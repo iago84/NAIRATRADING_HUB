@@ -1,2 +1,3 @@
 {"type":"server-started","port":59964,"host":"0.0.0.0","url_host":"localhost","url":"http://localhost:59964","screen_dir":"/workspace/.superpowers/brainstorm/1540-1776802663/content","state_dir":"/workspace/.superpowers/brainstorm/1540-1776802663/state"}
 {"type":"screen-added","file":"/workspace/.superpowers/brainstorm/1540-1776802663/content/strategy-brains-1.html"}
+{"type":"server-stopped","reason":"idle timeout"}
