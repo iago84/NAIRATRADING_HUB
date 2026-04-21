@@ -40,6 +40,20 @@ class Settings:
     MIN_ATR_PCT: float = float(_env("MIN_ATR_PCT", "0.02"))
     SIGNAL_TTL_BARS: int = _env_int("SIGNAL_TTL_BARS", 6)
     RISK_LIMITS_PATH: str = _env("RISK_LIMITS_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "data", "risk", "limits.json"))
+    BALANCE_USDT: float = float(_env("BALANCE_USDT", "0"))
+
+    CRYPTO_T0_MAX: float = float(_env("CRYPTO_T0_MAX", "200"))
+    CRYPTO_T1_MAX: float = float(_env("CRYPTO_T1_MAX", "1000"))
+    CRYPTO_T2_MAX: float = float(_env("CRYPTO_T2_MAX", "5000"))
+
+    FX_T0_MAX: float = float(_env("FX_T0_MAX", "500"))
+    FX_T1_MAX: float = float(_env("FX_T1_MAX", "2000"))
+    FX_T2_MAX: float = float(_env("FX_T2_MAX", "10000"))
+
+    AI_GATE_T0: float = float(_env("AI_GATE_T0", "0.62"))
+    AI_GATE_T1: float = float(_env("AI_GATE_T1", "0.58"))
+    AI_GATE_T2: float = float(_env("AI_GATE_T2", "0.54"))
+    AI_GATE_T3: float = float(_env("AI_GATE_T3", "0.50"))
 
 
 settings = Settings()

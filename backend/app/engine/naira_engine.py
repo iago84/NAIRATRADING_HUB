@@ -62,6 +62,7 @@ class NairaConfig:
     tp_atr_mult: float = 2.0
     sl_atr_mult: float = 1.2
     min_confidence: float = 0.55
+    strategy_mode: str = "single"
     entry_mode: str = "hybrid"
     entry_tol_atr: float = 0.6
     trend_age_min_bars: int = 0
@@ -1039,6 +1040,10 @@ class NairaEngine:
                 return float(px) * (1.0 - bps / 10000.0)
             return float(px) * (1.0 + bps / 10000.0)
 
+        entry_mode = str(self.config.entry_mode or "hybrid")
+        if str(self.config.strategy_mode or "single").lower() == "multi":
+            entry_mode = "regime"
+
         for i in range(60, len(base_state)):
             t = base_times[i]
             base_dir = str(dir_arr[i])
@@ -1118,7 +1123,7 @@ class NairaEngine:
                         if r > l:
                             for k in range(int(l), int(r)):
                                 w0 = max(0, int(k) - 400)
-                                ed = decide_entry(entry_mag_feat.iloc[w0 : int(k) + 1], side=g_dir, mode=self.config.entry_mode, tol_atr=float(self.config.entry_tol_atr))
+                                ed = decide_entry(entry_mag_feat.iloc[w0 : int(k) + 1], side=g_dir, mode=entry_mode, tol_atr=float(self.config.entry_tol_atr))
                                 if ed.ok:
                                     entry_price = float(entry_mag_df["close"].iloc[int(k)])
                                     entry_dt = pd.to_datetime(entry_mag_df["datetime"].iloc[int(k)])
@@ -1126,7 +1131,7 @@ class NairaEngine:
                                     entry_ok = ed
                                     break
                     if entry_ok is None:
-                        entry_ok = decide_entry(df_feat_all.iloc[: i + 1], side=g_dir, mode=self.config.entry_mode, tol_atr=float(self.config.entry_tol_atr))
+                        entry_ok = decide_entry(df_feat_all.iloc[: i + 1], side=g_dir, mode=entry_mode, tol_atr=float(self.config.entry_tol_atr))
                     if not entry_ok.ok:
                         equity_curve.append(float(cash))
                         continue
@@ -1927,6 +1932,10 @@ class NairaEngine:
         if fee_bps_eff < 0:
             fee_bps_eff = 2.0
 
+        entry_mode = str(self.config.entry_mode or "hybrid")
+        if str(self.config.strategy_mode or "single").lower() == "multi":
+            entry_mode = "regime"
+
         per_sym = {}
         common_times: Optional[np.ndarray] = None
         for sym in items:
@@ -2245,7 +2254,7 @@ class NairaEngine:
 
                     df_feat = pack["df_feat"]
                     w0 = max(0, int(i) - 300)
-                    ed = decide_entry(df_feat.iloc[w0 : i + 1], side=g_dir, mode=self.config.entry_mode, tol_atr=float(self.config.entry_tol_atr))
+                    ed = decide_entry(df_feat.iloc[w0 : i + 1], side=g_dir, mode=entry_mode, tol_atr=float(self.config.entry_tol_atr))
                     if not ed.ok:
                         continue
                     row = st.iloc[i]

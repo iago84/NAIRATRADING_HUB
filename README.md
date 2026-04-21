@@ -33,6 +33,10 @@ Variables principales:
 - DATA_DIR (por defecto backend/data)
 - SCAN_PROVIDER (csv|binance|ccxt|mt5)
 - SCAN_BASE_TIMEFRAME (por defecto 1h)
+- BALANCE_USDT (para escalar el universo en /scan y el AI gate)
+- CRYPTO_T0_MAX/CRYPTO_T1_MAX/CRYPTO_T2_MAX (tramos crypto)
+- FX_T0_MAX/FX_T1_MAX/FX_T2_MAX (tramos FX/metales)
+- AI_GATE_T0..AI_GATE_T3 (umbral p(win) por tramo)
 - API_KEY_PRO / API_KEY_TRADER (tiers)
 - REDIS_URL (opcional, cache)
 - TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID / WEBHOOK_URLS (notificaciones)
@@ -61,6 +65,11 @@ Healthcheck:
 - POST /api/v1/naira/model/train (TRADER)
 - POST /api/v1/naira/model/calibrate (TRADER)
 - POST /api/v1/naira/robustness/* (TRADER)
+
+Parámetros útiles:
+
+- `/naira/signal`: `mode=single|multi`, `balance_usdt`, `asset=crypto|fx|metals`, `include_debug`
+- `/naira/scan`: `mode=single|multi`, `balance_usdt`, `asset=crypto|fx|metals|all`, `top`
 
 ## Tests
 
