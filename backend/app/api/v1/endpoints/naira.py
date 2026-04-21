@@ -12,6 +12,9 @@ from ....engine.model import train_logreg_sgd, train_logreg_sgd_multi, load_mode
 from ....engine.robustness import walk_forward_backtest, walk_forward_optimize, walk_forward_threshold_selection, sensitivity_grid
 from ....engine.calibration import calibration_report, calibration_report_by_regime
 from ....engine.risk_controls import RiskStore, RiskManager, RiskLimits
+from ....engine.universe import UniverseManager, tranche_for_balance
+from ....engine.filters import classify_symbol
+from ....engine.multi_brain import run_multi_brain
 from ....schemas.naira import BacktestOut, SignalOut
 from ....services.notifier_service import notifier_singleton
 
@@ -43,6 +46,9 @@ def signal(
     base_timeframe: str = Query("1h"),
     provider: str = Query("csv"),
     csv_path: str | None = Query(None),
+    mode: str = Query("single"),
+    balance_usdt: float | None = Query(None),
+    asset: str | None = Query(None),
     include_debug: bool = Query(False),
     notify: bool = Query(False),
     api_key: str | None = Header(None, alias="X-API-Key"),
@@ -57,14 +63,32 @@ def signal(
         include_debug = False
     else:
         tfs = ["1w", "1d", "4h", base_timeframe, "30m", "15m", "5m", "1m"]
-    out = engine.analyze(
-        symbol=symbol,
-        provider=provider,
-        base_timeframe=base_timeframe,
-        csv_path=csv_path,
-        timeframes=tfs,
-        include_debug=include_debug,
-    )
+    out: dict
+    if str(mode).lower() == "multi":
+        bal = float(balance_usdt) if balance_usdt is not None else float(settings.BALANCE_USDT)
+        kind = str(asset or classify_symbol(symbol)).lower()
+        if kind not in ("crypto", "fx", "metals"):
+            kind = "crypto"
+        tranche = tranche_for_balance(kind, bal)  # type: ignore[arg-type]
+        out, _meta = run_multi_brain(
+            engine=engine,
+            symbol=symbol,
+            provider=provider,
+            base_timeframe=base_timeframe,
+            csv_path=csv_path,
+            timeframes=tfs,
+            tranche=tranche,
+            include_debug=include_debug,
+        )
+    else:
+        out = engine.analyze(
+            symbol=symbol,
+            provider=provider,
+            base_timeframe=base_timeframe,
+            csv_path=csv_path,
+            timeframes=tfs,
+            include_debug=include_debug,
+        )
     if notify and tier == "TRADER":
         ok, reason = risk.allow_notify(api_key or "anon")
         if not ok:
@@ -81,23 +105,71 @@ def scan(
     symbols: str | None = Query(None),
     base_timeframe: str = Query("1h"),
     provider: str = Query("csv"),
+    mode: str = Query("single"),
+    balance_usdt: float | None = Query(None),
+    asset: str | None = Query(None),
     top: int = Query(10, ge=1, le=200),
     api_key: str | None = Header(None, alias="X-API-Key"),
 ):
     tier = _tier(api_key)
     raw = (symbols or settings.DEFAULT_WATCHLIST or "").strip()
-    if not raw:
-        return []
-    items = [s.strip() for s in raw.split(",") if s.strip()]
+    items: list[str]
+    if raw:
+        items = [s.strip() for s in raw.split(",") if s.strip()]
+    else:
+        bal = float(balance_usdt) if balance_usdt is not None else float(settings.BALANCE_USDT)
+        um = UniverseManager(data_dir=settings.DATA_DIR)
+        assets = [str(asset).lower()] if asset else ["crypto", "fx", "metals"]
+        if assets == ["all"]:
+            assets = ["crypto", "fx", "metals"]
+        out_items = []
+        for a in assets:
+            if a not in ("crypto", "fx", "metals"):
+                continue
+            tr = tranche_for_balance(a, bal)  # type: ignore[arg-type]
+            out_items.extend(um.symbols(a, tr))  # type: ignore[arg-type]
+        seen = set()
+        items = []
+        for s in out_items:
+            if s not in seen:
+                seen.add(s)
+                items.append(s)
     items = items[: int(settings.MAX_SCAN_SYMBOLS)]
     if tier == "FREE":
         tfs = ["4h", "1d", base_timeframe]
     else:
         tfs = ["1w", "1d", "4h", base_timeframe, "30m", "15m", "5m", "1m"]
-    out = []
+    stage_a = []
     for sym in items:
         try:
-            out.append(engine.analyze(symbol=sym, provider=provider, base_timeframe=base_timeframe, timeframes=tfs))
+            stage_a.append(engine.analyze(symbol=sym, provider=provider, base_timeframe=base_timeframe, timeframes=tfs))
+        except Exception:
+            continue
+    stage_a.sort(key=lambda x: float(x.get("opportunity_score") or 0.0), reverse=True)
+    if str(mode).lower() != "multi":
+        return stage_a[: int(top)]
+    bal = float(balance_usdt) if balance_usdt is not None else float(settings.BALANCE_USDT)
+    candidates = stage_a[: max(int(top) * 3, 30)]
+    out = []
+    for base in candidates:
+        sym = str(base.get("symbol") or "")
+        if not sym:
+            continue
+        kind = str(classify_symbol(sym)).lower()
+        if kind not in ("crypto", "fx", "metals"):
+            kind = "crypto"
+        tranche = tranche_for_balance(kind, bal)  # type: ignore[arg-type]
+        try:
+            r, _meta = run_multi_brain(
+                engine=engine,
+                symbol=sym,
+                provider=provider,
+                base_timeframe=base_timeframe,
+                tranche=tranche,
+                timeframes=tfs,
+                include_debug=False,
+            )
+            out.append(r)
         except Exception:
             continue
     out.sort(key=lambda x: float(x.get("opportunity_score") or 0.0), reverse=True)

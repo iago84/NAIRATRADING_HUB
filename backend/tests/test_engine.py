@@ -38,6 +38,22 @@ class TestNairaEngine(unittest.TestCase):
             self.assertIn("entry_kind", t0)
             self.assertIn("exit_reason", t0)
 
+    def test_backtest_multi_strategy_mode(self):
+        cfg = NairaConfig(
+            strategy_mode="multi",
+            entry_mode="hybrid",
+            confirm_higher_tfs=False,
+            timing_timeframe="",
+            alignment_threshold=0.0,
+            slope_threshold_pct=0.0,
+            adx_threshold=0.0,
+            min_confidence=0.0,
+        )
+        e = NairaEngine(data_dir=settings.DATA_DIR, config=cfg)
+        r = e.backtest(symbol="TEST", provider="csv", base_timeframe="1h", max_bars=500)
+        self.assertIn("metrics", r)
+        self.assertIn("trades", r)
+
     def test_backtest_money_management_and_signal_stats(self):
         e = NairaEngine(data_dir=settings.DATA_DIR)
         r = e.backtest(

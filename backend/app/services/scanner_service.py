@@ -12,6 +12,9 @@ from ..core.logger import get_logger
 from ..core.metrics import metrics_singleton
 from ..engine.naira_engine import NairaEngine
 from ..engine.watchlist import WatchlistStore
+from ..engine.universe import UniverseManager, tranche_for_balance
+from ..engine.filters import classify_symbol
+from ..engine.multi_brain import run_multi_brain
 from .notifier_service import notifier_singleton
 
 
@@ -64,6 +67,19 @@ class ScannerService:
     def scan_once(self) -> List[Dict[str, Any]]:
         metrics_singleton.rolling["scans_10m"].add()
         symbols = self.watchlist.load()
+        if not symbols:
+            um = UniverseManager(data_dir=settings.DATA_DIR)
+            bal = float(settings.BALANCE_USDT)
+            out_items = []
+            for a in ("crypto", "fx", "metals"):
+                tr = tranche_for_balance(a, bal)  # type: ignore[arg-type]
+                out_items.extend(um.symbols(a, tr))  # type: ignore[arg-type]
+            seen = set()
+            symbols = []
+            for s in out_items:
+                if s not in seen:
+                    seen.add(s)
+                    symbols.append(s)
         symbols = symbols[: int(settings.MAX_SCAN_SYMBOLS)]
         if not symbols:
             return []
@@ -75,7 +91,20 @@ class ScannerService:
         try:
             for sym in symbols:
                 try:
-                    r = self.engine.analyze(symbol=sym, provider=settings.SCAN_PROVIDER, base_timeframe=settings.SCAN_BASE_TIMEFRAME)
+                    kind = str(classify_symbol(sym)).lower()
+                    if kind not in ("crypto", "fx", "metals"):
+                        kind = "crypto"
+                    tranche = tranche_for_balance(kind, float(settings.BALANCE_USDT))  # type: ignore[arg-type]
+                    r, meta = run_multi_brain(
+                        engine=self.engine,
+                        symbol=sym,
+                        provider=settings.SCAN_PROVIDER,
+                        base_timeframe=settings.SCAN_BASE_TIMEFRAME,
+                        tranche=tranche,
+                        include_debug=False,
+                    )
+                    r["brain"] = meta.final.brain
+                    r["regime"] = meta.regime
                     out.append(r)
                 except Exception as e:
                     err = str(e)

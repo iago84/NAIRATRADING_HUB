@@ -23,6 +23,9 @@ class TestAPI(unittest.TestCase):
         r = c.get("/api/v1/naira/signal", params={"symbol": "TEST", "provider": "csv", "base_timeframe": "1h"})
         self.assertEqual(r.status_code, 200)
         self.assertIn(r.json().get("direction"), ("buy", "sell", "neutral"))
+        r = c.get("/api/v1/naira/signal", params={"symbol": "TEST", "provider": "csv", "base_timeframe": "1h", "mode": "multi"})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(r.json().get("direction"), ("buy", "sell", "neutral"))
 
     def test_portfolio_backtest_requires_trader(self):
         c = TestClient(app)
