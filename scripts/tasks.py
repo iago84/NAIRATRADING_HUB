@@ -409,12 +409,12 @@ def cmd_backtest_global(
     return out
 
 
-def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_mode: str, workers: int) -> List[str]:
-    out = []
+def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_mode: str, workers: int) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
     tasks = [(tf, sym) for tf in tfs for sym in symbols]
     loc = threading.local()
 
-    def _ds_one(tf: str, sym: str) -> Optional[str]:
+    def _ds_one(tf: str, sym: str) -> Optional[Dict[str, Any]]:
         try:
             eng = getattr(loc, "eng", None)
             if eng is None:
@@ -422,9 +422,7 @@ def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_m
                 setattr(loc, "eng", eng)
             ds_path = os.path.join(str(settings.DATASETS_DIR), f"{sym}_{str(provider).lower()}_{tf}_ml.csv")
             r = build_trade_dataset(eng, symbol=sym, provider=str(provider), base_timeframe=tf, out_path=ds_path)
-            if int(r.rows) > 0:
-                return str(r.path)
-            return None
+            return {"path": str(r.path), "rows": int(r.rows), "symbol": str(sym), "timeframe": str(tf), "provider": str(provider).lower()}
         except Exception:
             return None
 
@@ -435,18 +433,19 @@ def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_m
         pass
     if w <= 1:
         for tf, sym in tasks:
-            p = _ds_one(tf, sym)
-            if p:
-                out.append(p)
+            it = _ds_one(tf, sym)
+            if it:
+                out.append(it)
     else:
         with ThreadPoolExecutor(max_workers=w) as pool:
             futs = [pool.submit(_ds_one, tf, sym) for tf, sym in tasks]
             for f in as_completed(futs):
-                p = f.result()
-                if p:
-                    out.append(p)
+                it = f.result()
+                if it:
+                    out.append(it)
     try:
-        print(f"dataset:build done files={len(out)}")
+        non_empty = sum(1 for x in out if int(x.get("rows") or 0) > 0)
+        print(f"dataset:build done files={len(out)} non_empty={int(non_empty)}")
     except Exception:
         pass
     return out
@@ -625,7 +624,8 @@ def main(argv: List[str]) -> int:
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
-        cmd_report_setup_edge(run_dir, datasets, backtests)
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        cmd_report_setup_edge(run_dir, ds_paths, backtests)
         return 0
     if args.cmd == "train:stack":
         cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
@@ -633,7 +633,8 @@ def main(argv: List[str]) -> int:
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": []})
-        cmd_train_stack(run_dir, datasets)
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        cmd_train_stack(run_dir, ds_paths)
         return 0
     if args.cmd == "train:calibrate":
         cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
@@ -641,7 +642,8 @@ def main(argv: List[str]) -> int:
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": []})
-        cmd_calibrate(run_dir, datasets)
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        cmd_calibrate(run_dir, ds_paths)
         return 0
     if args.cmd == "all":
         print("updating data...")
@@ -677,11 +679,12 @@ def main(argv: List[str]) -> int:
         print("writing datasets manifest...")
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
         print("setting up report...")
-        cmd_report_setup_edge(run_dir, datasets, backtests)
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        cmd_report_setup_edge(run_dir, ds_paths, backtests)
         print("training stack...")
-        cmd_train_stack(run_dir, datasets)
+        cmd_train_stack(run_dir, ds_paths)
         print("calibrating...")
-        cmd_calibrate(run_dir, datasets)
+        cmd_calibrate(run_dir, ds_paths)
         return 0
     return 0
 
