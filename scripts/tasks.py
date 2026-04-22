@@ -220,6 +220,10 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
             errors.append("mt5_provider_unavailable")
     payload = {"provider": p, "updated": int(updated), "errors": errors, "tfs": list(tfs), "symbols": int(len(symbols))}
     _write_json(os.path.join(run_dir, "data_update.json"), payload)
+    try:
+        print(f"data:update provider={p} updated={int(updated)} errors={len(errors)}")
+    except Exception:
+        pass
     return payload
 
 
@@ -258,6 +262,10 @@ def cmd_scan(provider: str, run_dir: str, symbols: List[str], tfs: List[str], en
         p = os.path.join(run_dir, f"scan_{tf}.json")
         _write_json(p, rows)
         out[tf] = p
+        try:
+            print(f"scan tf={tf} items={len(rows)}")
+        except Exception:
+            pass
     return out
 
 
@@ -304,6 +312,10 @@ def cmd_backtest_top(
             return None
 
     w = int(max(1, int(workers)))
+    try:
+        print(f"backtest:top tasks={len(tasks)} workers={w} sizing_mode={sizing_mode}")
+    except Exception:
+        pass
     if w <= 1:
         for tf, sym in tasks:
             res = _bt_one(tf, sym)
@@ -324,6 +336,10 @@ def cmd_backtest_top(
                 p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}.json")
                 _write_json(p, r)
                 out.append(p)
+    try:
+        print(f"backtest:top done files={len(out)}")
+    except Exception:
+        pass
     return out
 
 
@@ -362,6 +378,10 @@ def cmd_backtest_global(
             return None
 
     w = int(max(1, int(workers)))
+    try:
+        print(f"backtest:global tasks={len(tasks)} workers={w} sizing_mode={sizing_mode}")
+    except Exception:
+        pass
     if w <= 1:
         for tf, sym in tasks:
             res = _bt_one(tf, sym)
@@ -382,6 +402,10 @@ def cmd_backtest_global(
                 p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}.json")
                 _write_json(p, r)
                 out.append(p)
+    try:
+        print(f"backtest:global done files={len(out)}")
+    except Exception:
+        pass
     return out
 
 
@@ -405,6 +429,10 @@ def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_m
             return None
 
     w = int(max(1, int(workers)))
+    try:
+        print(f"dataset:build tasks={len(tasks)} workers={w}")
+    except Exception:
+        pass
     if w <= 1:
         for tf, sym in tasks:
             p = _ds_one(tf, sym)
@@ -417,6 +445,10 @@ def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_m
                 p = f.result()
                 if p:
                     out.append(p)
+    try:
+        print(f"dataset:build done files={len(out)}")
+    except Exception:
+        pass
     return out
 
 
@@ -540,6 +572,11 @@ def main(argv: List[str]) -> int:
             max_equity_drawdown_pct=max_equity_drawdown_pct,
             free_cash_min_pct=free_cash_min_pct,
             risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
         )
         return 0
     if args.cmd == "backtest:global":
@@ -554,6 +591,11 @@ def main(argv: List[str]) -> int:
             max_equity_drawdown_pct=max_equity_drawdown_pct,
             free_cash_min_pct=free_cash_min_pct,
             risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
         )
         return 0
     if args.cmd == "dataset:build":
@@ -574,6 +616,11 @@ def main(argv: List[str]) -> int:
             max_equity_drawdown_pct=max_equity_drawdown_pct,
             free_cash_min_pct=free_cash_min_pct,
             risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
         )
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -613,6 +660,11 @@ def main(argv: List[str]) -> int:
             max_equity_drawdown_pct=max_equity_drawdown_pct,
             free_cash_min_pct=free_cash_min_pct,
             risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
         )
         print("building datasets...")
         datasets = cmd_dataset_build(
