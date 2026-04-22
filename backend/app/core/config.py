@@ -55,5 +55,14 @@ class Settings:
     AI_GATE_T2: float = float(_env("AI_GATE_T2", "0.54"))
     AI_GATE_T3: float = float(_env("AI_GATE_T3", "0.50"))
 
+    STRUCT_ALIGN_4H_MIN: float = float(_env("STRUCT_ALIGN_4H_MIN", "0.6"))
+    STRUCT_ALIGN_1D_MIN: float = float(_env("STRUCT_ALIGN_1D_MIN", "0.6"))
+    CONFLUENCE_MIN: float = float(_env("CONFLUENCE_MIN", "0.2"))
+    EXEC_CONF_MIN: float = float(_env("EXEC_CONF_MIN", "0.65"))
+    EXEC_ALIGN_MIN: float = float(_env("EXEC_ALIGN_MIN", "0.7"))
+
+    MR_SPREAD_FAST_PCT_MIN: float = float(_env("MR_SPREAD_FAST_PCT_MIN", "1.0"))
+    MR_REQUIRE_OPPOSITE_CURVATURE: int = _env_int("MR_REQUIRE_OPPOSITE_CURVATURE", 1)
+
 
 settings = Settings()

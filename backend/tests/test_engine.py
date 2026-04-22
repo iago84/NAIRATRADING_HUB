@@ -140,6 +140,41 @@ class TestNairaEngine(unittest.TestCase):
             self.assertIn("metrics", r)
             self.assertIn("trades", r)
 
+    def test_backtest_confluence_gate_blocks_entries(self):
+        import pandas as pd
+        import numpy as np
+
+        with tempfile.TemporaryDirectory() as td:
+            base_dir = td
+            sym_dir = Path(base_dir) / "history" / "csv" / "GATE"
+            os.makedirs(sym_dir, exist_ok=True)
+
+            start = pd.Timestamp("2025-01-01T00:00:00Z")
+            n = 120
+            times = pd.date_range(start=start, periods=n, freq="1h")
+            close = np.concatenate([np.linspace(100.0, 110.0, 60), np.linspace(200.0, 210.0, 60)])
+            open_ = np.roll(close, 1)
+            open_[0] = close[0]
+            high = np.maximum(open_, close) + 0.2
+            low = np.minimum(open_, close) - 0.2
+            df_1h = pd.DataFrame({"datetime": times, "open": open_, "high": high, "low": low, "close": close, "volume": 1.0})
+            df_1h.to_csv(sym_dir / "1h.csv", index=False)
+
+            cfg = NairaConfig(
+                strategy_mode="multi",
+                entry_mode="hybrid",
+                confirm_higher_tfs=False,
+                timing_timeframe="",
+                alignment_threshold=0.0,
+                slope_threshold_pct=0.0,
+                adx_threshold=0.0,
+                min_confidence=0.0,
+            )
+            e = NairaEngine(data_dir=base_dir, config=cfg)
+            r = e.backtest(symbol="GATE", provider="csv", base_timeframe="1h", max_bars=120)
+            self.assertIn("trades", r)
+            self.assertEqual(len(r.get("trades") or []), 0)
+
     def test_history_file_exists(self):
         p = Path(settings.DATA_DIR) / "history" / "csv" / "TEST" / "1h.csv"
         self.assertTrue(p.exists())

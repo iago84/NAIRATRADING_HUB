@@ -17,6 +17,7 @@ from .levels import build_levels, confluence_score, pivot_points_prev_day, fract
 from .alligator import latest_alligator
 from .regression import rolling_linreg_slope_pct, linreg_metrics
 from .entry_rules import decide_entry
+from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate
 from .filters import OperationalFilterConfig, apply_operational_filters
 from ..core.logger import get_logger
 from ..core.config import settings
@@ -866,12 +867,14 @@ class NairaEngine:
         ht_index: Dict[str, np.ndarray] = {}
         ht_dir: Dict[str, np.ndarray] = {}
         ht_conf: Dict[str, np.ndarray] = {}
+        ht_align: Dict[str, np.ndarray] = {}
         ht_valid: Dict[str, np.ndarray] = {}
         for tf, st in ht_states.items():
             tarr = pd.to_datetime(st["datetime"]).to_numpy(dtype="datetime64[ns]")
             ht_index[tf] = tarr
             ht_dir[tf] = st["direction"].to_numpy()
             ht_conf[tf] = st["confidence"].to_numpy(dtype=float)
+            ht_align[tf] = st["alignment"].to_numpy(dtype=float)
             ht_valid[tf] = (st["slope_score"].notna() & st["alignment"].notna() & st["regression_r2"].notna()).to_numpy()
 
         def get_ht_state(tf: str, t: np.datetime64) -> Tuple[str, float, bool]:
@@ -882,6 +885,19 @@ class NairaEngine:
             if j < 0:
                 return "neutral", 0.0, False
             return str(ht_dir[tf][j]), float(ht_conf[tf][j]), bool(ht_valid[tf][j])
+
+        def get_ht_alignment(tf: str, t: np.datetime64) -> float:
+            idx = ht_index.get(tf)
+            if idx is None or len(idx) == 0:
+                return 0.0
+            j = int(np.searchsorted(idx, t, side="right") - 1)
+            if j < 0:
+                return 0.0
+            try:
+                v = float(ht_align[tf][j])
+                return float(v) if np.isfinite(v) else 0.0
+            except Exception:
+                return 0.0
 
         timing_tf = str(self.config.timing_timeframe or "").strip()
         timing_state: Optional[pd.DataFrame] = None
@@ -1113,6 +1129,35 @@ class NairaEngine:
                             continue
                     except Exception:
                         pass
+
+                    try:
+                        frames_min = []
+                        align_base = float(base_state.get("alignment").iloc[i]) if "alignment" in base_state.columns and pd.notna(base_state.get("alignment").iloc[i]) else 0.0
+                        frames_min.append(
+                            {
+                                "timeframe": str(base_timeframe),
+                                "confidence": float(base_conf),
+                                "alignment": float(align_base),
+                            }
+                        )
+                        frames_min.append({"timeframe": "4h", "alignment": float(get_ht_alignment("4h", t))})
+                        frames_min.append({"timeframe": "1d", "alignment": float(get_ht_alignment("1d", t))})
+                        g_struct = structural_gate(frames_min)
+                        g_exec = execution_threshold_gate(frames_min, base_timeframe=str(base_timeframe))
+                        if not g_struct.ok or not g_exec.ok:
+                            equity_curve.append(float(cash))
+                            continue
+                        piv_c = pivot_points_prev_day(df_base.iloc[: i + 1])
+                        lv_c = build_levels(df_base.iloc[: i + 1], atr=float(atr_v), lookback=3)
+                        conf_c = float(confluence_score(price=float(price), pivots=piv_c, levels=lv_c, atr=float(atr_v)))
+                        frames_min[0]["level_confluence_score"] = float(conf_c)
+                        g_conf = confluence_gate(frames_min, base_timeframe=str(base_timeframe))
+                        if not g_conf.ok:
+                            equity_curve.append(float(cash))
+                            continue
+                    except Exception:
+                        equity_curve.append(float(cash))
+                        continue
 
                     entry_price = float(price)
                     entry_dt = pd.to_datetime(dt_arr[i])
@@ -1986,16 +2031,19 @@ class NairaEngine:
             ht_index = {}
             ht_dir = {}
             ht_conf = {}
+            ht_align = {}
             ht_valid = {}
             for tf, st_tf in (pack.get("ht") or {}).items():
                 tarr = pd.to_datetime(st_tf["datetime"]).to_numpy(dtype="datetime64[ns]")
                 ht_index[tf] = tarr
                 ht_dir[tf] = st_tf["direction"].to_numpy()
                 ht_conf[tf] = st_tf["confidence"].to_numpy(dtype=float)
+                ht_align[tf] = st_tf["alignment"].to_numpy(dtype=float)
                 ht_valid[tf] = (st_tf["slope_score"].notna() & st_tf["alignment"].notna() & st_tf["regression_r2"].notna()).to_numpy()
             pack["ht_index"] = ht_index
             pack["ht_dir"] = ht_dir
             pack["ht_conf"] = ht_conf
+            pack["ht_align"] = ht_align
             pack["ht_valid"] = ht_valid
 
         base_sec = int(_TF_SECONDS.get(bt, 0))
@@ -2042,6 +2090,22 @@ class NairaEngine:
             if j < 0:
                 return "neutral", 0.0, False
             return str(pack["ht_dir"][tf][j]), float(pack["ht_conf"][tf][j]), bool(pack["ht_valid"][tf][j])
+
+        def _get_ht_alignment(pack: Dict[str, Any], tf: str, t: np.datetime64) -> float:
+            idx = (pack.get("ht_index") or {}).get(tf)
+            if idx is None or len(idx) == 0:
+                return 0.0
+            j = int(np.searchsorted(idx, t, side="right") - 1)
+            if j < 0:
+                return 0.0
+            try:
+                arr = (pack.get("ht_align") or {}).get(tf)
+                if arr is None:
+                    return 0.0
+                v = float(arr[j])
+                return float(v) if np.isfinite(v) else 0.0
+            except Exception:
+                return 0.0
 
         def _score_candidate(g_conf: float, ai_p: Optional[float], alignment: float, slope_score: float, adx: float) -> float:
             s = float(self.config.ensemble_w_conf) * float(g_conf)
@@ -2252,12 +2316,33 @@ class NairaEngine:
                     if float(g_conf) < float(self.config.min_confidence):
                         continue
 
+                    row = st.iloc[i]
+                    try:
+                        align_base = float(row.get("alignment") or 0.0)
+                    except Exception:
+                        align_base = 0.0
+                    try:
+                        piv_c = pivot_points_prev_day(pack["df"].iloc[: i + 1])
+                        lv_c = build_levels(pack["df"].iloc[: i + 1], atr=float(atr_v), lookback=3)
+                        conf_c = float(confluence_score(price=float(row.get("close") or 0.0), pivots=piv_c, levels=lv_c, atr=float(atr_v)))
+                    except Exception:
+                        conf_c = 0.0
+                    frames_min = [
+                        {"timeframe": str(bt), "confidence": float(base_conf), "alignment": float(align_base), "level_confluence_score": float(conf_c)},
+                        {"timeframe": "4h", "alignment": float(_get_ht_alignment(pack, "4h", t))},
+                        {"timeframe": "1d", "alignment": float(_get_ht_alignment(pack, "1d", t))},
+                    ]
+                    g_struct = structural_gate(frames_min)
+                    g_conf2 = confluence_gate(frames_min, base_timeframe=str(bt))
+                    g_exec = execution_threshold_gate(frames_min, base_timeframe=str(bt))
+                    if not (g_struct.ok and g_conf2.ok and g_exec.ok):
+                        continue
+
                     df_feat = pack["df_feat"]
                     w0 = max(0, int(i) - 300)
                     ed = decide_entry(df_feat.iloc[w0 : i + 1], side=g_dir, mode=entry_mode, tol_atr=float(self.config.entry_tol_atr))
                     if not ed.ok:
                         continue
-                    row = st.iloc[i]
                     feats = {
                         "alignment": float(row.get("alignment") or 0.0),
                         "slope_score": float(row.get("slope_score") or 0.0),
@@ -2265,7 +2350,7 @@ class NairaEngine:
                         "regression_r2": float(row.get("regression_r2") or 0.0),
                         "adx": float(row.get("adx") or 0.0),
                         "atr": float(row.get("atr") or 0.0),
-                        "confluence_levels": 0.0,
+                        "confluence_levels": float(conf_c),
                         "confluence_fibo": 0.0,
                         "alligator_mouth": 0.0,
                     }
