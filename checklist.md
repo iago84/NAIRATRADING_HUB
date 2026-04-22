@@ -228,4 +228,6 @@
 - [x] Métricas por trade: `pnl_partials` y `pnl_total` (evitar confusión cuando hay parciales).
 - [x] “Explicabilidad” de no-entrada: contadores por gate y por regla (para tuning rápido).
 - [x] Optimización de provider/rate limits: backoff y throttling configurable en `data:update`.
-- [ ] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).
+- [x] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).
+- [x] Reporte HTML por run: top/bottom mercados + AI quality + curvas (equity por trades) + datasets rows.
+- [x] Pipelines automáticos: `pipeline:report`, `pipeline:train` y `report:html`.

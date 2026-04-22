@@ -2731,7 +2731,7 @@ class NairaEngine:
         eq = np.asarray(equity_curve, dtype=float) if equity_curve else np.asarray([float(starting_cash)], dtype=float)
         peak = np.maximum.accumulate(eq)
         dd = (eq - peak) / np.maximum(1e-9, peak)
-        max_dd_pct = float(dd.min() * 100.0) if len(dd) else 0.0
+        max_dd_pct = float((-dd.min()) * 100.0) if len(dd) else 0.0
         wins = sum(1 for t in trades if float(t["pnl"]) > 0)
         gp = sum(float(t["pnl"]) for t in trades if float(t["pnl"]) > 0)
         gl = -sum(float(t["pnl"]) for t in trades if float(t["pnl"]) < 0)
@@ -2748,12 +2748,15 @@ class NairaEngine:
             exit_counts[k] = int(exit_counts.get(k, 0)) + 1
             ek = str(t.get("entry_kind") or "unknown")
             entry_counts[ek] = int(entry_counts.get(ek, 0)) + 1
+        times_out = [pd.to_datetime(x).isoformat() for x in common_times[60:]] if len(common_times) > 60 else [pd.to_datetime(x).isoformat() for x in common_times]
         return {
             "symbols": list(per_sym.keys()),
             "provider": p,
             "base_timeframe": bt,
             "start": start_dt,
             "end": end_dt,
+            "times": times_out,
+            "equity_curve": [float(x) for x in eq.tolist()],
             "metrics": {
                 "trades": int(len(trades)),
                 "win_rate_pct": float((wins / max(1, len(trades))) * 100.0),
