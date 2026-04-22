@@ -8,6 +8,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, REPO_ROOT)
@@ -132,51 +134,68 @@ def _timeframe_window_days(tf: str) -> int:
     return 365
 
 
-def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str]) -> Dict[str, Any]:
+def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str], update_workers: int) -> Dict[str, Any]:
     p = str(provider).lower()
     store = HistoryStore(base_dir=str(settings.DATA_DIR))
     updated = 0
     errors: List[str] = []
     if p in ("binance", "csv"):
         ex = BinanceRestOHLCVProvider()
-        for sym in symbols:
-            for tf in tfs:
-                try:
-                    latest = store.latest_datetime(provider="csv", symbol=sym, timeframe=tf)
-                    end = datetime.now(timezone.utc)
-                    start = end - timedelta(days=_timeframe_window_days(tf))
-                    since_ms = int(start.timestamp() * 1000)
-                    if latest is not None:
-                        try:
-                            since_ms = int(pd.to_datetime(latest).timestamp() * 1000) - 1
-                        except Exception:
-                            since_ms = since_ms
-                    chunks = []
-                    cur = int(since_ms)
-                    for _ in range(50):
-                        df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
-                        if df is None or df.empty:
-                            break
-                        chunks.append(df)
-                        last_dt = pd.to_datetime(df["datetime"].iloc[-1])
-                        nxt = int(last_dt.timestamp() * 1000) + 1
-                        if nxt <= cur:
-                            break
-                        cur = nxt
-                        if len(df) < 1000:
-                            break
-                    if not chunks:
-                        continue
-                    df_all = pd.concat(chunks).drop_duplicates(subset=["datetime"]).sort_values("datetime").reset_index(drop=True)
+        def _update_one(sym: str, tf: str) -> tuple[bool, Optional[str]]:
+            try:
+                latest = store.latest_datetime(provider="csv", symbol=sym, timeframe=tf)
+                end = datetime.now(timezone.utc)
+                start = end - timedelta(days=_timeframe_window_days(tf))
+                since_ms = int(start.timestamp() * 1000)
+                if latest is not None:
                     try:
-                        store.upsert(provider="binance", symbol=sym, timeframe=tf, df=df_all)
+                        since_ms = int(pd.to_datetime(latest).timestamp() * 1000) - 1
                     except Exception:
-                        pass
-                    store.upsert(provider="csv", symbol=sym, timeframe=tf, df=df_all)
-                    updated += 1
-                except Exception as e:
-                    errors.append(f"{sym}:{tf}:{type(e).__name__}")
-                    continue
+                        since_ms = since_ms
+                chunks = []
+                cur = int(since_ms)
+                for _ in range(50):
+                    df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                    if df is None or df.empty:
+                        break
+                    chunks.append(df)
+                    last_dt = pd.to_datetime(df["datetime"].iloc[-1])
+                    nxt = int(last_dt.timestamp() * 1000) + 1
+                    if nxt <= cur:
+                        break
+                    cur = nxt
+                    if len(df) < 1000:
+                        break
+                if not chunks:
+                    return (False, None)
+                df_all = pd.concat(chunks).drop_duplicates(subset=["datetime"]).sort_values("datetime").reset_index(drop=True)
+                try:
+                    store.upsert(provider="binance", symbol=sym, timeframe=tf, df=df_all)
+                except Exception:
+                    pass
+                store.upsert(provider="csv", symbol=sym, timeframe=tf, df=df_all)
+                return (True, None)
+            except Exception as e:
+                return (False, f"{sym}:{tf}:{type(e).__name__}")
+
+        w = int(max(1, int(update_workers)))
+        if w <= 1:
+            for sym in symbols:
+                for tf in tfs:
+                    ok, err = _update_one(sym, tf)
+                    if ok:
+                        updated += 1
+                    if err:
+                        errors.append(err)
+        else:
+            with ThreadPoolExecutor(max_workers=w) as pool:
+                futs = [pool.submit(_update_one, sym, tf) for sym in symbols for tf in tfs]
+                for f in as_completed(futs):
+                    ok, err = f.result()
+                    if ok:
+                        updated += 1
+                    if err:
+                        errors.append(err)
     elif p == "mt5":
         try:
             from app.engine.providers.mt5_provider import MT5OHLCVProvider
@@ -204,17 +223,37 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
     return payload
 
 
-def cmd_scan(provider: str, run_dir: str, symbols: List[str], tfs: List[str]) -> Dict[str, str]:
-    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
+def cmd_scan(provider: str, run_dir: str, symbols: List[str], tfs: List[str], entry_mode: str, workers: int) -> Dict[str, str]:
     out: Dict[str, str] = {}
     for tf in tfs:
         rows = []
-        for sym in symbols[: int(settings.MAX_SCAN_SYMBOLS)]:
+        loc = threading.local()
+
+        def _scan_one(sym: str) -> Optional[Dict[str, Any]]:
             try:
+                eng = getattr(loc, "eng", None)
+                if eng is None:
+                    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
+                    setattr(loc, "eng", eng)
                 r, _ = run_multi_brain(engine=eng, symbol=sym, provider=str(provider), base_timeframe=tf, tranche="T1", include_debug=False)
-                rows.append(r)
+                return r
             except Exception:
-                continue
+                return None
+
+        items = symbols[: int(settings.MAX_SCAN_SYMBOLS)]
+        w = int(max(1, int(workers)))
+        if w <= 1:
+            for sym in items:
+                r = _scan_one(sym)
+                if r:
+                    rows.append(r)
+        else:
+            with ThreadPoolExecutor(max_workers=w) as pool:
+                futs = [pool.submit(_scan_one, sym) for sym in items]
+                for f in as_completed(futs):
+                    r = f.result()
+                    if r:
+                        rows.append(r)
         rows.sort(key=lambda x: float(x.get("opportunity_score") or 0.0), reverse=True)
         p = os.path.join(run_dir, f"scan_{tf}.json")
         _write_json(p, rows)
@@ -222,51 +261,162 @@ def cmd_scan(provider: str, run_dir: str, symbols: List[str], tfs: List[str]) ->
     return out
 
 
-def cmd_backtest_top(provider: str, run_dir: str, scan_paths: Dict[str, str], top_n: int, tfs: List[str]) -> List[str]:
-    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
+def cmd_backtest_top(
+    provider: str,
+    run_dir: str,
+    scan_paths: Dict[str, str],
+    top_n: int,
+    tfs: List[str],
+    entry_mode: str,
+    workers: int,
+    max_equity_drawdown_pct: float,
+    free_cash_min_pct: float,
+    risk_stop_policy: str,
+) -> List[str]:
     out = []
+    tasks: List[tuple[str, str]] = []
     for tf in tfs:
         sp = scan_paths.get(tf) or os.path.join(run_dir, f"scan_{tf}.json")
         scan_items = _read_json(sp, [])
         top_syms = pick_top_symbols(list(scan_items or []), top_n=int(top_n))
         for sym in top_syms:
-            try:
-                r = eng.backtest(symbol=sym, provider=str(provider), base_timeframe=tf, max_bars=5000)
-                p = os.path.join(run_dir, f"backtest_{tf}_{sym}.json")
+            tasks.append((tf, sym))
+
+    loc = threading.local()
+
+    def _bt_one(tf: str, sym: str) -> Optional[tuple[str, str, Dict[str, Any]]]:
+        try:
+            eng = getattr(loc, "eng", None)
+            if eng is None:
+                eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
+                setattr(loc, "eng", eng)
+            r = eng.backtest(
+                symbol=sym,
+                provider=str(provider),
+                base_timeframe=tf,
+                max_bars=5000,
+                max_equity_drawdown_pct=float(max_equity_drawdown_pct),
+                free_cash_min_pct=float(free_cash_min_pct),
+                risk_stop_policy=str(risk_stop_policy),
+            )
+            return (tf, sym, r)
+        except Exception:
+            return None
+
+    w = int(max(1, int(workers)))
+    if w <= 1:
+        for tf, sym in tasks:
+            res = _bt_one(tf, sym)
+            if not res:
+                continue
+            tf2, sym2, r = res
+            p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}.json")
+            _write_json(p, r)
+            out.append(p)
+    else:
+        with ThreadPoolExecutor(max_workers=w) as pool:
+            futs = [pool.submit(_bt_one, tf, sym) for tf, sym in tasks]
+            for f in as_completed(futs):
+                res = f.result()
+                if not res:
+                    continue
+                tf2, sym2, r = res
+                p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}.json")
                 _write_json(p, r)
                 out.append(p)
-            except Exception:
-                continue
     return out
 
 
-def cmd_backtest_global(provider: str, run_dir: str, symbols: List[str], tfs: List[str]) -> List[str]:
-    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
+def cmd_backtest_global(
+    provider: str,
+    run_dir: str,
+    symbols: List[str],
+    tfs: List[str],
+    entry_mode: str,
+    workers: int,
+    max_equity_drawdown_pct: float,
+    free_cash_min_pct: float,
+    risk_stop_policy: str,
+) -> List[str]:
     out = []
-    for tf in tfs:
-        for sym in symbols:
-            try:
-                r = eng.backtest(symbol=sym, provider=str(provider), base_timeframe=tf, max_bars=5000)
-                p = os.path.join(run_dir, f"backtest_{tf}_{sym}.json")
+    tasks = [(tf, sym) for tf in tfs for sym in symbols]
+    loc = threading.local()
+
+    def _bt_one(tf: str, sym: str) -> Optional[tuple[str, str, Dict[str, Any]]]:
+        try:
+            eng = getattr(loc, "eng", None)
+            if eng is None:
+                eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
+                setattr(loc, "eng", eng)
+            r = eng.backtest(
+                symbol=sym,
+                provider=str(provider),
+                base_timeframe=tf,
+                max_bars=5000,
+                max_equity_drawdown_pct=float(max_equity_drawdown_pct),
+                free_cash_min_pct=float(free_cash_min_pct),
+                risk_stop_policy=str(risk_stop_policy),
+            )
+            return (tf, sym, r)
+        except Exception:
+            return None
+
+    w = int(max(1, int(workers)))
+    if w <= 1:
+        for tf, sym in tasks:
+            res = _bt_one(tf, sym)
+            if not res:
+                continue
+            tf2, sym2, r = res
+            p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}.json")
+            _write_json(p, r)
+            out.append(p)
+    else:
+        with ThreadPoolExecutor(max_workers=w) as pool:
+            futs = [pool.submit(_bt_one, tf, sym) for tf, sym in tasks]
+            for f in as_completed(futs):
+                res = f.result()
+                if not res:
+                    continue
+                tf2, sym2, r = res
+                p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}.json")
                 _write_json(p, r)
                 out.append(p)
-            except Exception:
-                continue
     return out
 
 
-def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str]) -> List[str]:
-    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
+def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_mode: str, workers: int) -> List[str]:
     out = []
-    for tf in tfs:
-        for sym in symbols:
-            try:
-                ds_path = os.path.join(str(settings.DATASETS_DIR), f"{sym}_{str(provider).lower()}_{tf}_ml.csv")
-                r = build_trade_dataset(eng, symbol=sym, provider=str(provider), base_timeframe=tf, out_path=ds_path)
-                if int(r.rows) > 0:
-                    out.append(r.path)
-            except Exception:
-                continue
+    tasks = [(tf, sym) for tf in tfs for sym in symbols]
+    loc = threading.local()
+
+    def _ds_one(tf: str, sym: str) -> Optional[str]:
+        try:
+            eng = getattr(loc, "eng", None)
+            if eng is None:
+                eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
+                setattr(loc, "eng", eng)
+            ds_path = os.path.join(str(settings.DATASETS_DIR), f"{sym}_{str(provider).lower()}_{tf}_ml.csv")
+            r = build_trade_dataset(eng, symbol=sym, provider=str(provider), base_timeframe=tf, out_path=ds_path)
+            if int(r.rows) > 0:
+                return str(r.path)
+            return None
+        except Exception:
+            return None
+
+    w = int(max(1, int(workers)))
+    if w <= 1:
+        for tf, sym in tasks:
+            p = _ds_one(tf, sym)
+            if p:
+                out.append(p)
+    else:
+        with ThreadPoolExecutor(max_workers=w) as pool:
+            futs = [pool.submit(_ds_one, tf, sym) for tf, sym in tasks]
+            for f in as_completed(futs):
+                p = f.result()
+                if p:
+                    out.append(p)
     return out
 
 
@@ -339,6 +489,16 @@ def build_parser() -> argparse.ArgumentParser:
     for name in ("data:update", "scan", "backtest:top", "backtest:global", "dataset:build", "report:setup-edge", "train:stack", "train:calibrate", "all"):
         sub = sp.add_parser(name)
         sub.add_argument("--provider", required=True, choices=["binance", "mt5", "csv"])
+        sub.add_argument("--entry-mode", default=os.getenv("PIPELINE_ENTRY_MODE", "hybrid"), choices=["hybrid", "pullback", "break_retest", "mean_reversion", "regime"])
+        sub.add_argument("--workers", type=int, default=int(os.getenv("PIPELINE_WORKERS", "8") or "8"))
+        sub.add_argument("--update-workers", type=int, default=int(os.getenv("PIPELINE_UPDATE_WORKERS", "2") or "2"))
+        sub.add_argument("--max-equity-drawdown-pct", type=float, default=float(os.getenv("PIPELINE_MAX_DD_PCT", "50.0") or "50.0"))
+        sub.add_argument("--free-cash-min-pct", type=float, default=float(os.getenv("PIPELINE_FREE_CASH_MIN_PCT", "0.20") or "0.20"))
+        sub.add_argument(
+            "--risk-stop-policy",
+            default=os.getenv("PIPELINE_RISK_STOP_POLICY", "stop_immediate"),
+            choices=["stop_immediate", "stop_no_new_trades", "stop_after_close"],
+        )
     return p
 
 
@@ -350,63 +510,118 @@ def main(argv: List[str]) -> int:
     ht_tfs = list(HT_TFS)
     update_tfs = run_tfs + ht_tfs
     symbols = load_symbols(provider)
+    entry_mode = str(args.entry_mode)
+    workers = int(args.workers)
+    update_workers = int(args.update_workers)
+    max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
+    free_cash_min_pct = float(args.free_cash_min_pct)
+    risk_stop_policy = str(args.risk_stop_policy)
     scan_paths: Dict[str, str] = {}
     backtests: List[str] = []
     datasets: List[str] = []
     if args.cmd == "data:update":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
         return 0
     if args.cmd == "scan":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
-        cmd_scan(provider, run_dir, symbols, run_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "backtest:top":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
-        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
-        cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=run_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+        cmd_backtest_top(
+            provider,
+            run_dir,
+            scan_paths,
+            top_n=_top_n(),
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+        )
         return 0
     if args.cmd == "backtest:global":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
-        cmd_backtest_global(provider, run_dir, symbols, run_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_backtest_global(
+            provider,
+            run_dir,
+            symbols,
+            run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+        )
         return 0
     if args.cmd == "dataset:build":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
-        cmd_dataset_build(provider, symbols, run_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_dataset_build(provider, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "report:setup-edge":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
-        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
-        backtests = cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=run_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+        backtests = cmd_backtest_top(
+            provider,
+            run_dir,
+            scan_paths,
+            top_n=_top_n(),
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+        )
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
-        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs)
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
         cmd_report_setup_edge(run_dir, datasets, backtests)
         return 0
     if args.cmd == "train:stack":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
-        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
-        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs)
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": []})
         cmd_train_stack(run_dir, datasets)
         return 0
     if args.cmd == "train:calibrate":
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
-        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
-        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs)
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": []})
         cmd_calibrate(run_dir, datasets)
         return 0
     if args.cmd == "all":
         print("updating data...")
-        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
         print("scanning...")
-        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         print("backtesting...")
-        backtests = cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=run_tfs)
+        backtests = cmd_backtest_top(
+            provider,
+            run_dir,
+            scan_paths,
+            top_n=_top_n(),
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+        )
         print("building datasets...")
-        datasets = cmd_dataset_build(provider, symbols=pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10], tfs=run_tfs)
+        datasets = cmd_dataset_build(
+            provider,
+            symbols=pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10],
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+        )
         print("writing datasets manifest...")
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
         print("setting up report...")
