@@ -399,13 +399,21 @@ def main(argv: List[str]) -> int:
         cmd_calibrate(run_dir, datasets)
         return 0
     if args.cmd == "all":
+        print("updating data...")
         cmd_data_update(provider, run_dir, symbols, update_tfs)
+        print("scanning...")
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        print("backtesting...")
         backtests = cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=run_tfs)
+        print("building datasets...")
         datasets = cmd_dataset_build(provider, symbols=pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10], tfs=run_tfs)
+        print("writing datasets manifest...")
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+        print("setting up report...")
         cmd_report_setup_edge(run_dir, datasets, backtests)
+        print("training stack...")
         cmd_train_stack(run_dir, datasets)
+        print("calibrating...")
         cmd_calibrate(run_dir, datasets)
         return 0
     return 0

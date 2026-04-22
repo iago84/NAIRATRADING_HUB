@@ -1,0 +1,4672 @@
+[
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "BTCUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.1107369108124656,
+    "opportunity_score": 0.0,
+    "price": 78876.6,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.5053760415992403,
+        "alignment": 0.5,
+        "slope_score": -14.639732596275739,
+        "regression_slope_pct": -1.1147702529046408,
+        "regression_r2": 0.7230250422845377,
+        "slope_z": -0.7596746353253166,
+        "curvature": 4.692086412577641,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 3.798233773164938,
+        "ema_spread_fast_pct": -6.495059471322808,
+        "ema_spread_trend_pct": 16.372824000339108,
+        "ema_compression": 35.022161785600794,
+        "adx": 32.90701078294009,
+        "atr": 8032.728439699889,
+        "adx_score": 0.6581402156588019,
+        "atr_pct": 10.183918221246719,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4594594594594594
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.39633467976180686,
+        "alignment": 0.5,
+        "slope_score": 6.815737619966818,
+        "regression_slope_pct": 0.15576701025887324,
+        "regression_r2": 0.25130877285601494,
+        "slope_z": 1.268831149411947,
+        "curvature": 2.525539555890611,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.094646299874961,
+        "ema_spread_fast_pct": 5.290449521122411,
+        "ema_spread_trend_pct": -13.328704661775049,
+        "ema_compression": 18.619154182897457,
+        "adx": 20.823144777985743,
+        "atr": 2591.803745177634,
+        "adx_score": 0.41646289555971483,
+        "atr_pct": 3.285896888529214,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.2702702702702702
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.8115075574831216,
+        "alignment": 0.75,
+        "slope_score": 2.9559419617308733,
+        "regression_slope_pct": 0.07321447789177861,
+        "regression_r2": 0.3852988106877199,
+        "slope_z": 1.0143070192392296,
+        "curvature": 3.470754557377768,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.0162637643496268,
+        "ema_spread_fast_pct": 2.7796796309281335,
+        "ema_spread_trend_pct": 5.432162654885716,
+        "ema_compression": 8.21184228581385,
+        "adx": 21.48470571543859,
+        "atr": 1022.411283357074,
+        "adx_score": 0.4296941143087718,
+        "atr_pct": 1.2962162204723249,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.5402973192392769,
+        "trend_age_bars": 4,
+        "alignment": 0.75,
+        "slope_score": 0.08280206782986176,
+        "regression_slope_pct": -0.003758351067961427,
+        "regression_r2": 0.06123333791706154,
+        "slope_z": -0.05815889316532671,
+        "curvature": 0.3299083102676538,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.05579674092523658,
+        "ema_spread_fast_pct": -0.01247685447543769,
+        "ema_spread_trend_pct": 1.09286929315574,
+        "ema_compression": 1.1053461476311777,
+        "adx": 18.316407225226754,
+        "atr": 123.21348768413738,
+        "adx_score": 0.3663281445045351,
+        "atr_pct": 0.15621044477593782,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.81",
+      "Nivel relevante (touches)",
+      "Nivel cercano + EMA clave + 4h alineado",
+      "Alligator awakening dir=neutral mouth=0.21",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.8058654093022235,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.3882691813955529
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 18.316407225226754,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 1.1053461476311777,
+          "trend_age_bars": 4.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 78876.6,
+      "sl": 78728.74381477904,
+      "tp": 78995.52198456491,
+      "atr": 123.21348768413738,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "ETHUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.0808050739581333,
+    "opportunity_score": 0.0,
+    "price": 2396.11,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.42953925554187644,
+        "alignment": 0.5,
+        "slope_score": -19.70689183501093,
+        "regression_slope_pct": -0.8509767771679829,
+        "regression_r2": 0.18988944053291346,
+        "slope_z": -0.7426886800530742,
+        "curvature": 4.80549950640944,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 5.05959265697216,
+        "ema_spread_fast_pct": -10.477667814160222,
+        "ema_spread_trend_pct": -4.008880694981337,
+        "ema_compression": 30.25757942624353,
+        "adx": 22.517264464075225,
+        "atr": 367.03876540166215,
+        "adx_score": 0.4503452892815045,
+        "atr_pct": 15.318109995019515,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.6216216216216215
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.41537836903507697,
+        "alignment": 0.5,
+        "slope_score": 6.841253612068806,
+        "regression_slope_pct": 0.27863285714523944,
+        "regression_r2": 0.45218401270431985,
+        "slope_z": 0.8078058707770462,
+        "curvature": 0.6427986293052266,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.6852222446119834,
+        "ema_spread_fast_pct": 4.3888714725050715,
+        "ema_spread_trend_pct": -17.70869277786425,
+        "ema_compression": 22.09756425036932,
+        "adx": 22.68986670870715,
+        "atr": 104.00159558882498,
+        "adx_score": 0.45379733417414303,
+        "atr_pct": 4.340434937829439,
+        "volatility_penalty": 0.08510873445735978,
+        "level_confluence_score": 0.43243243243243235
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3520837340819118,
+        "alignment": 0.5,
+        "slope_score": 2.2671536517755153,
+        "regression_slope_pct": -0.007318030031618793,
+        "regression_r2": 0.0043081068464552175,
+        "slope_z": 0.4993364825581146,
+        "curvature": 4.144067112070853,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.142505011325637,
+        "ema_spread_fast_pct": 2.0608661411354667,
+        "ema_spread_trend_pct": 5.309547759655191,
+        "ema_compression": 7.370413900790658,
+        "adx": 16.62726560310674,
+        "atr": 37.966851734176394,
+        "adx_score": 0.3325453120621348,
+        "atr_pct": 1.5845203990708439,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.16137899924247626,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.22660556744983193,
+        "regression_slope_pct": -0.006352614847615321,
+        "regression_r2": 0.11864185725381937,
+        "slope_z": 1.1548844912675527,
+        "curvature": 0.4905135697638744,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.08571554707394953,
+        "ema_spread_fast_pct": -0.009596496960996596,
+        "ema_spread_trend_pct": 0.6782172628422745,
+        "ema_compression": 0.6878137598032711,
+        "adx": 14.232259715567752,
+        "atr": 5.225412398849162,
+        "adx_score": 0.28464519431135504,
+        "atr_pct": 0.21807898630902428,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.35",
+      "Nivel relevante (touches)",
+      "Alligator trending dir=buy mouth=0.56",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.8019295089076985,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.39614098218460286
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.15100287030324294,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 14.232259715567752,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.6878137598032711,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 2396.11,
+      "sl": null,
+      "tp": null,
+      "atr": 5.225412398849162,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "BNBUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.08163399829036087,
+    "opportunity_score": 0.0,
+    "price": 645.69,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.41314050148004355,
+        "alignment": 0.5,
+        "slope_score": -23.847605380798647,
+        "regression_slope_pct": -0.2256530610914853,
+        "regression_r2": 0.02261758413034287,
+        "slope_z": -1.2655154983780341,
+        "curvature": -8.451256871163167,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 3.77645897629676,
+        "ema_spread_fast_pct": -14.80473572835903,
+        "ema_spread_trend_pct": 23.140965054175116,
+        "ema_compression": 37.945700782534146,
+        "adx": 27.01795355879295,
+        "atr": 81.14073943406736,
+        "adx_score": 0.540359071175859,
+        "atr_pct": 12.56651635212987,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.5675675675675674
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.36583713995446066,
+        "alignment": 0.5,
+        "slope_score": 3.746272803226433,
+        "regression_slope_pct": -0.1195447130851216,
+        "regression_r2": 0.23140960056797943,
+        "slope_z": 1.2363842940833036,
+        "curvature": 6.231635437340858,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.9336304694997941,
+        "ema_spread_fast_pct": 2.330763123748204,
+        "ema_spread_trend_pct": -19.238330627136342,
+        "ema_compression": 21.569093750884548,
+        "adx": 13.981395332743142,
+        "atr": 18.997145915092975,
+        "adx_score": 0.27962790665486287,
+        "atr_pct": 2.942146527759912,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.40540540540540526
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.38745841379911017,
+        "alignment": 0.5,
+        "slope_score": 2.1210555679020113,
+        "regression_slope_pct": 0.05190102185995077,
+        "regression_r2": 0.2734277120076747,
+        "slope_z": 0.5967197654269676,
+        "curvature": 3.0323353321308515,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.7021414521339098,
+        "ema_spread_fast_pct": 1.8296504777562141,
+        "ema_spread_trend_pct": 1.374888515186786,
+        "ema_compression": 3.5350184693957507,
+        "adx": 21.306194862864817,
+        "atr": 7.179910165457468,
+        "adx_score": 0.4261238972572963,
+        "atr_pct": 1.111974812287238,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3243243243243243
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.6130638357309918,
+        "trend_age_bars": 3,
+        "alignment": 0.75,
+        "slope_score": 0.09550565044299894,
+        "regression_slope_pct": -0.01946807633643433,
+        "regression_r2": 0.709966641411359,
+        "slope_z": 0.5158308486675768,
+        "curvature": 0.5872918584946947,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.13896984599261467,
+        "ema_spread_fast_pct": -0.013657196721150091,
+        "ema_spread_trend_pct": 0.5109266185946147,
+        "ema_compression": 0.5651692854079016,
+        "adx": 28.13934468654414,
+        "atr": 0.8350272167412528,
+        "adx_score": 0.5627868937308828,
+        "atr_pct": 0.1293232382011883,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.39",
+      "Nivel relevante (touches)",
+      "Alligator trending dir=sell mouth=0.90",
+      "gate_structural",
+      "gate_low_confluence",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 1.0,
+        "reasons": [
+          "break_retest"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.37124538432394333
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 28.13934468654414,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.5651692854079016,
+          "trend_age_bars": 3.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 645.69,
+      "sl": null,
+      "tp": null,
+      "atr": 0.8350272167412528,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "SOLUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.08666077587767672,
+    "opportunity_score": 0.0,
+    "price": 88.19,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.5076119986784907,
+        "alignment": 0.5,
+        "slope_score": -28.406307641886677,
+        "regression_slope_pct": -1.5819854731680374,
+        "regression_r2": 0.5272473674365122,
+        "slope_z": -0.910967353010363,
+        "curvature": 2.6387617361963223,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 3.028214365505707,
+        "ema_spread_fast_pct": -27.55059314700467,
+        "ema_spread_trend_pct": -0.502432702636829,
+        "ema_compression": 87.42063509172063,
+        "adx": 35.53498919414038,
+        "atr": 17.655621884575147,
+        "adx_score": 0.7106997838828076,
+        "atr_pct": 20.01998172647142,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.7567567567567566
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.33559735002957075,
+        "alignment": 0.5,
+        "slope_score": 2.9326228082598274,
+        "regression_slope_pct": -0.09934638486162907,
+        "regression_r2": 0.10236745207580689,
+        "slope_z": 0.681714634650273,
+        "curvature": 4.527928165933095,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.1845069200145568,
+        "ema_spread_fast_pct": 1.8075259813876274,
+        "ema_spread_trend_pct": -38.96907809396985,
+        "ema_compression": 40.776604075357476,
+        "adx": 9.673627959049059,
+        "atr": 4.023867605309538,
+        "adx_score": 0.19347255918098116,
+        "atr_pct": 4.562725485099827,
+        "volatility_penalty": 0.14068137127495683,
+        "level_confluence_score": 0.43243243243243235
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.35874377413468306,
+        "alignment": 0.5,
+        "slope_score": 2.099421906674147,
+        "regression_slope_pct": 0.029186354326397282,
+        "regression_r2": 0.041550434660366564,
+        "slope_z": 0.5482217679722229,
+        "curvature": 3.694478576463327,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.9987427025247428,
+        "ema_spread_fast_pct": 1.8304539241822066,
+        "ema_spread_trend_pct": 0.9238326142220316,
+        "ema_compression": 3.2493402013496424,
+        "adx": 17.43117925140565,
+        "atr": 1.3808972261108903,
+        "adx_score": 0.34862358502811297,
+        "atr_pct": 1.565820644189693,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.29729729729729726
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.7109022195466836,
+        "trend_age_bars": 7,
+        "alignment": 0.875,
+        "slope_score": 0.24296527344826285,
+        "regression_slope_pct": -0.020035007372560868,
+        "regression_r2": 0.5650258042873846,
+        "slope_z": 1.7025237352068427,
+        "curvature": 0.47551846366595724,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.15967274921269783,
+        "ema_spread_fast_pct": 0.153316830626552,
+        "ema_spread_trend_pct": 0.32352695680566596,
+        "ema_compression": 0.7933880818482909,
+        "adx": 23.158155812388014,
+        "atr": 0.15488629982817584,
+        "adx_score": 0.4631631162477603,
+        "atr_pct": 0.17562796215917434,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.36",
+      "Nivel relevante (touches)",
+      "Alligator awakening dir=neutral mouth=0.92",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.45121033884664963,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.0975793223067007
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 23.158155812388014,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.7933880818482909,
+          "trend_age_bars": 7.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 88.19,
+      "sl": null,
+      "tp": null,
+      "atr": 0.15488629982817584,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "XRPUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.09159800653193803,
+    "opportunity_score": 0.0,
+    "price": 1.4504,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.5167628767435684,
+        "alignment": 0.5,
+        "slope_score": -23.550304658039817,
+        "regression_slope_pct": -1.457160876343996,
+        "regression_r2": 0.5765878514643552,
+        "slope_z": -0.8328055266994188,
+        "curvature": 0.8072548701460001,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 2.9343799607645376,
+        "ema_spread_fast_pct": -20.23092475303686,
+        "ema_spread_trend_pct": 23.53059586869462,
+        "ema_compression": 63.60413015763468,
+        "adx": 37.4013572258391,
+        "atr": 0.2531917700866212,
+        "adx_score": 0.748027144516782,
+        "atr_pct": 17.45668574783654,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.5945945945945945
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.3640491706462661,
+        "alignment": 0.5,
+        "slope_score": 5.124296326008121,
+        "regression_slope_pct": -0.028593644546567074,
+        "regression_r2": 0.011488582823624194,
+        "slope_z": 1.433651168044736,
+        "curvature": 6.159010607556836,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.9357934044460945,
+        "ema_spread_fast_pct": 3.0310479346563235,
+        "ema_spread_trend_pct": -29.016577306068054,
+        "ema_compression": 32.04762524072437,
+        "adx": 16.927136899327273,
+        "atr": 0.0541857883133491,
+        "adx_score": 0.33854273798654544,
+        "atr_pct": 3.7359203194531925,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.5405405405405403
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3803918458674337,
+        "alignment": 0.5,
+        "slope_score": 1.4243138996247713,
+        "regression_slope_pct": 0.07965292503265706,
+        "regression_r2": 0.25146467994328825,
+        "slope_z": -0.09586868648173782,
+        "curvature": 2.3366940239257454,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.4555733507928756,
+        "ema_spread_fast_pct": 1.191966869566613,
+        "ema_spread_trend_pct": 2.7533485211353788,
+        "ema_compression": 3.9453153907019924,
+        "adx": 20.71931968845476,
+        "atr": 0.019417930432108238,
+        "adx_score": 0.4143863937690952,
+        "atr_pct": 1.3387982923406123,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.16216216216216212
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.16395418525841554,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.16664066549489792,
+        "regression_slope_pct": -0.012085486464308001,
+        "regression_r2": 0.4390157653161493,
+        "slope_z": 1.2376973190234009,
+        "curvature": 0.3637257045043243,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.11437204480801733,
+        "ema_spread_fast_pct": 0.024756813466936933,
+        "ema_spread_trend_pct": 0.1726283486609673,
+        "ema_compression": 0.36235941810457917,
+        "adx": 14.340495776358543,
+        "atr": 0.00227216951760291,
+        "adx_score": 0.28680991552717083,
+        "atr_pct": 0.15665813000571635,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.38",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator awakening dir=neutral mouth=0.65",
+      "gate_structural",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.4498649901267897,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.1002700197464206
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.1679250037529223,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 14.340495776358543,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.36235941810457917,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 1.4504,
+      "sl": null,
+      "tp": null,
+      "atr": 0.00227216951760291,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "ADAUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.06948196636658331,
+    "opportunity_score": 0.0,
+    "price": 0.2536,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 3.364159651316893,
+        "ema_spread_trend_pct": 0.6224852006417174,
+        "ema_compression": 3.9866448519586104,
+        "adx": 13.775510204081632,
+        "atr": 0.02541683673469388,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 10.022411961630079,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "sell",
+        "confidence": 0.7138977682574384,
+        "alignment": 0.75,
+        "slope_score": -0.7842597433101262,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.1420037727356469,
+        "ema_spread_fast_pct": 0.5216896274522975,
+        "ema_spread_trend_pct": -0.30026956724193155,
+        "ema_compression": 0.8219591946942291,
+        "adx": 18.83320810747671,
+        "atr": 0.009784010511800513,
+        "adx_score": 0.37666416214953424,
+        "atr_pct": 3.8580483090696025,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.5555555555555555
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.33952826803397235,
+        "alignment": 0.5,
+        "slope_score": 1.8611129850414292,
+        "regression_slope_pct": 0.0342642999148618,
+        "regression_r2": 0.04379438056484741,
+        "slope_z": 0.4261856404774877,
+        "curvature": 3.583860037355124,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.8614091227126724,
+        "ema_spread_fast_pct": 1.3702724940141116,
+        "ema_spread_trend_pct": -0.30743081913485293,
+        "ema_compression": 2.148188624026329,
+        "adx": 12.840869401302994,
+        "atr": 0.004238612888788928,
+        "adx_score": 0.25681738802605986,
+        "atr_pct": 1.671377322077653,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.17142857142857137
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.1944739894013565,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.16650953117306821,
+        "regression_slope_pct": -0.02063061154499498,
+        "regression_r2": 0.598222456095477,
+        "slope_z": 1.2647219581267477,
+        "curvature": 0.6837833439486964,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.17656364717418493,
+        "ema_spread_fast_pct": -0.004203022382046824,
+        "ema_spread_trend_pct": 0.0020173235699555863,
+        "ema_compression": 0.5063731134320313,
+        "adx": 21.689183411199593,
+        "atr": 0.0005122203219995516,
+        "adx_score": 0.4337836682239919,
+        "atr_pct": 0.2019796222395708,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.34",
+      "Nivel relevante (touches)",
+      "Alligator awakening dir=neutral mouth=0.81",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.4143145300661122,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.1713709398677756
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.20481644479559602,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 21.689183411199593,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.5063731134320313,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.2536,
+      "sl": null,
+      "tp": null,
+      "atr": 0.0005122203219995516,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "DOGEUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.07011888722297303,
+    "opportunity_score": 0.0,
+    "price": 0.09733,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 3.2220038337213106,
+        "ema_spread_trend_pct": 0.5915346436869016,
+        "ema_compression": 3.813538477408212,
+        "adx": 13.775510204081632,
+        "atr": 0.005489081632653062,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 5.6396605698685525,
+        "volatility_penalty": 0.4099151424671381,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9317970827270491,
+        "alignment": 1.0,
+        "slope_score": 2.824602194273478,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.6787766639342594,
+        "ema_spread_fast_pct": 2.029132827183675,
+        "ema_spread_trend_pct": 1.5820730389932678,
+        "ema_compression": 3.6112058661769426,
+        "adx": 25.449270681762254,
+        "atr": 0.003305564540590055,
+        "adx_score": 0.5089854136352451,
+        "atr_pct": 3.3962442623960287,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.5357142857142857
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3487904939909476,
+        "alignment": 0.5,
+        "slope_score": 1.7748750256981107,
+        "regression_slope_pct": 0.005986508681901634,
+        "regression_r2": 0.0016728945191410993,
+        "slope_z": 0.33634037744871315,
+        "curvature": 3.2652938115034056,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.8817749550771065,
+        "ema_spread_fast_pct": 1.561001812950669,
+        "ema_spread_trend_pct": 1.7944048882000252,
+        "ema_compression": 3.3554067011506943,
+        "adx": 16.261030014102083,
+        "atr": 0.0015255819558000205,
+        "adx_score": 0.32522060028204164,
+        "atr_pct": 1.5674324009041618,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3428571428571428
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.16119286363314533,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.12258674535998951,
+        "regression_slope_pct": -0.018598534921140848,
+        "regression_r2": 0.5914815166882124,
+        "slope_z": 1.0135502359264714,
+        "curvature": 0.582180427351195,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.13744241046018302,
+        "ema_spread_fast_pct": -0.038800890689466995,
+        "ema_spread_trend_pct": 0.28523429037465586,
+        "ema_compression": 0.6691678746113473,
+        "adx": 16.851668088353893,
+        "atr": 0.00018955616515347668,
+        "adx_score": 0.3370333617670779,
+        "atr_pct": 0.19475615447804034,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.35",
+      "Nivel relevante (touches)",
+      "Alligator awakening dir=neutral mouth=0.70",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.3405648405115592,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.3188703189768816
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.167651614799556,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 16.851668088353893,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.6691678746113473,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.09733,
+      "sl": null,
+      "tp": null,
+      "atr": 0.00018955616515347668,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "TRXUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.13316843797868114,
+    "opportunity_score": 0.0,
+    "price": 0.3284,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 1.339829476248465,
+        "ema_spread_trend_pct": 0.2940917109013272,
+        "ema_compression": 1.633921187149792,
+        "adx": 13.775510204081632,
+        "atr": 0.007516326530612244,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 2.288771781550622,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.2
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 1.0,
+        "alignment": 1.0,
+        "slope_score": 2.764209088292168,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.7188204800414452,
+        "ema_spread_fast_pct": 1.7826325742437408,
+        "ema_spread_trend_pct": 1.4899080868442212,
+        "ema_compression": 3.2725406610879615,
+        "adx": 55.21407005010159,
+        "atr": 0.003912768588239502,
+        "adx_score": 1.0,
+        "atr_pct": 1.1914642473323696,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1923076923076923
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.6678198358997914,
+        "alignment": 0.75,
+        "slope_score": 0.41454775224618445,
+        "regression_slope_pct": 0.050528584749025274,
+        "regression_r2": 0.6408226499049852,
+        "slope_z": -0.6095207731094913,
+        "curvature": 0.08403733335735442,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.03398976758628454,
+        "ema_spread_fast_pct": -0.029671267140177645,
+        "ema_spread_trend_pct": 2.419091525338941,
+        "ema_compression": 2.4487627924791187,
+        "adx": 20.25503209361242,
+        "atr": 0.0028500465987251564,
+        "adx_score": 0.4051006418722484,
+        "atr_pct": 0.8678582821940183,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.22857142857142848
+      },
+      {
+        "timeframe": "5m",
+        "direction": "sell",
+        "confidence": 0.6255979354767118,
+        "trend_age_bars": 1,
+        "alignment": 0.75,
+        "slope_score": -0.03503368428970524,
+        "regression_slope_pct": -0.005092083361946201,
+        "regression_r2": 0.5544859083234442,
+        "slope_z": 0.8018581829955199,
+        "curvature": 0.06406258275236573,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.023270122567678703,
+        "ema_spread_fast_pct": -0.06469052542470254,
+        "ema_spread_trend_pct": -0.7724518591947832,
+        "ema_compression": 0.8371423846194859,
+        "adx": 34.5855082475152,
+        "atr": 0.00039435912901297266,
+        "adx_score": 0.691710164950304,
+        "atr_pct": 0.12008499665437658,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.02702702702702702
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.67",
+      "Nivel relevante (touches)",
+      "Nivel cercano + EMA clave + 4h alineado",
+      "Alligator trending dir=sell mouth=0.80",
+      "gate_low_confluence",
+      "regime=trend"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.4928480532438071,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.0143038935123858
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.1771039535027446,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 34.5855082475152,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.8371423846194859,
+          "trend_age_bars": 1.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.3284,
+      "sl": 0.3279267690451845,
+      "tp": 0.32851207923861386,
+      "atr": 0.00039435912901297266,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "LINKUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.16310214340144186,
+    "opportunity_score": 0.0,
+    "price": 9.45,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 3.848501925424977,
+        "ema_spread_trend_pct": 0.7337707098154473,
+        "ema_compression": 4.5822726352404235,
+        "adx": 13.775510204081632,
+        "atr": 0.6320408163265303,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 6.688262606629951,
+        "volatility_penalty": 0.6720656516574877,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9079526518723449,
+        "alignment": 1.0,
+        "slope_score": 4.015950149539,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.7587521323770656,
+        "ema_spread_fast_pct": 2.7231131852669774,
+        "ema_spread_trend_pct": 2.502453422363734,
+        "ema_compression": 5.225566607630712,
+        "adx": 19.4881629680862,
+        "atr": 0.3551276444568976,
+        "adx_score": 0.389763259361724,
+        "atr_pct": 3.757964491607382,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.7142857142857142
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.9162975053664856,
+        "alignment": 1.0,
+        "slope_score": 1.7801241646331103,
+        "regression_slope_pct": 0.036698550664349364,
+        "regression_r2": 0.07557595681242835,
+        "slope_z": 0.24463981693197845,
+        "curvature": 3.207929736592199,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.5678382965583503,
+        "ema_spread_fast_pct": 1.0471890067066245,
+        "ema_spread_trend_pct": 2.5649468328503544,
+        "ema_compression": 3.612135839556979,
+        "adx": 19.559345455831707,
+        "atr": 0.14579243272324413,
+        "adx_score": 0.3911869091166341,
+        "atr_pct": 1.5427770658544353,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3513513513513513
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.15245665351821835,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.1182680956144167,
+        "regression_slope_pct": -0.008770029695928893,
+        "regression_r2": 0.35729088771546735,
+        "slope_z": 1.6107482272916827,
+        "curvature": 0.38910710463963555,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.07308853646755278,
+        "ema_spread_fast_pct": -0.07001888471417145,
+        "ema_spread_trend_pct": -0.08966543884003172,
+        "ema_compression": 0.33983794060319833,
+        "adx": 14.61977536778188,
+        "atr": 0.02208662937522802,
+        "adx_score": 0.29239550735563763,
+        "atr_pct": 0.2337209457696087,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.92",
+      "Nivel relevante (touches)",
+      "Nivel cercano + EMA clave + 4h alineado",
+      "Alligator awakening dir=neutral mouth=0.41",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.7736186941404153,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.4527626117191693
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.17072675517653135,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 14.61977536778188,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.33983794060319833,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 9.45,
+      "sl": 9.423496044749726,
+      "tp": 9.450291337062477,
+      "atr": 0.02208662937522802,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "AVAXUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.08690945757475262,
+    "opportunity_score": 0.0,
+    "price": 9.54,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.05510204081632654,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 2.2054445312790794,
+        "ema_spread_trend_pct": 0.34333588428837986,
+        "ema_compression": 2.548780415567459,
+        "adx": 13.775510204081634,
+        "atr": 0.7921938775510199,
+        "adx_score": 0.2755102040816327,
+        "atr_pct": 8.303919051897484,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9242108558302882,
+        "alignment": 1.0,
+        "slope_score": 1.9126324880188506,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.4007262961818695,
+        "ema_spread_fast_pct": 1.543583595170146,
+        "ema_spread_trend_pct": 2.0223781724310648,
+        "ema_compression": 3.565961767601211,
+        "adx": 23.552713957572035,
+        "atr": 0.38869580152334987,
+        "adx_score": 0.4710542791514407,
+        "atr_pct": 4.0743794708946535,
+        "volatility_penalty": 0.018594867723663366,
+        "level_confluence_score": 0.5555555555555555
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.36048846558186143,
+        "alignment": 0.5,
+        "slope_score": 2.2808468978570473,
+        "regression_slope_pct": -0.03019147351039315,
+        "regression_r2": 0.04857654447728643,
+        "slope_z": 0.7794216095819217,
+        "curvature": 4.603130894072157,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.0701433894388044,
+        "ema_spread_fast_pct": 1.3857606777252622,
+        "ema_spread_trend_pct": 1.1302514808198205,
+        "ema_compression": 2.5160121585450828,
+        "adx": 17.188962146664558,
+        "atr": 0.17087611785892934,
+        "adx_score": 0.34377924293329115,
+        "atr_pct": 1.7911542752508318,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.18749999999999994
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.6203416630666145,
+        "trend_age_bars": 9,
+        "alignment": 0.75,
+        "slope_score": 0.26651339567781257,
+        "regression_slope_pct": -0.006362826915402274,
+        "regression_r2": 0.13715692226547382,
+        "slope_z": 1.3348190953614851,
+        "curvature": 0.3695401583549829,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.10948640014919431,
+        "ema_spread_fast_pct": 0.08434701664205985,
+        "ema_spread_trend_pct": 0.16327671949202432,
+        "ema_compression": 0.391509950327356,
+        "adx": 22.672283933625692,
+        "atr": 0.024521200315991965,
+        "adx_score": 0.45344567867251384,
+        "atr_pct": 0.2570356427252827,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.36",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=0.78",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.18437924154323737,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.6312415169135253
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 9.54,
+      "sl": null,
+      "tp": null,
+      "atr": 0.024521200315991965,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "TONUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.1858141748007443,
+    "opportunity_score": 0.0,
+    "price": 1.374,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.0,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": -4.450574059240508,
+        "ema_spread_trend_pct": -1.1068801902331669,
+        "ema_compression": 5.5574542494736745,
+        "adx": 0.0,
+        "atr": 0.2852755102040817,
+        "adx_score": 0.0,
+        "atr_pct": 20.762409767400413,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.8
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9632540032272552,
+        "alignment": 1.0,
+        "slope_score": 7.56446326085079,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.8410808597516715,
+        "ema_spread_fast_pct": 2.5626186487106373,
+        "ema_spread_trend_pct": 5.4836560708898965,
+        "ema_compression": 8.046274719600534,
+        "adx": 33.31350080681377,
+        "atr": 0.05594757034049763,
+        "adx_score": 0.6662700161362755,
+        "atr_pct": 4.071875570633015,
+        "volatility_penalty": 0.017968892658253743,
+        "level_confluence_score": 0.7142857142857142
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.9432475910714363,
+        "alignment": 1.0,
+        "slope_score": 3.4277064555548513,
+        "regression_slope_pct": -0.1013777808025606,
+        "regression_r2": 0.20129596420219753,
+        "slope_z": 1.3183693396394651,
+        "curvature": 7.757107372474415,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.374900994978799,
+        "ema_spread_fast_pct": 1.1228117425871018,
+        "ema_spread_trend_pct": 3.2032041823435353,
+        "ema_compression": 4.326015924930637,
+        "adx": 21.2325526062009,
+        "atr": 0.02261194001760823,
+        "adx_score": 0.42465105212401805,
+        "atr_pct": 1.6457016024460136,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3142857142857142
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.7273439049307652,
+        "trend_age_bars": 10,
+        "alignment": 0.875,
+        "slope_score": 0.3630904830571145,
+        "regression_slope_pct": -0.006258444130487553,
+        "regression_r2": 0.12981558473746946,
+        "slope_z": 1.8491991371946699,
+        "curvature": 0.56264800440995,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.15928471892308602,
+        "ema_spread_fast_pct": 0.15004422458534603,
+        "ema_spread_trend_pct": 0.014736107926465427,
+        "ema_compression": 0.2762850210907256,
+        "adx": 25.006397837785492,
+        "atr": 0.0027713865539201864,
+        "adx_score": 0.5001279567557099,
+        "atr_pct": 0.20170207816013003,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.94",
+      "Nivel relevante (touches)",
+      "Nivel cercano + EMA clave + 4h alineado",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=0.88",
+      "gate_low_confluence",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.6391697872007901,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.7216604255984198
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 25.006397837785492,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.2762850210907256,
+          "trend_age_bars": 10.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 1.374,
+      "sl": 1.370674336135296,
+      "tp": 1.3740561946779415,
+      "atr": 0.0027713865539201864,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "DOTUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.06858441183593876,
+    "opportunity_score": 0.0,
+    "price": 1.292,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.05510204081632654,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 2.4017852235880093,
+        "ema_spread_trend_pct": 0.4240001501048207,
+        "ema_compression": 2.8257853736928302,
+        "adx": 13.775510204081634,
+        "atr": 0.14431632653061216,
+        "adx_score": 0.2755102040816327,
+        "atr_pct": 11.169994313514872,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.2732417198664392,
+        "alignment": 0.5,
+        "slope_score": -0.6411606804072806,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.17262379912908074,
+        "ema_spread_fast_pct": 1.1859062824761073,
+        "ema_spread_trend_pct": -0.02192873656520469,
+        "ema_compression": 1.2294167706848649,
+        "adx": 20.737887441154765,
+        "atr": 0.05953870539970237,
+        "adx_score": 0.4147577488230953,
+        "atr_pct": 4.6082589318655085,
+        "volatility_penalty": 0.15206473296637713,
+        "level_confluence_score": 0.7407407407407407
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.36026145428357526,
+        "alignment": 0.5,
+        "slope_score": 1.5612385147649297,
+        "regression_slope_pct": 0.1424796942562122,
+        "regression_r2": 0.23747068018801398,
+        "slope_z": 0.07711334286600942,
+        "curvature": 3.29466492456062,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.5400964046480828,
+        "ema_spread_fast_pct": 1.0579201511726877,
+        "ema_spread_trend_pct": 0.364954298182338,
+        "ema_compression": 2.2424097216496195,
+        "adx": 15.123200533175963,
+        "atr": 0.023711191022651096,
+        "adx_score": 0.30246401066351924,
+        "atr_pct": 1.8352315033011686,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3333333333333333
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.1805523552230716,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.03129747048014174,
+        "regression_slope_pct": -0.02048977445147939,
+        "regression_r2": 0.7373040438620335,
+        "slope_z": 1.1006046589470555,
+        "curvature": 0.5253617848070898,
+        "slope_alignment": 0.5,
+        "slope_parallelism": 0.18074139283357094,
+        "ema_spread_fast_pct": -0.1304195452301276,
+        "ema_spread_trend_pct": -0.19729376572413926,
+        "ema_compression": 0.5711335806500345,
+        "adx": 27.20806252447249,
+        "atr": 0.0028729102266077766,
+        "adx_score": 0.5441612504894497,
+        "atr_pct": 0.22236147264766074,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.36",
+      "Nivel relevante (touches)",
+      "Alligator awakening dir=neutral mouth=0.82",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.8259604510543871,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.34807909789122576
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.2346916961143332,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 27.20806252447249,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.5711335806500345,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 1.292,
+      "sl": null,
+      "tp": null,
+      "atr": 0.0028729102266077766,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2024-09-10T02:55:00",
+    "symbol": "MATICUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.06286582536545089,
+    "opportunity_score": 0.0,
+    "price": 0.3794,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.02857142857142857,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 0.41259478528851745,
+        "ema_spread_trend_pct": 0.06619167678426242,
+        "ema_compression": 0.47878646207277986,
+        "adx": 7.142857142857142,
+        "atr": 0.028321428571428605,
+        "adx_score": 0.14285714285714285,
+        "atr_pct": 7.464794035695467,
+        "volatility_penalty": 0.8661985089238669,
+        "level_confluence_score": 0.8
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.10261349437734278,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 2.4298903693944283,
+        "ema_spread_trend_pct": 0.7034409920918716,
+        "ema_compression": 3.1333313614862996,
+        "adx": 25.653373594335694,
+        "atr": 0.016318999895876755,
+        "adx_score": 0.5130674718867139,
+        "atr_pct": 4.301265128064511,
+        "volatility_penalty": 0.07531628201612772,
+        "level_confluence_score": 0.6
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.34928700776581173,
+        "alignment": 0.5,
+        "slope_score": 1.875477735125786,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.9215157351343876,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.39267761304439613,
+        "ema_spread_fast_pct": 1.6574918275411052,
+        "ema_spread_trend_pct": 1.6107196945938782,
+        "ema_compression": 3.2682115221349832,
+        "adx": 15.017962603616974,
+        "atr": 0.005364380646635182,
+        "adx_score": 0.3003592520723395,
+        "atr_pct": 1.4139116095506543,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.24999999999999997
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.2857255232236508,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": -0.05768914087345796,
+        "regression_slope_pct": -0.027184753820191816,
+        "regression_r2": 0.8538008557167425,
+        "slope_z": 1.6511989886201328,
+        "curvature": 0.30240643434857284,
+        "slope_alignment": 0.5,
+        "slope_parallelism": 0.11010348518514516,
+        "ema_spread_fast_pct": -0.044543039567423816,
+        "ema_spread_trend_pct": -0.015092544160546917,
+        "ema_compression": 0.6236013349074497,
+        "adx": 48.935491910559556,
+        "atr": 0.000724672309868988,
+        "adx_score": 0.9787098382111911,
+        "atr_pct": 0.19100482600658616,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.35",
+      "Nivel relevante (touches)",
+      "Alligator trending dir=sell mouth=1.20",
+      "gate_structural",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.7930098915645036,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.41398021687099285
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.36243288471798485,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 48.935491910559556,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.6236013349074497,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.3794,
+      "sl": null,
+      "tp": null,
+      "atr": 0.000724672309868988,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2024-09-10T03:25:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "LTCUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.07080578469840672,
+    "opportunity_score": 0.0,
+    "price": 56.12,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 2.175231013846058,
+        "ema_spread_trend_pct": 0.38340624485260066,
+        "ema_compression": 2.5586372586986585,
+        "adx": 13.775510204081632,
+        "atr": 2.5248469387755117,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 4.499014502451018,
+        "volatility_penalty": 0.1247536256127546,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.907133719634071,
+        "alignment": 1.0,
+        "slope_score": 1.837513375744904,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.32603755304694565,
+        "ema_spread_fast_pct": 1.5983007680865229,
+        "ema_spread_trend_pct": 1.2706248585699702,
+        "ema_compression": 2.8689256266564933,
+        "adx": 19.283429908517714,
+        "atr": 1.312125281229375,
+        "adx_score": 0.38566859817035426,
+        "atr_pct": 2.33807070782141,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.5517241379310345
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3479804796852252,
+        "alignment": 0.5,
+        "slope_score": 1.4563131573064034,
+        "regression_slope_pct": 0.01831316569077214,
+        "regression_r2": 0.043003407130563054,
+        "slope_z": 0.5272667367538442,
+        "curvature": 2.712939125437879,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.6726171952549205,
+        "ema_spread_fast_pct": 1.1475356055137154,
+        "ema_spread_trend_pct": 1.217251976431487,
+        "ema_compression": 2.3647875819452024,
+        "adx": 14.910495919155007,
+        "atr": 0.6468029245242366,
+        "adx_score": 0.2982099183831001,
+        "atr_pct": 1.1525355034287894,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.34374999999999994
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.13176102777432486,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.048045000232803996,
+        "regression_slope_pct": -0.014163776795287828,
+        "regression_r2": 0.6098679005958044,
+        "slope_z": 0.35812507592946946,
+        "curvature": 0.3492455967556243,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.0966612553361209,
+        "ema_spread_fast_pct": -0.035369445034693296,
+        "ema_spread_trend_pct": 0.19351447575113143,
+        "ema_compression": 0.39450828572980595,
+        "adx": 15.616735771818638,
+        "atr": 0.07698251469676066,
+        "adx_score": 0.31233471543637276,
+        "atr_pct": 0.13717483017954502,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.35",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=sell mouth=0.60",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.6752509307019228,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.6494981385961545
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.17397500034442154,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 15.616735771818638,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.39450828572980595,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 56.12,
+      "sl": null,
+      "tp": null,
+      "atr": 0.07698251469676066,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "BCHUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.06932736072974145,
+    "opportunity_score": 0.0,
+    "price": 463.8,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 4.4094194855464535,
+        "ema_spread_trend_pct": 0.8065416907247769,
+        "ema_compression": 5.215961176271231,
+        "adx": 13.775510204081632,
+        "atr": 29.103571428571406,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 6.275026181235749,
+        "volatility_penalty": 0.5687565453089372,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9345902072045186,
+        "alignment": 1.0,
+        "slope_score": 1.5325991902686282,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.9319174553886973,
+        "ema_spread_fast_pct": 2.3513325385233546,
+        "ema_spread_trend_pct": 0.4618375269324605,
+        "ema_compression": 2.8131700654558154,
+        "adx": 26.147551801129623,
+        "atr": 11.9931943030817,
+        "adx_score": 0.5229510360225924,
+        "atr_pct": 2.5858547440883353,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.21428571428571425
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3891434916041546,
+        "alignment": 0.5,
+        "slope_score": 3.5713959939323727,
+        "regression_slope_pct": 0.06591805580680585,
+        "regression_r2": 0.2431403343152465,
+        "slope_z": 1.5503168000937315,
+        "curvature": 4.547148075126607,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.4102631927427651,
+        "ema_spread_fast_pct": 2.94260480213306,
+        "ema_spread_trend_pct": 1.4149642585038116,
+        "ema_compression": 4.357569060636872,
+        "adx": 19.546851024278663,
+        "atr": 6.194168167928964,
+        "adx_score": 0.39093702048557327,
+        "atr_pct": 1.335525693818233,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.031249999999999997
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.09159667591602268,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.06019003909831916,
+        "regression_slope_pct": -0.0021580317996848356,
+        "regression_r2": 0.03006033460249058,
+        "slope_z": 0.6064165770472327,
+        "curvature": 0.33322752620608387,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.10544255260998282,
+        "ema_spread_fast_pct": 0.0012244403625001853,
+        "ema_spread_trend_pct": 0.493012632710158,
+        "ema_compression": 0.7681765275835039,
+        "adx": 11.593520512715449,
+        "atr": 0.5592199557279727,
+        "adx_score": 0.23187041025430896,
+        "atr_pct": 0.12057351352478929,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.39",
+      "Nivel relevante (touches)",
+      "Alligator awakening dir=neutral mouth=0.73",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.284717943444454,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.430564113111092
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.13115229669711748,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 11.593520512715449,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.7681765275835039,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 463.8,
+      "sl": null,
+      "tp": null,
+      "atr": 0.5592199557279727,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "SHIBUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.08640126730665773,
+    "opportunity_score": 0.0,
+    "price": 6.26e-06,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 3.6547441253757342,
+        "ema_spread_trend_pct": 0.6501994180372611,
+        "ema_compression": 4.304943543412996,
+        "adx": 13.775510204081632,
+        "atr": 3.5428571428571384e-07,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 5.659516202647186,
+        "volatility_penalty": 0.41487905066179653,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9490427775421227,
+        "alignment": 1.0,
+        "slope_score": 2.559573312811862,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.9996806869274037,
+        "ema_spread_fast_pct": 2.341053971848821,
+        "ema_spread_trend_pct": 1.0595724689630794,
+        "ema_compression": 3.4006264408119007,
+        "adx": 29.760694385530666,
+        "atr": 2.0564177515526155e-07,
+        "adx_score": 0.5952138877106133,
+        "atr_pct": 3.2850123826719098,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3571428571428571
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3575038543360669,
+        "alignment": 0.5,
+        "slope_score": 2.718934145374846,
+        "regression_slope_pct": 0.04545131872389822,
+        "regression_r2": 0.07370095596719595,
+        "slope_z": 0.6653287985159384,
+        "curvature": 4.521295269086598,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.3115490007565338,
+        "ema_spread_fast_pct": 2.247953177049369,
+        "ema_spread_trend_pct": 1.522085552226096,
+        "ema_compression": 3.7700387292754654,
+        "adx": 16.223238154088182,
+        "atr": 1.0409508322678823e-07,
+        "adx_score": 0.32446476308176364,
+        "atr_pct": 1.662860754421537,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1515151515151515
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.7623545630499521,
+        "trend_age_bars": 8,
+        "alignment": 1.0,
+        "slope_score": 0.37673829918372576,
+        "regression_slope_pct": -0.005012074840485743,
+        "regression_r2": 0.08012138961078552,
+        "slope_z": 1.068354933722097,
+        "curvature": 0.7737092545403503,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.2016192300803386,
+        "ema_spread_fast_pct": 0.11787051041047192,
+        "ema_spread_trend_pct": 0.7628583338052737,
+        "ema_compression": 0.8807288442157456,
+        "adx": 18.307441423559037,
+        "atr": 1.9699069777269453e-08,
+        "adx_score": 0.36614882847118074,
+        "atr_pct": 0.3146816258349753,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.36",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=0.63",
+      "gate_low_confluence",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.7461809082087014,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.5076381835825973
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 18.307441423559037,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.8807288442157456,
+          "trend_age_bars": 8.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 6.26e-06,
+      "sl": null,
+      "tp": null,
+      "atr": 1.9699069777269453e-08,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "ATOMUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.15714032714538329,
+    "opportunity_score": 0.0,
+    "price": 1.881,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 3.886812692480699,
+        "ema_spread_trend_pct": 0.6855562660165946,
+        "ema_compression": 4.572368958497294,
+        "adx": 13.775510204081632,
+        "atr": 0.13062244897959174,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 6.9443088240080675,
+        "volatility_penalty": 0.7360772060020169,
+        "level_confluence_score": 0.6
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9144012171536474,
+        "alignment": 1.0,
+        "slope_score": 1.7302275742687305,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.9633482549241127,
+        "ema_spread_fast_pct": 2.9391115024539958,
+        "ema_spread_trend_pct": 0.6798384367442549,
+        "ema_compression": 3.618949939198251,
+        "adx": 21.100304288411834,
+        "atr": 0.059873569029141094,
+        "adx_score": 0.42200608576823667,
+        "atr_pct": 3.183071187088841,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.39285714285714285
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.8902378633005182,
+        "alignment": 0.875,
+        "slope_score": 4.0282013639906475,
+        "regression_slope_pct": 0.10470058880250788,
+        "regression_r2": 0.42626197369866814,
+        "slope_z": 1.7406816255503759,
+        "curvature": 4.498637437104286,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.221628470861945,
+        "ema_spread_fast_pct": 2.8379036473434223,
+        "ema_spread_trend_pct": 1.8807381166178072,
+        "ema_compression": 4.718641763961229,
+        "adx": 21.258229729988894,
+        "atr": 0.03077613576792483,
+        "adx_score": 0.4251645945997779,
+        "atr_pct": 1.6361582013782472,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3333333333333333
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.10015093695197111,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.08686654455079026,
+        "regression_slope_pct": 0.004599032767037159,
+        "regression_r2": 0.05678805332758574,
+        "slope_z": 0.3581331875868347,
+        "curvature": 0.43452322010734357,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.057623495360273794,
+        "ema_spread_fast_pct": -0.06591497141861967,
+        "ema_spread_trend_pct": 0.2326670051792873,
+        "ema_compression": 0.5104224730317144,
+        "adx": 10.44590365841851,
+        "atr": 0.003585389611483485,
+        "adx_score": 0.20891807316837022,
+        "atr_pct": 0.19061082464027032,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.89",
+      "Nivel relevante (touches)",
+      "Nivel cercano + EMA clave + 4h alineado",
+      "Alligator trending dir=buy mouth=0.50",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.8605451417612978,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.27890971647740437
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.13715429829892534,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 10.44590365841851,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.5104224730317144,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 1.881,
+      "sl": 1.8766975324662198,
+      "tp": 1.888170779222967,
+      "atr": 0.003585389611483485,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "NEARUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.07055381105264387,
+    "opportunity_score": 0.0,
+    "price": 1.42,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 1.9400575047920483,
+        "ema_spread_trend_pct": 0.2619595462251756,
+        "ema_compression": 2.202017051017224,
+        "adx": 13.775510204081632,
+        "atr": 0.10620408163265306,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 7.479160678355849,
+        "volatility_penalty": 0.8697901695889623,
+        "level_confluence_score": 0.6
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9674958035937328,
+        "alignment": 1.0,
+        "slope_score": 2.7538225954249818,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.3446087470773524,
+        "ema_spread_fast_pct": 2.140781239475136,
+        "ema_spread_trend_pct": 2.0281980465148437,
+        "ema_compression": 4.16897928598998,
+        "adx": 34.37395089843318,
+        "atr": 0.05835150331262051,
+        "adx_score": 0.6874790179686636,
+        "atr_pct": 4.109260796663417,
+        "volatility_penalty": 0.02731519916585423,
+        "level_confluence_score": 0.5925925925925926
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3625585241932218,
+        "alignment": 0.5,
+        "slope_score": 3.4347059105402407,
+        "regression_slope_pct": -0.025984989838891717,
+        "regression_r2": 0.02953137358907887,
+        "slope_z": 1.4740274604464194,
+        "curvature": 5.485106242970253,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.5541104881597827,
+        "ema_spread_fast_pct": 2.3234884152795257,
+        "ema_spread_trend_pct": 1.4306665123118478,
+        "ema_compression": 3.7541549275913737,
+        "adx": 16.26060785433976,
+        "atr": 0.025697477824398657,
+        "adx_score": 0.3252121570867952,
+        "atr_pct": 1.809681536929483,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.36666666666666664
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.17736557501653777,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.2417063076188356,
+        "regression_slope_pct": -0.011217230693465086,
+        "regression_r2": 0.2680965408288313,
+        "slope_z": 0.8269936456381121,
+        "curvature": 0.39549214533285554,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.13974241865372966,
+        "ema_spread_fast_pct": 0.0297525658870855,
+        "ema_spread_trend_pct": 0.6582050452446963,
+        "ema_compression": 0.6879576111317818,
+        "adx": 16.175843269833234,
+        "atr": 0.0031503930165229475,
+        "adx_score": 0.3235168653966647,
+        "atr_pct": 0.22185866313541883,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.36",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=0.45",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.8412896431087861,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.3174207137824278
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.16265717906241034,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 16.175843269833234,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.6879576111317818,
+          "trend_age_bars": 0.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 1.42,
+      "sl": null,
+      "tp": null,
+      "atr": 0.0031503930165229475,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "ICPUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.06967108476427639,
+    "opportunity_score": 0.0,
+    "price": 2.544,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 2.1197340999590426,
+        "ema_spread_trend_pct": 0.332205234312499,
+        "ema_compression": 2.4519393342715414,
+        "adx": 13.775510204081632,
+        "atr": 0.1820918367346941,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 7.157697984854328,
+        "volatility_penalty": 0.7894244962135819,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.7931980864963227,
+        "alignment": 1.0,
+        "slope_score": 0.4932396702652281,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.919859877813254,
+        "ema_spread_fast_pct": 0.9394314558748988,
+        "ema_spread_trend_pct": 1.6269462472790592,
+        "ema_compression": 2.5663777031539583,
+        "adx": 24.347042232503913,
+        "atr": 0.11994044938676157,
+        "adx_score": 0.48694084465007825,
+        "atr_pct": 4.714640306083395,
+        "volatility_penalty": 0.1786600765208488,
+        "level_confluence_score": 0.5555555555555555
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3565308738099897,
+        "alignment": 0.5,
+        "slope_score": 2.1699288609324308,
+        "regression_slope_pct": -0.028029924264193217,
+        "regression_r2": 0.02027504365492372,
+        "slope_z": 0.6019726723818093,
+        "curvature": 5.357234412890149,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.4065039676850455,
+        "ema_spread_fast_pct": 1.6645105458859992,
+        "ema_spread_trend_pct": -0.5141237885971663,
+        "ema_compression": 2.178634334483166,
+        "adx": 17.02397467255392,
+        "atr": 0.044609050164020926,
+        "adx_score": 0.34047949345107836,
+        "atr_pct": 1.7535003995291245,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.40625
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.1826360572230687,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.27465740486901347,
+        "regression_slope_pct": -0.0033933835136369336,
+        "regression_r2": 0.061170751637138365,
+        "slope_z": 2.7864377958971183,
+        "curvature": 0.42881727822274446,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.14489950821120529,
+        "ema_spread_fast_pct": 0.07972468762070785,
+        "ema_spread_trend_pct": 0.6724572869042091,
+        "ema_compression": 0.752181974524917,
+        "adx": 15.18587481206914,
+        "atr": 0.0050961995927394955,
+        "adx_score": 0.3037174962413828,
+        "atr_pct": 0.20032231103535753,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.36",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=0.82",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.21510138541301183,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.5697972291739763
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.15350615014616897,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 15.18587481206914,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.752181974524917,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 2.544,
+      "sl": null,
+      "tp": null,
+      "atr": 0.0050961995927394955,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "FILUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.1625048942344446,
+    "opportunity_score": 0.0,
+    "price": 0.951,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 5.059607140412758,
+        "ema_spread_trend_pct": 0.9833944524939785,
+        "ema_compression": 6.043001592906736,
+        "adx": 13.775510204081632,
+        "atr": 0.07795918367346945,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 8.197600806884275,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9049281184923949,
+        "alignment": 1.0,
+        "slope_score": 3.7623661108350746,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.5930964410740032,
+        "ema_spread_fast_pct": 2.649267170857356,
+        "ema_spread_trend_pct": 2.627593852237865,
+        "ema_compression": 5.276861023095221,
+        "adx": 18.732029623098683,
+        "atr": 0.04176594776337104,
+        "adx_score": 0.3746405924619737,
+        "atr_pct": 4.391792614444904,
+        "volatility_penalty": 0.09794815361122611,
+        "level_confluence_score": 0.5357142857142857
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.9046122461227377,
+        "alignment": 1.0,
+        "slope_score": 1.6870373651928456,
+        "regression_slope_pct": -0.009745595655236252,
+        "regression_r2": 0.0014388069602326858,
+        "slope_z": 0.0423675464863717,
+        "curvature": 5.100936480572434,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.2495692469672763,
+        "ema_spread_fast_pct": 1.354338593110547,
+        "ema_spread_trend_pct": 2.4152684328981877,
+        "ema_compression": 3.7696070260087344,
+        "adx": 18.407337631775114,
+        "atr": 0.017806709245583374,
+        "adx_score": 0.3681467526355023,
+        "atr_pct": 1.8724194790308493,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3529411764705882
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.1433311548024679,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.11437858168957334,
+        "regression_slope_pct": -0.010509932768171701,
+        "regression_r2": 0.3789730633983127,
+        "slope_z": 0.4086750253702149,
+        "curvature": 0.41298502416539,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.12513764503779856,
+        "ema_spread_fast_pct": -0.04312812456620564,
+        "ema_spread_trend_pct": 0.505618709912695,
+        "ema_compression": 0.5903341882942799,
+        "adx": 17.16890232951205,
+        "atr": 0.002053788395110004,
+        "adx_score": 0.343378046590241,
+        "atr_pct": 0.21596092482755036,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.90",
+      "Nivel relevante (touches)",
+      "Nivel cercano + EMA clave + 4h alineado",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator awakening dir=neutral mouth=0.58",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "breakout",
+    "setup_candidates": [
+      {
+        "type": "breakout",
+        "score": 0.1734967045623583,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 17.16890232951205,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.5903341882942799,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "break_retest",
+        "score": 0.026189842750144354,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.9476203144997113
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 0.951,
+      "sl": 0.9485354539258679,
+      "tp": 0.95510757679022,
+      "atr": 0.002053788395110004,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "APTUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.1633787125807313,
+    "opportunity_score": 0.0,
+    "price": 0.963,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 8.45545540009953,
+        "ema_spread_trend_pct": 1.6955967679725716,
+        "ema_compression": 10.1510521680721,
+        "adx": 13.77551020408163,
+        "atr": 0.08438775510204076,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 8.763006760336529,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9483399470217102,
+        "alignment": 1.0,
+        "slope_score": 9.831225301781085,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 2.2754135709928867,
+        "ema_spread_fast_pct": 6.102902228384141,
+        "ema_spread_trend_pct": 5.096214776602034,
+        "ema_compression": 11.199117004986174,
+        "adx": 29.584986755427522,
+        "atr": 0.04642286626616443,
+        "adx_score": 0.5916997351085505,
+        "atr_pct": 4.820650702613129,
+        "volatility_penalty": 0.20516267565328228,
+        "level_confluence_score": 0.5555555555555555
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.9154138742871765,
+        "alignment": 1.0,
+        "slope_score": 2.202465895771896,
+        "regression_slope_pct": 0.10406686979755231,
+        "regression_r2": 0.1293763442102086,
+        "slope_z": -0.14872512323272413,
+        "curvature": 3.84816067464557,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.9239304839874632,
+        "ema_spread_fast_pct": 2.184810043938155,
+        "ema_spread_trend_pct": 6.839293911988757,
+        "ema_compression": 9.024103955926911,
+        "adx": 18.063615588615264,
+        "atr": 0.022894888903175335,
+        "adx_score": 0.3612723117723053,
+        "atr_pct": 2.377454714763794,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.34374999999999994
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.2257716946025365,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": -0.2586603284138531,
+        "regression_slope_pct": -0.035838841367840754,
+        "regression_r2": 0.7187520339589557,
+        "slope_z": -0.24915801834412504,
+        "curvature": 0.4025640163235794,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.22050167794304795,
+        "ema_spread_fast_pct": -0.36596349050581817,
+        "ema_spread_trend_pct": 0.38583662295434623,
+        "ema_compression": 1.4999661738189765,
+        "adx": 24.596372137323034,
+        "atr": 0.0033591354049425843,
+        "adx_score": 0.49192744274646066,
+        "atr_pct": 0.34881987590265673,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.92",
+      "Nivel relevante (touches)",
+      "Alligator trending dir=sell mouth=1.36",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.5534565240231393,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.8930869519537216
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.1725799241329894,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 24.596372137323034,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 1.4999661738189765,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 0.963,
+      "sl": 0.9589690375140688,
+      "tp": 0.9697182708098852,
+      "atr": 0.0033591354049425843,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "ARBUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.2,
+    "opportunity_score": 0.0,
+    "price": 0.1317,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 8.076788289684718,
+        "ema_spread_trend_pct": 1.5614098819753648,
+        "ema_compression": 9.638198171660084,
+        "adx": 13.775510204081632,
+        "atr": 0.022668367346938785,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 17.212124029566276,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 1.0,
+        "alignment": 1.0,
+        "slope_score": 13.896254022559871,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 2.8267891592849503,
+        "ema_spread_fast_pct": 8.917481090991245,
+        "ema_spread_trend_pct": 7.273045953513485,
+        "ema_compression": 16.19052704450473,
+        "adx": 42.989259610194914,
+        "atr": 0.008122372434972974,
+        "adx_score": 0.8597851922038983,
+        "atr_pct": 6.167329107800283,
+        "volatility_penalty": 0.5418322769500707,
+        "level_confluence_score": 0.5714285714285714
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.9693823180825588,
+        "alignment": 1.0,
+        "slope_score": 1.0920080188220396,
+        "regression_slope_pct": 0.2178430281979493,
+        "regression_r2": 0.35290394696261296,
+        "slope_z": -0.41513262915265525,
+        "curvature": 1.6144223698319102,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.3611529088350582,
+        "ema_spread_fast_pct": 2.067998615628296,
+        "ema_spread_trend_pct": 11.714285968910945,
+        "ema_compression": 13.782284584539243,
+        "adx": 26.673410758251034,
+        "atr": 0.003511818623574443,
+        "adx_score": 0.5334682151650206,
+        "atr_pct": 2.666528947285074,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.21212121212121207
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 1.0,
+        "trend_age_bars": 22,
+        "alignment": 0.875,
+        "slope_score": 1.678777494464302,
+        "regression_slope_pct": 0.086168660692604,
+        "regression_r2": 0.7461165297492409,
+        "slope_z": 1.2420935145703882,
+        "curvature": 0.12025354889705087,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.1640302218588623,
+        "ema_spread_fast_pct": 0.9059390424852355,
+        "ema_spread_trend_pct": 2.113546399830672,
+        "ema_compression": 3.0194854423159074,
+        "adx": 52.12376853114777,
+        "atr": 0.0006682760976215764,
+        "adx_score": 1.0,
+        "atr_pct": 0.5074230050277725,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.97",
+      "Nivel relevante (touches)",
+      "Alligator trending dir=buy mouth=4.25",
+      "gate_timing_age",
+      "gate_timing_compression",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_level",
+    "setup_candidates": [
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 52.12376853114777,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 3.0194854423159074,
+          "trend_age_bars": 22.0
+        }
+      },
+      {
+        "type": "break_retest",
+        "score": 0.0,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 2.843136252758695
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.1317,
+      "sl": 0.12959983905690453,
+      "tp": 0.13303655219524316,
+      "atr": 0.0006682760976215764,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "OPUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.08822977292969994,
+    "opportunity_score": 0.0,
+    "price": 0.1274,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 8.704471775055039,
+        "ema_spread_trend_pct": 1.7495418205301827,
+        "ema_compression": 10.454013595585222,
+        "adx": 13.77551020408163,
+        "atr": 0.0124015306122449,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 9.734325441322527,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9386917500590676,
+        "alignment": 1.0,
+        "slope_score": 7.321779914194062,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 2.3097162281087327,
+        "ema_spread_fast_pct": 4.562161706409211,
+        "ema_spread_trend_pct": 3.1547227319754145,
+        "ema_compression": 7.716884438384626,
+        "adx": 27.172937514766865,
+        "atr": 0.006411234502217804,
+        "adx_score": 0.5434587502953373,
+        "atr_pct": 5.03236617128556,
+        "volatility_penalty": 0.2580915428213899,
+        "level_confluence_score": 0.5555555555555555
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.36170452470532016,
+        "alignment": 0.5,
+        "slope_score": 1.5452949113130368,
+        "regression_slope_pct": 0.10088575094195185,
+        "regression_r2": 0.09043949239686999,
+        "slope_z": -0.26761619741753734,
+        "curvature": 4.8403496281457175,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.973343722480309,
+        "ema_spread_fast_pct": 1.6313691723725925,
+        "ema_spread_trend_pct": 4.815060498236579,
+        "ema_compression": 6.446429670609172,
+        "adx": 17.36552514105094,
+        "atr": 0.0029074758081995317,
+        "adx_score": 0.34731050282101883,
+        "atr_pct": 2.282163114756304,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3529411764705882
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.8011482376409099,
+        "trend_age_bars": 5,
+        "alignment": 0.875,
+        "slope_score": 0.6842487897924484,
+        "regression_slope_pct": 0.01590383790074799,
+        "regression_r2": 0.3675751237065966,
+        "slope_z": 2.2904321132868173,
+        "curvature": 0.4954807738647878,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.18266086708635276,
+        "ema_spread_fast_pct": 0.3296044896985578,
+        "ema_spread_trend_pct": 0.8014796247643063,
+        "ema_compression": 1.131084114462864,
+        "adx": 19.915523028107625,
+        "atr": 0.000354107595361734,
+        "adx_score": 0.3983104605621525,
+        "atr_pct": 0.2779494469087394,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.36",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=2.32",
+      "gate_low_confluence",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 19.915523028107625,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 1.131084114462864,
+          "trend_age_bars": 5.0
+        }
+      },
+      {
+        "type": "break_retest",
+        "score": 0.0,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 2.2592003404580057
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.1274,
+      "sl": null,
+      "tp": null,
+      "atr": 0.000354107595361734,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "INJUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.18345680955628124,
+    "opportunity_score": 0.0,
+    "price": 3.374,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 7.5896693475691,
+        "ema_spread_trend_pct": 1.5030171758359412,
+        "ema_compression": 9.09268652340504,
+        "adx": 13.77551020408163,
+        "atr": 0.2408316326530611,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 7.1378670021654145,
+        "volatility_penalty": 0.7844667505413536,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9512268895462175,
+        "alignment": 1.0,
+        "slope_score": 9.454953544779928,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 2.140861609082983,
+        "ema_spread_fast_pct": 6.271285756637923,
+        "ema_spread_trend_pct": 5.006896783764855,
+        "ema_compression": 11.27818254040278,
+        "adx": 30.306722386554334,
+        "atr": 0.15134518793363652,
+        "adx_score": 0.6061344477310867,
+        "atr_pct": 4.485630940534574,
+        "volatility_penalty": 0.12140773513364356,
+        "level_confluence_score": 0.5357142857142857
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 0.9388368116006166,
+        "alignment": 1.0,
+        "slope_score": 1.3802067629305488,
+        "regression_slope_pct": 0.10172693598183546,
+        "regression_r2": 0.15875672582435774,
+        "slope_z": -0.31111023326113685,
+        "curvature": 1.2317098634054717,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.3172468285469198,
+        "ema_spread_fast_pct": 1.984831478164359,
+        "ema_spread_trend_pct": 6.384729767187089,
+        "ema_compression": 8.369561245351449,
+        "adx": 23.17538154442386,
+        "atr": 0.06967470052603107,
+        "adx_score": 0.4635076308884772,
+        "atr_pct": 2.065047437048935,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.32352941176470584
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.7879674648661442,
+        "trend_age_bars": 1,
+        "alignment": 1.0,
+        "slope_score": 0.4641436651046296,
+        "regression_slope_pct": 0.006636071481121328,
+        "regression_r2": 0.1415427812534128,
+        "slope_z": 0.932520007845694,
+        "curvature": 0.590496128717035,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.20627484238699367,
+        "ema_spread_fast_pct": 0.23396139826809587,
+        "ema_spread_trend_pct": 0.9464176841312615,
+        "ema_compression": 1.1803790823993572,
+        "adx": 18.799351468700802,
+        "atr": 0.007543286323712997,
+        "adx_score": 0.37598702937401607,
+        "atr_pct": 0.2235710232280082,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=0.94",
+      "Nivel relevante (touches)",
+      "Alligator trending dir=buy mouth=1.30",
+      "gate_low_confluence",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.9337158927100314,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.13256821457993714
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.10251810312815797,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 18.799351468700802,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 1.1803790823993572,
+          "trend_age_bars": 1.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 3.374,
+      "sl": 3.3649480564115444,
+      "tp": 3.375445671367628,
+      "atr": 0.007543286323712997,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:30:00",
+    "symbol": "ETCUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.06679454311408199,
+    "opportunity_score": 0.0,
+    "price": 8.61,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 2.5665079135998177,
+        "ema_spread_trend_pct": 0.4504412276571058,
+        "ema_compression": 3.0169491412569234,
+        "adx": 13.775510204081632,
+        "atr": 0.5671428571428577,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 6.587025053924016,
+        "volatility_penalty": 0.646756263481004,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.7945080242390445,
+        "alignment": 1.0,
+        "slope_score": 0.5610536832104817,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.12971395880909575,
+        "ema_spread_fast_pct": 0.6710061388178361,
+        "ema_spread_trend_pct": 0.3783053630455151,
+        "ema_compression": 1.0493115018633512,
+        "adx": 18.56115085910602,
+        "atr": 0.31077925536135637,
+        "adx_score": 0.3712230171821204,
+        "atr_pct": 3.6095151609913634,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.5555555555555555
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.34623357760362694,
+        "alignment": 0.5,
+        "slope_score": 1.8481267755774549,
+        "regression_slope_pct": 0.0029131291342722287,
+        "regression_r2": 0.0005443227943751072,
+        "slope_z": 0.6493351143550676,
+        "curvature": 3.6419921486039724,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.9583646622911498,
+        "ema_spread_fast_pct": 1.4239738629755467,
+        "ema_spread_trend_pct": 0.23878006281567687,
+        "ema_compression": 1.7827445409577276,
+        "adx": 14.891838465910999,
+        "atr": 0.140147453495135,
+        "adx_score": 0.29783676931821995,
+        "atr_pct": 1.627728844310511,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.3870967741935484
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.20207421003777484,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": 0.15410665521404981,
+        "regression_slope_pct": -0.02432260096944052,
+        "regression_r2": 0.6862979354401173,
+        "slope_z": 1.0735740704892038,
+        "curvature": 0.6071169453336122,
+        "slope_alignment": 0.75,
+        "slope_parallelism": 0.1654996597176174,
+        "ema_spread_fast_pct": -0.08022718097367444,
+        "ema_spread_trend_pct": 0.09888952094880578,
+        "ema_compression": 0.7183780200053703,
+        "adx": 23.695194677223125,
+        "atr": 0.01772032375343922,
+        "adx_score": 0.4739038935444625,
+        "atr_pct": 0.2058109611316983,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.35",
+      "Nivel relevante (touches)",
+      "Alligator awakening dir=neutral mouth=0.59",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "breakout",
+    "setup_candidates": [
+      {
+        "type": "breakout",
+        "score": 0.20625226706307023,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 23.695194677223125,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.7183780200053703,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "break_retest",
+        "score": 0.1535143370566625,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.692971325886675
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 8.61,
+      "sl": null,
+      "tp": null,
+      "atr": 0.01772032375343922,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:00:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2024-07-22T02:55:00",
+    "symbol": "RNDRUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.18131075498876156,
+    "opportunity_score": 0.0,
+    "price": 7.03,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.0,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": -0.9328154064996091,
+        "ema_spread_trend_pct": -0.1496495304544898,
+        "ema_compression": 1.082464936954099,
+        "adx": 0.0,
+        "atr": 1.0019999999999998,
+        "adx_score": 0.0,
+        "atr_pct": 14.25320056899004,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.6
+      },
+      {
+        "timeframe": "1d",
+        "direction": "neutral",
+        "confidence": 0.10261349437734278,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 5.950430464196231,
+        "ema_spread_trend_pct": 1.8473120080428778,
+        "ema_compression": 7.797742472239108,
+        "adx": 25.653373594335694,
+        "atr": 0.31175333194502314,
+        "adx_score": 0.5130674718867139,
+        "atr_pct": 4.434613541180983,
+        "volatility_penalty": 0.10865338529524582,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 1.0,
+        "alignment": 1.0,
+        "slope_score": 5.41841888170104,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": -1.6399756975708581,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.4900289155200202,
+        "ema_spread_fast_pct": 4.1484391274261965,
+        "ema_spread_trend_pct": 5.371891229349616,
+        "ema_compression": 9.520330356775812,
+        "adx": 57.00907861932536,
+        "atr": 0.22706262417972592,
+        "adx_score": 1.0,
+        "atr_pct": 3.2299093055437536,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.40740740740740744
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.8696168380068707,
+        "trend_age_bars": 9,
+        "alignment": 0.75,
+        "slope_score": 1.7653491503361733,
+        "regression_slope_pct": -0.06782105540954012,
+        "regression_r2": 0.3815168877254862,
+        "slope_z": 2.0305131673263035,
+        "curvature": 3.0225165517599533,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.8303282417891177,
+        "ema_spread_fast_pct": 0.6903677016795529,
+        "ema_spread_trend_pct": 0.029914223882587132,
+        "ema_compression": 1.3709942719923442,
+        "adx": 33.66248521252982,
+        "atr": 0.05035553258312529,
+        "adx_score": 0.6732497042505965,
+        "atr_pct": 0.7162949158339302,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h buy conf=1.00",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=1.26",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.3943068728415978,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.2113862543168044
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 7.03,
+      "sl": null,
+      "tp": null,
+      "atr": 0.05035553258312529,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2024-07-22T03:25:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:35:00",
+    "symbol": "IMXUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.18939987107786968,
+    "opportunity_score": 0.0,
+    "price": 0.1819,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.05510204081632654,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 11.906698198828284,
+        "ema_spread_trend_pct": 2.2215899121065434,
+        "ema_compression": 14.128288110934829,
+        "adx": 13.775510204081634,
+        "atr": 0.016088775510204094,
+        "adx_score": 0.2755102040816327,
+        "atr_pct": 8.844846349754862,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9715328262933749,
+        "alignment": 1.0,
+        "slope_score": 15.353747270005412,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 4.724758623592902,
+        "ema_spread_fast_pct": 11.176304908705147,
+        "ema_spread_trend_pct": 6.393893221249981,
+        "ema_compression": 17.570198129955127,
+        "adx": 35.383206573343706,
+        "atr": 0.009310076850322275,
+        "adx_score": 0.7076641314668741,
+        "atr_pct": 5.118239060100207,
+        "volatility_penalty": 0.27955976502505164,
+        "level_confluence_score": 0.39285714285714285
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 1.0,
+        "alignment": 1.0,
+        "slope_score": 8.600056144976884,
+        "regression_slope_pct": 0.2545001116053568,
+        "regression_r2": 0.4568562525659823,
+        "slope_z": 0.8448140980013834,
+        "curvature": 10.172144629117218,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 2.0433844152252942,
+        "ema_spread_fast_pct": 5.436650575242656,
+        "ema_spread_trend_pct": 10.57472542931484,
+        "ema_compression": 16.011376004557494,
+        "adx": 38.95914678987788,
+        "atr": 0.005021326288640333,
+        "adx_score": 0.7791829357975576,
+        "atr_pct": 2.760487239494411,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.17647058823529407
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.6289954877254388,
+        "trend_age_bars": 20,
+        "alignment": 0.75,
+        "slope_score": 0.11468555526785318,
+        "regression_slope_pct": 0.06604032149669173,
+        "regression_r2": 0.7368806784936535,
+        "slope_z": -0.8412067344802716,
+        "curvature": -0.6154069356650298,
+        "slope_alignment": 0.5,
+        "slope_parallelism": 0.3123685761054466,
+        "ema_spread_fast_pct": 0.1771240435512736,
+        "ema_spread_trend_pct": 1.875138173907857,
+        "ema_compression": 2.052262217459131,
+        "adx": 31.06649539103886,
+        "atr": 0.0005613132960393648,
+        "adx_score": 0.6213299078207772,
+        "atr_pct": 0.30858345026902956,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=1.00",
+      "Nivel relevante (touches)",
+      "Nivel cercano + EMA clave + 4h alineado",
+      "Alligator trending dir=buy mouth=2.02",
+      "gate_low_confluence",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 1.0,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 31.06649539103886,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 2.052262217459131,
+          "trend_age_bars": 20.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.1819,
+      "sl": 0.18122642404475278,
+      "tp": 0.18302262659207874,
+      "atr": 0.0005613132960393648,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:05:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:35:00",
+    "symbol": "SUIUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.0792229099611951,
+    "opportunity_score": 0.0,
+    "price": 0.9678,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 3.310931521623485,
+        "ema_spread_trend_pct": 0.6055366495172066,
+        "ema_compression": 3.916468171140691,
+        "adx": 13.77551020408163,
+        "atr": 0.07664030612244892,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 7.919023157930245,
+        "volatility_penalty": 0.9797557894825613,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9278366994586555,
+        "alignment": 1.0,
+        "slope_score": 2.8755259596203593,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.3799708549269675,
+        "ema_spread_fast_pct": 1.8215975877554043,
+        "ema_spread_trend_pct": 2.2682809266610597,
+        "ema_compression": 4.089878514416464,
+        "adx": 24.45917486466385,
+        "atr": 0.04013198679176144,
+        "adx_score": 0.48918349729327704,
+        "atr_pct": 4.14672316509211,
+        "volatility_penalty": 0.03668079127302759,
+        "level_confluence_score": 0.5555555555555555
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.3342959815724178,
+        "alignment": 0.5,
+        "slope_score": 1.4955240508121161,
+        "regression_slope_pct": -0.027808316965701112,
+        "regression_r2": 0.025415267735624636,
+        "slope_z": 0.21499958090522767,
+        "curvature": 4.05498447307895,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.0626659895497843,
+        "ema_spread_fast_pct": 1.149119914280608,
+        "ema_spread_trend_pct": 1.4048587417154816,
+        "ema_compression": 2.5539786559960898,
+        "adx": 12.37120163207481,
+        "atr": 0.01803686726896508,
+        "adx_score": 0.24742403264149618,
+        "atr_pct": 1.863697795925303,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.19354838709677416
+      },
+      {
+        "timeframe": "5m",
+        "direction": "buy",
+        "confidence": 0.6503592925406554,
+        "trend_age_bars": 9,
+        "alignment": 0.75,
+        "slope_score": 0.3992753131586283,
+        "regression_slope_pct": -0.010747341178819644,
+        "regression_r2": 0.24779175630044326,
+        "slope_z": 1.7952417222066166,
+        "curvature": 0.8388426335654322,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.1860859423843493,
+        "ema_spread_fast_pct": 0.06570395413983199,
+        "ema_spread_trend_pct": 0.3234146070522814,
+        "ema_compression": 0.5315335768212821,
+        "adx": 19.29027303874221,
+        "atr": 0.0019488231315020028,
+        "adx_score": 0.38580546077484423,
+        "atr_pct": 0.20136630827671037,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.33",
+      "Nivel relevante (touches)",
+      "Confluencia Fibonacci: 0.17",
+      "Alligator trending dir=buy mouth=0.91",
+      "gate_low_confluence",
+      "gate_timing_age",
+      "regime=transition"
+    ],
+    "setup_primary": "pullback_ema",
+    "setup_candidates": [
+      {
+        "type": "pullback_ema",
+        "score": 1.0,
+        "reasons": [
+          "ema_pullback"
+        ],
+        "features": {}
+      },
+      {
+        "type": "break_retest",
+        "score": 0.281617722321984,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.436764555356032
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.0,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 19.29027303874221,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.5315335768212821,
+          "trend_age_bars": 9.0
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.9678,
+      "sl": null,
+      "tp": null,
+      "atr": 0.0019488231315020028,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:05:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:35:00",
+    "symbol": "SEIUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.0835105555395855,
+    "opportunity_score": 0.0,
+    "price": 0.06259,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 6.514075352793765,
+        "ema_spread_trend_pct": 1.088694968379658,
+        "ema_compression": 7.6027703211734226,
+        "adx": 13.775510204081632,
+        "atr": 0.005237500000000003,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 8.367950151781438,
+        "volatility_penalty": 1.0,
+        "level_confluence_score": 0.4
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.9038429748756179,
+        "alignment": 1.0,
+        "slope_score": 4.294931751627195,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 1.929276877019194,
+        "ema_spread_fast_pct": 5.274221047577379,
+        "ema_spread_trend_pct": 1.7751803902894918,
+        "ema_compression": 7.049401437866871,
+        "adx": 18.46074371890446,
+        "atr": 0.002880983547976309,
+        "adx_score": 0.3692148743780892,
+        "atr_pct": 4.602945435335211,
+        "volatility_penalty": 0.15073635883380265,
+        "level_confluence_score": 0.037037037037037035
+      },
+      {
+        "timeframe": "4h",
+        "direction": "neutral",
+        "confidence": 0.4373057637362616,
+        "alignment": 0.5,
+        "slope_score": 7.999880149924936,
+        "regression_slope_pct": 0.10478460523701442,
+        "regression_r2": 0.16217842800521343,
+        "slope_z": 2.0373263630754814,
+        "curvature": 10.005624529534632,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 3.3892990976468234,
+        "ema_spread_fast_pct": 6.496492993621435,
+        "ema_spread_trend_pct": 2.170329474037904,
+        "ema_compression": 8.666822467659339,
+        "adx": 30.989403018537544,
+        "atr": 0.0013785291313823528,
+        "adx_score": 0.6197880603707508,
+        "atr_pct": 2.202475046145315,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.24070152813458887,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": -0.38622084869489803,
+        "regression_slope_pct": 0.041375775471373805,
+        "regression_r2": 0.43878787511168493,
+        "slope_z": -1.4732083112990468,
+        "curvature": -0.4107990785738859,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.1870896486121481,
+        "ema_spread_fast_pct": -0.28363853335817224,
+        "ema_spread_trend_pct": 2.7290353776131497,
+        "ema_compression": 3.012673910971322,
+        "adx": 18.851512579680243,
+        "atr": 0.00024140963308906237,
+        "adx_score": 0.37703025159360487,
+        "atr_pct": 0.3857000049353928,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.0
+      }
+    ],
+    "reasons": [
+      "Sin confluencia suficiente multi-timeframe",
+      "4h neutral conf=0.44",
+      "Nivel relevante (touches)",
+      "Alligator awakening dir=neutral mouth=0.74",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "gate_timing_compression",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.8135948453084236,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 0.3728103093831528
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.11310907547808145,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 18.851512579680243,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 3.012673910971322,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_ema",
+        "score": 0.0,
+        "reasons": [
+          "no_pullback"
+        ],
+        "features": {}
+      }
+    ],
+    "risk": {
+      "entry_price": 0.06259,
+      "sl": null,
+      "tp": null,
+      "atr": 0.00024140963308906237,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:05:00+00:00"
+    }
+  },
+  {
+    "timestamp": "2026-04-22T18:35:00",
+    "symbol": "XLMUSDT",
+    "provider": "binance",
+    "base_timeframe": "5m",
+    "direction": "neutral",
+    "confidence": 0.1835119536529265,
+    "opportunity_score": 0.0,
+    "price": 0.1788,
+    "frames": [
+      {
+        "timeframe": "1w",
+        "direction": "neutral",
+        "confidence": 0.055102040816326525,
+        "alignment": 0.5,
+        "slope_score": 0.0,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 0.0,
+        "slope_parallelism": 0.0,
+        "ema_spread_fast_pct": 8.409117985782904,
+        "ema_spread_trend_pct": 1.6546981858266536,
+        "ema_compression": 10.06381617160956,
+        "adx": 13.77551020408163,
+        "atr": 0.01200561224489794,
+        "adx_score": 0.2755102040816326,
+        "atr_pct": 6.714548235401533,
+        "volatility_penalty": 0.6786370588503832,
+        "level_confluence_score": 0.2
+      },
+      {
+        "timeframe": "1d",
+        "direction": "buy",
+        "confidence": 0.989769807296886,
+        "alignment": 1.0,
+        "slope_score": 9.422940622619373,
+        "regression_slope_pct": 0.0,
+        "regression_r2": 0.0,
+        "slope_z": 0.0,
+        "curvature": 0.0,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 4.160127634866409,
+        "ema_spread_fast_pct": 7.290072171947433,
+        "ema_spread_trend_pct": 2.9690102117084742,
+        "ema_compression": 10.259082383655906,
+        "adx": 39.94245182422149,
+        "atr": 0.005930736654206746,
+        "adx_score": 0.7988490364844298,
+        "atr_pct": 3.3169668088404625,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.2222222222222222
+      },
+      {
+        "timeframe": "4h",
+        "direction": "buy",
+        "confidence": 1.0,
+        "alignment": 1.0,
+        "slope_score": 4.498352589551869,
+        "regression_slope_pct": 0.2842850749767362,
+        "regression_r2": 0.7827017872592971,
+        "slope_z": 0.41998359367273463,
+        "curvature": 3.9438399891174725,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.5476153740019886,
+        "ema_spread_fast_pct": 2.557065655162986,
+        "ema_spread_trend_pct": 7.1500714140773125,
+        "ema_compression": 9.707137069240298,
+        "adx": 39.087071931568296,
+        "atr": 0.003411935753502201,
+        "adx_score": 0.7817414386313659,
+        "atr_pct": 1.9082414728759514,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.18749999999999994
+      },
+      {
+        "timeframe": "5m",
+        "direction": "neutral",
+        "confidence": 0.2226931526272009,
+        "trend_age_bars": 0,
+        "alignment": 0.5,
+        "slope_score": -0.4134668710558881,
+        "regression_slope_pct": -0.01547071709573022,
+        "regression_r2": 0.2615397730235042,
+        "slope_z": -1.0822589793860484,
+        "curvature": -0.5037197749431683,
+        "slope_alignment": 1.0,
+        "slope_parallelism": 0.15081901716644944,
+        "ema_spread_fast_pct": -0.42975427099534935,
+        "ema_spread_trend_pct": 0.05330744784089184,
+        "ema_compression": 0.6690525963199764,
+        "adx": 16.163330140851677,
+        "atr": 0.00042702232520714284,
+        "adx_score": 0.32326660281703357,
+        "atr_pct": 0.2388268038071269,
+        "volatility_penalty": 0.0,
+        "level_confluence_score": 0.1351351351351351
+      }
+    ],
+    "reasons": [
+      "Dirección multi-timeframe: buy",
+      "4h buy conf=1.00",
+      "Nivel relevante (touches)",
+      "Alligator trending dir=sell mouth=0.74",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "setup_primary": "break_retest",
+    "setup_candidates": [
+      {
+        "type": "break_retest",
+        "score": 0.18037072223279482,
+        "reasons": [
+          "near_fractal"
+        ],
+        "features": {
+          "fractal_distance_atr": 1.6392585555344104
+        }
+      },
+      {
+        "type": "breakout",
+        "score": 0.16352735102911126,
+        "reasons": [
+          "momentum"
+        ],
+        "features": {
+          "adx": 16.163330140851677,
+          "alignment": 0.0,
+          "r2": 0.0,
+          "ema_compression": 0.6690525963199764,
+          "trend_age_bars": 0.0
+        }
+      },
+      {
+        "type": "pullback_level",
+        "score": 0.1351351351351351,
+        "reasons": [
+          "level_confluence"
+        ],
+        "features": {
+          "level_confluence_score": 0.1351351351351351
+        }
+      }
+    ],
+    "risk": {
+      "entry_price": 0.1788,
+      "sl": 0.17828757320975142,
+      "tp": 0.17965404465041426,
+      "atr": 0.00042702232520714284,
+      "risk_r": 1.6666666666666667,
+      "safe_exit_hint": "A 1R: mover SL a BE; parciales en niveles; cerrar si 4h pierde confluencia",
+      "ttl_bars": 6,
+      "valid_until": "2026-04-22T19:05:00+00:00"
+    }
+  }
+]
