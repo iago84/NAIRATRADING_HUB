@@ -801,6 +801,7 @@ class NairaEngine:
         entry_magnifier: bool = False,
         entry_magnifier_timeframe: str = "5m",
         apply_execution_gates: bool = True,
+        include_debug: bool = False,
         max_equity_drawdown_pct: float = 50.0,
         free_cash_min_pct: float = 0.20,
         risk_stop_policy: str = "stop_immediate",

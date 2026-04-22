@@ -49,12 +49,14 @@ class TestBacktestTimingGate(unittest.TestCase):
             r = e.backtest(symbol="TEST", provider="csv", base_timeframe="1h", max_bars=500)
             met = r.get("metrics") or {}
             self.assertGreater(int(met.get("gates_timing_blocked") or 0), 0)
+            self.assertGreater(int(met.get("blocked_timing_gate") or 0), 0)
 
             object.__setattr__(settings, "EXPANSION_MAX_TREND_AGE", 999)
             object.__setattr__(settings, "EXPANSION_MAX_EMA_COMPRESSION", 999.0)
             r2 = e.backtest(symbol="TEST", provider="csv", base_timeframe="1h", max_bars=500)
             met2 = r2.get("metrics") or {}
             self.assertEqual(int(met2.get("gates_timing_blocked") or 0), 0)
+            self.assertEqual(int(met2.get("blocked_timing_gate") or 0), 0)
         finally:
             for k, v in orig.items():
                 object.__setattr__(settings, k, v)
@@ -62,4 +64,3 @@ class TestBacktestTimingGate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -134,13 +135,25 @@ def _timeframe_window_days(tf: str) -> int:
     return 365
 
 
-def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str], update_workers: int) -> Dict[str, Any]:
+def cmd_data_update(
+    provider: str,
+    run_dir: str,
+    symbols: List[str],
+    tfs: List[str],
+    update_workers: int,
+    update_min_sleep_ms: int,
+    update_backoff_ms: int,
+    update_max_retries: int,
+) -> Dict[str, Any]:
     p = str(provider).lower()
     store = HistoryStore(base_dir=str(settings.DATA_DIR))
     updated = 0
     errors: List[str] = []
     if p in ("binance", "csv"):
         ex = BinanceRestOHLCVProvider()
+        min_sleep_s = float(max(0, int(update_min_sleep_ms))) / 1000.0
+        backoff_s = float(max(0, int(update_backoff_ms))) / 1000.0
+        max_retries = int(max(0, int(update_max_retries)))
         def _update_one(sym: str, tf: str) -> tuple[bool, Optional[str]]:
             try:
                 latest = store.latest_datetime(provider="csv", symbol=sym, timeframe=tf)
@@ -155,7 +168,23 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
                 chunks = []
                 cur = int(since_ms)
                 for _ in range(50):
-                    df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                    df = None
+                    last_err: Optional[BaseException] = None
+                    for attempt in range(int(max_retries) + 1):
+                        try:
+                            if min_sleep_s > 0:
+                                time.sleep(float(min_sleep_s))
+                            df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                            last_err = None
+                            break
+                        except BaseException as e:
+                            last_err = e
+                            if attempt >= int(max_retries):
+                                break
+                            if backoff_s > 0:
+                                time.sleep(float(backoff_s) * float(attempt + 1))
+                    if last_err is not None and df is None:
+                        raise last_err
                     if df is None or df.empty:
                         break
                     chunks.append(df)
@@ -523,6 +552,9 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--entry-mode", default=os.getenv("PIPELINE_ENTRY_MODE", "hybrid"), choices=["hybrid", "pullback", "break_retest", "mean_reversion", "regime"])
         sub.add_argument("--workers", type=int, default=int(os.getenv("PIPELINE_WORKERS", "8") or "8"))
         sub.add_argument("--update-workers", type=int, default=int(os.getenv("PIPELINE_UPDATE_WORKERS", "2") or "2"))
+        sub.add_argument("--update-min-sleep-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_MIN_SLEEP_MS", "0") or "0"))
+        sub.add_argument("--update-backoff-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_BACKOFF_MS", "250") or "250"))
+        sub.add_argument("--update-max-retries", type=int, default=int(os.getenv("PIPELINE_UPDATE_MAX_RETRIES", "3") or "3"))
         sub.add_argument("--max-equity-drawdown-pct", type=float, default=float(os.getenv("PIPELINE_MAX_DD_PCT", "50.0") or "50.0"))
         sub.add_argument("--free-cash-min-pct", type=float, default=float(os.getenv("PIPELINE_FREE_CASH_MIN_PCT", "0.20") or "0.20"))
         sub.add_argument(
@@ -544,6 +576,9 @@ def main(argv: List[str]) -> int:
     entry_mode = str(args.entry_mode)
     workers = int(args.workers)
     update_workers = int(args.update_workers)
+    update_min_sleep_ms = int(args.update_min_sleep_ms)
+    update_backoff_ms = int(args.update_backoff_ms)
+    update_max_retries = int(args.update_max_retries)
     max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
     free_cash_min_pct = float(args.free_cash_min_pct)
     risk_stop_policy = str(args.risk_stop_policy)
@@ -551,14 +586,14 @@ def main(argv: List[str]) -> int:
     backtests: List[str] = []
     datasets: List[str] = []
     if args.cmd == "data:update":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         return 0
     if args.cmd == "scan":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "backtest:top":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         cmd_backtest_top(
             provider,
@@ -579,7 +614,7 @@ def main(argv: List[str]) -> int:
         )
         return 0
     if args.cmd == "backtest:global":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_backtest_global(
             provider,
             run_dir,
@@ -598,11 +633,11 @@ def main(argv: List[str]) -> int:
         )
         return 0
     if args.cmd == "dataset:build":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_dataset_build(provider, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "report:setup-edge":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         backtests = cmd_backtest_top(
             provider,
@@ -628,7 +663,7 @@ def main(argv: List[str]) -> int:
         cmd_report_setup_edge(run_dir, ds_paths, backtests)
         return 0
     if args.cmd == "train:stack":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -637,7 +672,7 @@ def main(argv: List[str]) -> int:
         cmd_train_stack(run_dir, ds_paths)
         return 0
     if args.cmd == "train:calibrate":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -647,7 +682,7 @@ def main(argv: List[str]) -> int:
         return 0
     if args.cmd == "all":
         print("updating data...")
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         print("scanning...")
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         print("backtesting...")
