@@ -1392,6 +1392,8 @@ class NairaEngine:
                             pass
                     ai_p_entry = self.score_ai(dict(pending_features))
                     sm = str(sizing_mode or "fixed_qty").lower()
+                    risk_pct_used: Optional[float] = None
+                    sizing_mode_used = str(sm)
                     if sm in ("fixed_risk", "risk", "ai_risk", "martingale", "anti_martingale", "antimartingale", "vol_target", "voltarget", "kelly"):
                         r = abs(float(entry) - float(sl)) if (entry is not None and sl is not None) else 0.0
                         if r > 0 and float(price) > 0 and float(cash) > 0:
@@ -1416,7 +1418,14 @@ class NairaEngine:
                                         b = 1.0
                                     f = ((float(ai_p_entry) * (float(b) + 1.0)) - 1.0) / float(b)
                                     risk_pct = float(max(0.0, min(float(self.config.max_risk_pct), float(f) * float(self.config.kelly_fraction) * 100.0)))
-                            if bool(ai_assisted_sizing) and sm in ("ai_risk", "fixed_risk", "risk", "martingale"):
+                            if sm == "ai_risk":
+                                if ai_p_entry is None:
+                                    sizing_mode_used = "fixed_risk_fallback"
+                                    risk_pct = float(risk_per_trade_pct)
+                                else:
+                                    sizing_mode_used = "ai_risk"
+                                    risk_pct = float(ai_risk_min_pct) + (float(ai_risk_max_pct) - float(ai_risk_min_pct)) * float(ai_p_entry)
+                            elif bool(ai_assisted_sizing) and sm in ("fixed_risk", "risk", "martingale"):
                                 if ai_p_entry is not None:
                                     risk_pct = float(ai_risk_min_pct) + (float(ai_risk_max_pct) - float(ai_risk_min_pct)) * float(ai_p_entry)
                             try:
@@ -1427,6 +1436,7 @@ class NairaEngine:
                                     risk_pct = float(risk_pct) * float(scale)
                             except Exception:
                                 pass
+                            risk_pct_used = float(risk_pct)
                             risk_cash = float(cash) * (risk_pct / 100.0)
                             qty_risk = float(risk_cash / r) if r > 0 else 0.0
                             qty_max = (float(cash) * float(max_leverage)) / float(price) if float(max_leverage) > 0 else qty_risk
@@ -1530,6 +1540,8 @@ class NairaEngine:
                             "d1_dir": str(states.get("1d", {}).get("direction") or ""),
                             "w1_dir": str(states.get("1w", {}).get("direction") or ""),
                             "ai_prob_entry": float(ai_p_entry) if ai_p_entry is not None else None,
+                            "risk_pct_used": float(risk_pct_used) if risk_pct_used is not None else None,
+                            "sizing_mode_used": str(sizing_mode_used),
                             "filled_qty": float(qty),
                         }
                         pending_features.update(

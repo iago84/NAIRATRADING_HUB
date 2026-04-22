@@ -272,6 +272,11 @@ def cmd_backtest_top(
     max_equity_drawdown_pct: float,
     free_cash_min_pct: float,
     risk_stop_policy: str,
+    sizing_mode: str,
+    risk_per_trade_pct: float,
+    ai_risk_min_pct: float,
+    ai_risk_max_pct: float,
+    max_leverage: float,
 ) -> List[str]:
     out = []
     tasks: List[tuple[str, str]] = []
@@ -298,6 +303,12 @@ def cmd_backtest_top(
                 max_equity_drawdown_pct=float(max_equity_drawdown_pct),
                 free_cash_min_pct=float(free_cash_min_pct),
                 risk_stop_policy=str(risk_stop_policy),
+                sizing_mode=str(sizing_mode),
+                risk_per_trade_pct=float(risk_per_trade_pct),
+                ai_assisted_sizing=True,
+                ai_risk_min_pct=float(ai_risk_min_pct),
+                ai_risk_max_pct=float(ai_risk_max_pct),
+                max_leverage=float(max_leverage),
             )
             return (tf, sym, r)
         except Exception:
@@ -337,6 +348,11 @@ def cmd_backtest_global(
     max_equity_drawdown_pct: float,
     free_cash_min_pct: float,
     risk_stop_policy: str,
+    sizing_mode: str,
+    risk_per_trade_pct: float,
+    ai_risk_min_pct: float,
+    ai_risk_max_pct: float,
+    max_leverage: float,
 ) -> List[str]:
     out = []
     tasks = [(tf, sym) for tf in tfs for sym in symbols]
@@ -356,6 +372,12 @@ def cmd_backtest_global(
                 max_equity_drawdown_pct=float(max_equity_drawdown_pct),
                 free_cash_min_pct=float(free_cash_min_pct),
                 risk_stop_policy=str(risk_stop_policy),
+                sizing_mode=str(sizing_mode),
+                risk_per_trade_pct=float(risk_per_trade_pct),
+                ai_assisted_sizing=True,
+                ai_risk_min_pct=float(ai_risk_min_pct),
+                ai_risk_max_pct=float(ai_risk_max_pct),
+                max_leverage=float(max_leverage),
             )
             return (tf, sym, r)
         except Exception:
@@ -499,6 +521,11 @@ def build_parser() -> argparse.ArgumentParser:
             default=os.getenv("PIPELINE_RISK_STOP_POLICY", "stop_immediate"),
             choices=["stop_immediate", "stop_no_new_trades", "stop_after_close"],
         )
+        sub.add_argument("--sizing-mode", default=os.getenv("PIPELINE_SIZING_MODE", "ai_risk"), choices=["fixed_qty", "fixed_risk", "ai_risk"])
+        sub.add_argument("--risk-per-trade-pct", type=float, default=float(os.getenv("PIPELINE_RISK_PCT", "2.0") or "2.0"))
+        sub.add_argument("--ai-risk-min-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MIN_PCT", "1.0") or "1.0"))
+        sub.add_argument("--ai-risk-max-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MAX_PCT", "5.0") or "5.0"))
+        sub.add_argument("--max-leverage", type=float, default=float(os.getenv("PIPELINE_MAX_LEVERAGE", "1.0") or "1.0"))
     return p
 
 
@@ -516,6 +543,11 @@ def main(argv: List[str]) -> int:
     max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
     free_cash_min_pct = float(args.free_cash_min_pct)
     risk_stop_policy = str(args.risk_stop_policy)
+    sizing_mode = str(args.sizing_mode)
+    risk_per_trade_pct = float(args.risk_per_trade_pct)
+    ai_risk_min_pct = float(args.ai_risk_min_pct)
+    ai_risk_max_pct = float(args.ai_risk_max_pct)
+    max_leverage = float(args.max_leverage)
     scan_paths: Dict[str, str] = {}
     backtests: List[str] = []
     datasets: List[str] = []
