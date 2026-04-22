@@ -1,0 +1,407 @@
+diff --git a/backend/tests/test_analyze_runs_setup_edge.py b/backend/tests/test_analyze_runs_setup_edge.py
+new file mode 100644
+index 0000000..666542d
+--- /dev/null
++++ b/backend/tests/test_analyze_runs_setup_edge.py
+@@ -0,0 +1,44 @@
++import json
++import tempfile
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT.parent))
++
++from scripts.analyze_runs import load_dataset_csv, load_backtest_json, normalize_trade_rows, aggregate_by_setup
++
++
++def test_setup_edge_multi_sources():
++    with tempfile.TemporaryDirectory() as td:
++        base = Path(td)
++        ds1 = base / "a.csv"
++        ds1.write_text("setup_primary,pnl,trend_age_bars,ema_compression\nbreakout,10,1,1.0\nbreakout,-5,2,1.2\n", encoding="utf-8")
++        ds2 = base / "b.csv"
++        ds2.write_text("setup_primary,pnl,trend_age_bars,ema_compression\npullback_ema,3,1,1.0\n", encoding="utf-8")
++        bt = base / "bt.json"
++        bt.write_text(
++            json.dumps(
++                {
++                    "trades": [
++                        {
++                            "pnl": 2.0,
++                            "setup_primary": "breakout",
++                            "entry_meta": {"risk_r": 1.0},
++                            "_features": {"trend_age_bars": 1, "ema_compression": 1.0},
++                        }
++                    ]
++                }
++            ),
++            encoding="utf-8",
++        )
++
++        rows = []
++        rows += load_dataset_csv(str(ds1))
++        rows += load_dataset_csv(str(ds2))
++        rows += load_backtest_json(str(bt))
++        norm = normalize_trade_rows(rows)
++        agg = aggregate_by_setup(norm)
++        assert "breakout" in agg
++        assert agg["breakout"]["n_trades"] == 3
++
+diff --git a/backend/tests/test_run_pipeline_smoke.py b/backend/tests/test_run_pipeline_smoke.py
+new file mode 100644
+index 0000000..667ffd7
+--- /dev/null
++++ b/backend/tests/test_run_pipeline_smoke.py
+@@ -0,0 +1,15 @@
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT.parent))
++
++from scripts.run_pipeline import pick_top_symbols
++
++
++def test_pick_top_symbols_top10():
++    items = [{"symbol": f"S{i}", "opportunity_score": float(i)} for i in range(30)]
++    out = pick_top_symbols(items, top_n=10)
++    assert len(out) == 10
++    assert out[0] == "S29"
++
+diff --git a/scripts/analyze_runs.py b/scripts/analyze_runs.py
+index 3b0526d..342694e 100644
+--- a/scripts/analyze_runs.py
++++ b/scripts/analyze_runs.py
+@@ -3,7 +3,9 @@ from __future__ import annotations
+ import argparse
+ import json
+ import os
+-from typing import Any, Dict, List
++from typing import Any, Dict, List, Optional
++
++import pandas as pd
+ 
+ 
+ def load_scan_json(path: str) -> List[Dict[str, Any]]:
+@@ -23,6 +25,111 @@ def load_random_jsonl(path: str) -> List[Dict[str, Any]]:
+     return out
+ 
+ 
++def load_dataset_csv(path: str) -> List[Dict[str, Any]]:
++    df = pd.read_csv(path)
++    out: List[Dict[str, Any]] = []
++    for _, row in df.iterrows():
++        d = row.to_dict()
++        d["_source"] = "dataset_csv"
++        d["_path"] = str(path)
++        out.append(d)
++    return out
++
++
++def load_backtest_json(path: str) -> List[Dict[str, Any]]:
++    with open(path, "r", encoding="utf-8") as f:
++        obj = json.loads(f.read() or "{}")
++    trades = obj.get("trades") or []
++    out: List[Dict[str, Any]] = []
++    for t in trades:
++        d = dict(t)
++        d["_source"] = "backtest_json"
++        d["_path"] = str(path)
++        out.append(d)
++    return out
++
++
++def normalize_trade_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
++    out: List[Dict[str, Any]] = []
++    for r in rows or []:
++        setup = str(r.get("setup_primary") or ((r.get("entry_meta") or {}).get("setup_primary") if isinstance(r.get("entry_meta"), dict) else "") or "unknown")
++        try:
++            pnl = float(r.get("pnl") or 0.0)
++        except Exception:
++            pnl = 0.0
++        risk_r = None
++        try:
++            em = r.get("entry_meta")
++            if isinstance(em, dict) and em.get("risk_r") is not None:
++                risk_r = float(em.get("risk_r"))
++        except Exception:
++            risk_r = None
++        try:
++            feats = r.get("_features")
++            if risk_r is None and isinstance(feats, dict) and feats.get("risk_r") is not None:
++                risk_r = float(feats.get("risk_r"))
++        except Exception:
++            pass
++        R = None
++        if risk_r is not None and float(risk_r) > 0:
++            R = float(pnl) / float(risk_r)
++        def _i(k: str) -> Optional[int]:
++            try:
++                v = r.get(k)
++                if v is None or (isinstance(v, float) and pd.isna(v)):
++                    return None
++                return int(v)
++            except Exception:
++                return None
++        def _f(k: str) -> Optional[float]:
++            try:
++                v = r.get(k)
++                if v is None or (isinstance(v, float) and pd.isna(v)):
++                    return None
++                return float(v)
++            except Exception:
++                return None
++        out.append(
++            {
++                "setup_primary": setup,
++                "pnl": float(pnl),
++                "risk_r": float(risk_r) if risk_r is not None else None,
++                "R": float(R) if R is not None else None,
++                "trend_age_bars": _i("trend_age_bars"),
++                "ema_compression": _f("ema_compression"),
++            }
++        )
++    return out
++
++
++def aggregate_by_setup(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
++    by: Dict[str, List[Dict[str, Any]]] = {}
++    for r in rows or []:
++        k = str(r.get("setup_primary") or "unknown")
++        by.setdefault(k, []).append(r)
++    out: Dict[str, Dict[str, Any]] = {}
++    for k, items in by.items():
++        pnls = [float(x.get("pnl") or 0.0) for x in items]
++        wins = [1 if float(x.get("pnl") or 0.0) > 0 else 0 for x in items]
++        Rs = [x.get("R") for x in items]
++        Rs2 = [float(x) for x in Rs if x is not None]
++        def _med(a: List[float]) -> float:
++            if not a:
++                return 0.0
++            s = sorted(a)
++            m = len(s) // 2
++            return float(s[m]) if len(s) % 2 == 1 else float((s[m - 1] + s[m]) / 2.0)
++        out[k] = {
++            "n_trades": int(len(items)),
++            "win_rate_pct": (float(sum(wins)) / max(1, len(items))) * 100.0,
++            "avg_pnl": float(sum(pnls)) / max(1, len(pnls)),
++            "median_pnl": _med(pnls),
++            "avg_R": (float(sum(Rs2)) / max(1, len(Rs2))) if Rs2 else None,
++            "median_R": _med(Rs2) if Rs2 else None,
++        }
++    return out
++
++
+ def _count(items: List[Dict[str, Any]], key: str) -> Dict[str, int]:
+     out: Dict[str, int] = {}
+     for it in items or []:
+@@ -72,18 +179,34 @@ def main() -> int:
+     ap = argparse.ArgumentParser()
+     ap.add_argument("--scan-json", default="")
+     ap.add_argument("--random-jsonl", default="")
++    ap.add_argument("--dataset-csv", action="append", default=[])
++    ap.add_argument("--backtest-json", action="append", default=[])
+     ap.add_argument("--out-md", default="")
+     ap.add_argument("--out-json", default="")
+     args = ap.parse_args()
+ 
+     scan_items: List[Dict[str, Any]] = []
+     random_items: List[Dict[str, Any]] = []
++    trade_rows: List[Dict[str, Any]] = []
+     if str(args.scan_json).strip():
+         scan_items = load_scan_json(str(args.scan_json))
+     if str(args.random_jsonl).strip():
+         random_items = load_random_jsonl(str(args.random_jsonl))
++    for p in list(args.dataset_csv or []):
++        if str(p).strip():
++            trade_rows += load_dataset_csv(str(p))
++    for p in list(args.backtest_json or []):
++        if str(p).strip():
++            trade_rows += load_backtest_json(str(p))
+ 
+     md = build_markdown_report(scan_items, random_items)
++    if trade_rows:
++        norm = normalize_trade_rows(trade_rows)
++        agg = aggregate_by_setup(norm)
++        md += "## Setup Edge\n"
++        for k, v in sorted(agg.items(), key=lambda kv: int(kv[1].get("n_trades") or 0), reverse=True):
++            md += f"- {k}: n={v['n_trades']} win%={v['win_rate_pct']:.1f} avg_pnl={v['avg_pnl']:.6f} avg_R={v.get('avg_R')}\n"
++        md += "\n"
+     if str(args.out_md).strip():
+         os.makedirs(os.path.dirname(str(args.out_md)) or ".", exist_ok=True)
+         with open(str(args.out_md), "w", encoding="utf-8") as f:
+@@ -93,6 +216,8 @@ def main() -> int:
+ 
+     if str(args.out_json).strip():
+         payload = {"scan": scan_items, "random": random_items, "markdown": md}
++        if trade_rows:
++            payload["setup_edge"] = aggregate_by_setup(normalize_trade_rows(trade_rows))
+         os.makedirs(os.path.dirname(str(args.out_json)) or ".", exist_ok=True)
+         with open(str(args.out_json), "w", encoding="utf-8") as f:
+             f.write(json.dumps(payload, ensure_ascii=False, indent=2))
+@@ -101,4 +226,3 @@ def main() -> int:
+ 
+ if __name__ == "__main__":
+     raise SystemExit(main())
+-
+diff --git a/scripts/run_pipeline.ps1 b/scripts/run_pipeline.ps1
+new file mode 100644
+index 0000000..ce3e01a
+--- /dev/null
++++ b/scripts/run_pipeline.ps1
+@@ -0,0 +1,3 @@
++$ErrorActionPreference = "Stop"
++python scripts/run_pipeline.py
++
+diff --git a/scripts/run_pipeline.py b/scripts/run_pipeline.py
+new file mode 100644
+index 0000000..b44c09c
+--- /dev/null
++++ b/scripts/run_pipeline.py
+@@ -0,0 +1,135 @@
++from __future__ import annotations
++
++import json
++import os
++import sys
++from datetime import datetime, timezone
++from typing import Any, Dict, List
++
++REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
++sys.path.insert(0, REPO_ROOT)
++sys.path.insert(0, os.path.join(REPO_ROOT, "backend"))
++
++from app.core.config import settings
++from app.engine.dataset import build_trade_dataset
++from app.engine.history_store import HistoryStore
++from app.engine.naira_engine import NairaEngine, NairaConfig
++from app.engine.multi_brain import run_multi_brain
++
++
++def pick_top_symbols(scan_items: List[Dict[str, Any]], top_n: int) -> List[str]:
++    items = list(scan_items or [])
++    items.sort(key=lambda x: float(x.get("opportunity_score") or 0.0), reverse=True)
++    out = []
++    for it in items:
++        s = str(it.get("symbol") or "").strip()
++        if not s:
++            continue
++        out.append(s)
++        if len(out) >= int(top_n):
++            break
++    return out
++
++
++def _read_watchlist(path: str, limit: int) -> List[str]:
++    try:
++        with open(path, "r", encoding="utf-8") as f:
++            obj = json.loads(f.read() or "{}")
++        items = obj.get("symbols") if isinstance(obj, dict) else obj
++        out = [str(x).strip() for x in (items or []) if str(x).strip()]
++        return out[: int(limit)]
++    except Exception:
++        return []
++
++
++def _utc_stamp() -> str:
++    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
++
++
++def _run_stamp() -> str:
++    return datetime.now(timezone.utc).strftime("%H%M%S")
++
++
++def main() -> int:
++    universe_size = 30
++    try:
++        v = int(os.getenv("PIPELINE_UNIVERSE", "30").strip() or "30")
++        universe_size = 100 if v >= 100 else 30
++    except Exception:
++        universe_size = 30
++    top_n = 10
++    balance_usdt = 1000.0
++    provider = "csv"
++    tfs = ["5m", "15m", "1h", "4h", "1d"]
++    wl = "crypto_top100.json" if universe_size >= 100 else "crypto_top30.json"
++    wl_path = os.path.join(str(settings.DATA_DIR), "watchlists", wl)
++
++    run_dir = os.path.join(str(settings.DATA_DIR), "reports", _utc_stamp(), f"run_{_run_stamp()}")
++    os.makedirs(run_dir, exist_ok=True)
++
++    symbols = _read_watchlist(wl_path, universe_size)
++    if not symbols:
++        raise SystemExit(f"watchlist vacía: {wl_path}")
++
++    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
++    store = HistoryStore(base_dir=str(settings.DATA_DIR))
++
++    all_datasets: List[str] = []
++    all_backtests: List[str] = []
++
++    for tf in tfs:
++        scan_out = []
++        for sym in symbols[: int(settings.MAX_SCAN_SYMBOLS)]:
++            try:
++                r, _ = run_multi_brain(engine=eng, symbol=sym, provider=provider, base_timeframe=tf, tranche="T1", include_debug=False)
++                scan_out.append(r)
++            except Exception:
++                continue
++        scan_out.sort(key=lambda x: float(x.get("opportunity_score") or 0.0), reverse=True)
++        scan_path = os.path.join(run_dir, f"scan_{tf}.json")
++        with open(scan_path, "w", encoding="utf-8") as f:
++            f.write(json.dumps(scan_out, ensure_ascii=False, indent=2))
++
++        top_syms = pick_top_symbols(scan_out, top_n=top_n)
++        for sym in top_syms:
++            try:
++                r = eng.backtest(symbol=sym, provider="csv", base_timeframe=tf, max_bars=5000)
++                bt_path = os.path.join(run_dir, f"backtest_{tf}_{sym}.json")
++                with open(bt_path, "w", encoding="utf-8") as f:
++                    f.write(json.dumps(r, ensure_ascii=False))
++                all_backtests.append(bt_path)
++            except Exception:
++                continue
++            try:
++                ds_path = os.path.join(str(settings.DATASETS_DIR), f"{sym}_csv_{tf}_ml.csv")
++                ds = build_trade_dataset(eng, symbol=sym, provider="csv", base_timeframe=tf, out_path=ds_path)
++                if ds.rows > 0:
++                    all_datasets.append(ds.path)
++            except Exception:
++                continue
++
++    man_path = os.path.join(run_dir, "datasets_manifest.json")
++    with open(man_path, "w", encoding="utf-8") as f:
++        f.write(json.dumps({"datasets": all_datasets, "backtests": all_backtests}, ensure_ascii=False, indent=2))
++
++    try:
++        from scripts.analyze_runs import main as analyze_main
++
++        argv = []
++        for p in all_datasets:
++            argv += ["--dataset-csv", p]
++        for p in all_backtests:
++            argv += ["--backtest-json", p]
++        argv += ["--out-md", os.path.join(run_dir, "setup_edge.md")]
++        argv += ["--out-json", os.path.join(run_dir, "setup_edge.json")]
++        sys.argv = ["analyze_runs.py"] + argv
++        analyze_main()
++    except Exception:
++        pass
++
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
++
+diff --git a/scripts/run_pipeline.sh b/scripts/run_pipeline.sh
+new file mode 100644
+index 0000000..95d5679
+--- /dev/null
++++ b/scripts/run_pipeline.sh
+@@ -0,0 +1,4 @@
++#!/usr/bin/env bash
++set -euo pipefail
++python3 scripts/run_pipeline.py
++
