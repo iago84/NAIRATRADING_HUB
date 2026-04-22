@@ -354,6 +354,93 @@ def cmd_backtest_top(
     return out
 
 
+def cmd_backtest_top_leverage_sweep(
+    provider: str,
+    run_dir: str,
+    scan_paths: Dict[str, str],
+    top_n: int,
+    tfs: List[str],
+    entry_mode: str,
+    workers: int,
+    max_equity_drawdown_pct: float,
+    free_cash_min_pct: float,
+    risk_stop_policy: str,
+    sizing_mode: str,
+    risk_per_trade_pct: float,
+    ai_risk_min_pct: float,
+    ai_risk_max_pct: float,
+    leverages: List[float],
+) -> List[str]:
+    out: List[str] = []
+    tasks: List[tuple[str, str, float]] = []
+    levs = [float(x) for x in (leverages or []) if float(x) > 0]
+    for tf in tfs:
+        sp = scan_paths.get(tf) or os.path.join(run_dir, f"scan_{tf}.json")
+        scan_items = _read_json(sp, [])
+        top_syms = pick_top_symbols(list(scan_items or []), top_n=int(top_n))
+        for sym in top_syms:
+            for lev in levs:
+                tasks.append((tf, sym, float(lev)))
+
+    loc = threading.local()
+
+    def _bt_one(tf: str, sym: str, lev: float) -> Optional[tuple[str, str, float, Dict[str, Any]]]:
+        try:
+            eng = getattr(loc, "eng", None)
+            if eng is None:
+                eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
+                setattr(loc, "eng", eng)
+            r = eng.backtest(
+                symbol=sym,
+                provider=str(provider),
+                base_timeframe=tf,
+                max_bars=5000,
+                max_equity_drawdown_pct=float(max_equity_drawdown_pct),
+                free_cash_min_pct=float(free_cash_min_pct),
+                risk_stop_policy=str(risk_stop_policy),
+                sizing_mode=str(sizing_mode),
+                risk_per_trade_pct=float(risk_per_trade_pct),
+                max_leverage=float(lev),
+                ai_assisted_sizing=bool(str(sizing_mode).lower() == "ai_risk"),
+                ai_risk_min_pct=float(ai_risk_min_pct),
+                ai_risk_max_pct=float(ai_risk_max_pct),
+            )
+            return (tf, sym, float(lev), r)
+        except Exception:
+            return None
+
+    w = int(max(1, int(workers)))
+    try:
+        print(f"backtest:leverage_sweep tasks={len(tasks)} workers={w} levels={','.join(str(int(x)) for x in levs)}")
+    except Exception:
+        pass
+    if w <= 1:
+        for tf, sym, lev in tasks:
+            res = _bt_one(tf, sym, lev)
+            if not res:
+                continue
+            tf2, sym2, lev2, r = res
+            p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}_lev{int(lev2)}.json")
+            _write_json(p, r)
+            out.append(p)
+    else:
+        with ThreadPoolExecutor(max_workers=w) as pool:
+            futs = [pool.submit(_bt_one, tf, sym, lev) for tf, sym, lev in tasks]
+            for f in as_completed(futs):
+                res = f.result()
+                if not res:
+                    continue
+                tf2, sym2, lev2, r = res
+                p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}_lev{int(lev2)}.json")
+                _write_json(p, r)
+                out.append(p)
+    try:
+        print(f"backtest:leverage_sweep done files={len(out)}")
+    except Exception:
+        pass
+    return out
+
+
 def cmd_backtest_global(
     provider: str,
     run_dir: str,
@@ -484,10 +571,11 @@ def cmd_report_setup_edge(run_dir: str, dataset_paths: List[str], backtest_paths
             argv += ["--backtest-json", str(p)]
         md = os.path.join(run_dir, "setup_edge.md")
         js = os.path.join(run_dir, "setup_edge.json")
-        argv += ["--out-md", md, "--out-json", js]
+        html = os.path.join(run_dir, "setup_edge.html")
+        argv += ["--out-md", md, "--out-json", js, "--out-html", html, "--dataset-dir", str(settings.DATASETS_DIR)]
         sys.argv = ["analyze_runs.py"] + argv
         analyze_main()
-        return {"md": md, "json": js}
+        return {"md": md, "json": js, "html": html}
     except Exception:
         return {}
 
@@ -561,6 +649,7 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--ai-risk-min-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MIN_PCT", "1.0") or "1.0"))
         sub.add_argument("--ai-risk-max-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MAX_PCT", "5.0") or "5.0"))
         sub.add_argument("--max-leverage", type=float, default=float(os.getenv("PIPELINE_MAX_LEVERAGE", "1.0") or "1.0"))
+        sub.add_argument("--leverage-sweep", action="store_true", default=bool(int(os.getenv("PIPELINE_LEVERAGE_SWEEP", "0") or "0")))
     return p
 
 
@@ -583,6 +672,7 @@ def main(argv: List[str]) -> int:
     ai_risk_min_pct = float(args.ai_risk_min_pct)
     ai_risk_max_pct = float(args.ai_risk_max_pct)
     max_leverage = float(args.max_leverage)
+    leverage_sweep = bool(args.leverage_sweep)
     scan_paths: Dict[str, str] = {}
     backtests: List[str] = []
     datasets: List[str] = []
@@ -704,6 +794,24 @@ def main(argv: List[str]) -> int:
             ai_risk_max_pct=ai_risk_max_pct,
             max_leverage=max_leverage,
         )
+        if leverage_sweep:
+            backtests += cmd_backtest_top_leverage_sweep(
+                provider,
+                run_dir,
+                scan_paths,
+                top_n=_top_n(),
+                tfs=run_tfs,
+                entry_mode=entry_mode,
+                workers=workers,
+                max_equity_drawdown_pct=max_equity_drawdown_pct,
+                free_cash_min_pct=free_cash_min_pct,
+                risk_stop_policy=risk_stop_policy,
+                sizing_mode=sizing_mode,
+                risk_per_trade_pct=risk_per_trade_pct,
+                ai_risk_min_pct=ai_risk_min_pct,
+                ai_risk_max_pct=ai_risk_max_pct,
+                leverages=[50.0, 100.0, 200.0, 500.0],
+            )
         print("building datasets...")
         datasets = cmd_dataset_build(
             provider,
