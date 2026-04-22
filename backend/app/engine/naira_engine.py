@@ -1151,7 +1151,7 @@ class NairaEngine:
                     if apply_gates:
                         try:
                             comp_eff = float(comp_v) if comp_v is not None else 0.0
-                            tg = timing_gate(trend_age_bars=int(trend_age), ema_compression=float(comp_eff))
+                            tg = timing_gate(trend_age_bars=int(trend_age), ema_compression=float(comp_eff), base_timeframe=str(base_timeframe))
                             if not tg.ok:
                                 gates_timing_blocked += 1
                                 equity_curve.append(float(cash))
@@ -2420,7 +2420,7 @@ class NairaEngine:
                     except Exception:
                         comp_pf = 0.0
                     try:
-                        tg = timing_gate(trend_age_bars=int(age_pf), ema_compression=float(comp_pf))
+                        tg = timing_gate(trend_age_bars=int(age_pf), ema_compression=float(comp_pf), base_timeframe=str(base_timeframe))
                         if not tg.ok:
                             continue
                     except Exception:
