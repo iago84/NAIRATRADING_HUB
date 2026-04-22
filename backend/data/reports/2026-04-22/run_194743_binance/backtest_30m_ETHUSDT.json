@@ -1,0 +1,157 @@
+{
+  "symbol": "ETHUSDT",
+  "provider": "binance",
+  "base_timeframe": "30m",
+  "start": "2026-01-22T14:30:00",
+  "end": "2026-04-22T19:30:00",
+  "metrics": {
+    "trades": 1,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "total_pnl": 0.0,
+    "equity_last": 10000.0,
+    "max_drawdown_pct": -0.022800000000006548,
+    "CAGR_pct": 0.0,
+    "exit_reason_counts": {
+      "sl": 1
+    },
+    "entry_kind_counts": {
+      "pullback": 1
+    },
+    "pnl_avg_by_exit_reason": {
+      "sl": 0.0
+    },
+    "pnl_avg_by_entry_kind": {
+      "pullback": 0.0
+    },
+    "gates_timing_blocked": 218,
+    "risk_stop_triggered": false,
+    "risk_stop_reason": "",
+    "risk_stop_policy": "stop_immediate",
+    "risk_stop_at_index": null,
+    "risk_stop_at_time": "",
+    "risk_threshold_equity": 5000.0,
+    "risk_threshold_free_cash": 2000.0,
+    "late_entry_report": {
+      "wins": {
+        "trend_age_bars": {},
+        "ema_compression": {},
+        "dist_ema25_atr": {},
+        "dist_reg_atr": {},
+        "signal_age_bars": {}
+      },
+      "losses": {
+        "trend_age_bars": {
+          "p50": 1.0,
+          "p75": 1.0,
+          "p90": 1.0
+        },
+        "ema_compression": {
+          "p50": 2.2873249908615634,
+          "p75": 2.2873249908615634,
+          "p90": 2.2873249908615634
+        },
+        "dist_ema25_atr": {
+          "p50": -0.7571166042875206,
+          "p75": -0.7571166042875206,
+          "p90": -0.7571166042875206
+        },
+        "dist_reg_atr": {
+          "p50": -2.0882742281150555,
+          "p75": -2.0882742281150555,
+          "p90": -2.0882742281150555
+        },
+        "signal_age_bars": {
+          "p50": 1.0,
+          "p75": 1.0,
+          "p90": 1.0
+        }
+      },
+      "recommendations": {
+        "trend_age_max_bars": 240,
+        "ema_compression_max": 6.0,
+        "ai_entry_threshold": 0.0
+      }
+    },
+    "regime_report": {
+      "adx<=18": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "18<adx<=25": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "adx>25": {
+        "n": 1,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      }
+    }
+  },
+  "trades": [
+    {
+      "side": "sell",
+      "entry_time": "2026-03-28T21:30:00",
+      "exit_time": "2026-03-28T23:00:00",
+      "entry": 2009.61,
+      "exit": 2009.61,
+      "pnl": -0.0,
+      "bars_held": 3,
+      "entry_index": 3134,
+      "exit_index": 3137,
+      "entry_kind": "pullback",
+      "exit_reason": "sl",
+      "entry_sub_index": null,
+      "entry_meta": {
+        "trend_age_bars": 1,
+        "signal_age_bars": 1,
+        "atr_pct": 0.38469475734074376,
+        "ema_compression": 2.2873249908615634,
+        "dist_ema25_atr": -0.7571166042875206,
+        "dist_ema80_atr": -1.2697051534985027,
+        "dist_ema220_atr": -6.690777960791427,
+        "dist_reg_atr": -2.0882742281150555,
+        "hour_utc": 21,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -0.5191312602120107,
+        "nearest_support_distance_atr": 0.059243052452747594,
+        "nearest_resistance_distance_atr": 0.32966190135915524,
+        "h4_dir": "sell",
+        "d1_dir": "sell",
+        "w1_dir": "neutral",
+        "ai_prob_entry": null,
+        "filled_qty": 1.0
+      },
+      "_features": {
+        "alignment": 0.875,
+        "slope_score": -0.04026624983101096,
+        "regression_slope_pct": 0.04407911925991703,
+        "regression_r2": 0.7743525207840815,
+        "adx": 36.10513784963189,
+        "atr": 7.730864312995321,
+        "confluence_levels": 0.1351351351351351,
+        "confluence_fibo": 0.0,
+        "alligator_mouth": 1.2814611338247295,
+        "wick_reject_ratio": 0.29112662013956003,
+        "fractal_distance_atr": 0.9572021575337886,
+        "trend_age_bars": 1.0,
+        "signal_age_bars": 1.0,
+        "atr_pct": 0.38469475734074376,
+        "ema_compression": 2.2873249908615634,
+        "dist_ema25_atr": -0.7571166042875206,
+        "dist_ema80_atr": -1.2697051534985027,
+        "dist_ema220_atr": -6.690777960791427,
+        "dist_reg_atr": -2.0882742281150555,
+        "hour_utc": 21.0,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -0.5191312602120107,
+        "nearest_support_distance_atr": 0.059243052452747594,
+        "nearest_resistance_distance_atr": 0.32966190135915524,
+        "ai_prob_entry": 0.0
+      }
+    }
+  ]
+}

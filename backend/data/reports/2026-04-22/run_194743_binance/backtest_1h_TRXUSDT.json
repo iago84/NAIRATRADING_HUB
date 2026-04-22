@@ -1,0 +1,242 @@
+{
+  "symbol": "TRXUSDT",
+  "provider": "binance",
+  "base_timeframe": "1h",
+  "start": "2025-09-26T12:00:00",
+  "end": "2026-04-22T19:00:00",
+  "metrics": {
+    "trades": 2,
+    "win_rate_pct": 50.0,
+    "profit_factor": 0.3530524496579849,
+    "total_pnl": -0.0012469581288314657,
+    "equity_last": 9999.998753041871,
+    "max_drawdown_pct": -1.927448436424065e-05,
+    "CAGR_pct": -2.1881716139038332e-05,
+    "exit_reason_counts": {
+      "tp": 1,
+      "sl": 1
+    },
+    "entry_kind_counts": {
+      "pullback": 1,
+      "break_retest": 1
+    },
+    "pnl_avg_by_exit_reason": {
+      "tp": 0.0006804904385935839,
+      "sl": -0.0019274485682022613
+    },
+    "pnl_avg_by_entry_kind": {
+      "pullback": 0.0006804904385935839,
+      "break_retest": -0.0019274485682022613
+    },
+    "gates_timing_blocked": 298,
+    "risk_stop_triggered": false,
+    "risk_stop_reason": "",
+    "risk_stop_policy": "stop_immediate",
+    "risk_stop_at_index": null,
+    "risk_stop_at_time": "",
+    "risk_threshold_equity": 5000.0,
+    "risk_threshold_free_cash": 2000.0,
+    "late_entry_report": {
+      "wins": {
+        "trend_age_bars": {
+          "p50": 3.0,
+          "p75": 3.0,
+          "p90": 3.0
+        },
+        "ema_compression": {
+          "p50": 1.5681843682738532,
+          "p75": 1.5681843682738532,
+          "p90": 1.5681843682738532
+        },
+        "dist_ema25_atr": {
+          "p50": 0.3947358154198434,
+          "p75": 0.3947358154198434,
+          "p90": 0.3947358154198434
+        },
+        "dist_reg_atr": {
+          "p50": -0.24590697972814338,
+          "p75": -0.24590697972814338,
+          "p90": -0.24590697972814338
+        },
+        "signal_age_bars": {
+          "p50": 3.0,
+          "p75": 3.0,
+          "p90": 3.0
+        }
+      },
+      "losses": {
+        "trend_age_bars": {
+          "p50": 3.0,
+          "p75": 3.0,
+          "p90": 3.0
+        },
+        "ema_compression": {
+          "p50": 1.9403599395779327,
+          "p75": 1.9403599395779327,
+          "p90": 1.9403599395779327
+        },
+        "dist_ema25_atr": {
+          "p50": -2.54835015487167,
+          "p75": -2.54835015487167,
+          "p90": -2.54835015487167
+        },
+        "dist_reg_atr": {
+          "p50": -1.8538375184355436,
+          "p75": -1.8538375184355436,
+          "p90": -1.8538375184355436
+        },
+        "signal_age_bars": {
+          "p50": 3.0,
+          "p75": 3.0,
+          "p90": 3.0
+        }
+      },
+      "recommendations": {
+        "trend_age_max_bars": 3,
+        "ema_compression_max": 1.5681843682738532,
+        "ai_entry_threshold": 0.0
+      }
+    },
+    "regime_report": {
+      "adx<=18": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "18<adx<=25": {
+        "n": 1,
+        "pf": 0.0,
+        "avg_pnl": -0.0019274485682022613
+      },
+      "adx>25": {
+        "n": 1,
+        "pf": 680490.4385935839,
+        "avg_pnl": 0.0006804904385935839
+      }
+    }
+  },
+  "trades": [
+    {
+      "side": "buy",
+      "entry_time": "2025-10-03T17:00:00",
+      "exit_time": "2025-10-03T18:00:00",
+      "entry": 0.3434,
+      "exit": 0.34408049043859357,
+      "pnl": 0.0006804904385935839,
+      "bars_held": 1,
+      "entry_index": 173,
+      "exit_index": 174,
+      "entry_kind": "pullback",
+      "exit_reason": "tp",
+      "entry_sub_index": null,
+      "entry_meta": {
+        "trend_age_bars": 3,
+        "signal_age_bars": 3,
+        "atr_pct": 0.3480185247714194,
+        "ema_compression": 1.5681843682738532,
+        "dist_ema25_atr": 0.3947358154198434,
+        "dist_ema80_atr": 2.2990829730083795,
+        "dist_ema220_atr": 4.2735274433479615,
+        "dist_reg_atr": -0.24590697972814338,
+        "hour_utc": 17,
+        "is_weekend": 0.0,
+        "dist_pivot_P_atr": 0.7530778202244875,
+        "nearest_support_distance_atr": 1.17145438701589,
+        "nearest_resistance_distance_atr": 0.7530778202244875,
+        "h4_dir": "buy",
+        "d1_dir": "neutral",
+        "w1_dir": "neutral",
+        "ai_prob_entry": null,
+        "filled_qty": 1.0
+      },
+      "_features": {
+        "alignment": 1.0,
+        "slope_score": 0.05361314255131644,
+        "regression_slope_pct": 0.015950485160824087,
+        "regression_r2": 0.6145650330309755,
+        "adx": 34.03815438391642,
+        "atr": 0.0011950956140650542,
+        "confluence_levels": 0.29729729729729726,
+        "confluence_fibo": 0.08333333333333333,
+        "alligator_mouth": 0.5222232976684078,
+        "wick_reject_ratio": 0.1999999999999778,
+        "fractal_distance_atr": 0.2510259400748601,
+        "trend_age_bars": 3.0,
+        "signal_age_bars": 3.0,
+        "atr_pct": 0.3480185247714194,
+        "ema_compression": 1.5681843682738532,
+        "dist_ema25_atr": 0.3947358154198434,
+        "dist_ema80_atr": 2.2990829730083795,
+        "dist_ema220_atr": 4.2735274433479615,
+        "dist_reg_atr": -0.24590697972814338,
+        "hour_utc": 17.0,
+        "is_weekend": 0.0,
+        "dist_pivot_P_atr": 0.7530778202244875,
+        "nearest_support_distance_atr": 1.17145438701589,
+        "nearest_resistance_distance_atr": 0.7530778202244875,
+        "ai_prob_entry": 0.0
+      }
+    },
+    {
+      "side": "sell",
+      "entry_time": "2025-11-19T05:00:00",
+      "exit_time": "2025-11-19T07:00:00",
+      "entry": 0.286,
+      "exit": 0.28792744856820224,
+      "pnl": -0.0019274485682022613,
+      "bars_held": 2,
+      "entry_index": 1289,
+      "exit_index": 1291,
+      "entry_kind": "break_retest",
+      "exit_reason": "sl",
+      "entry_sub_index": null,
+      "entry_meta": {
+        "trend_age_bars": 3,
+        "signal_age_bars": 3,
+        "atr_pct": 0.5616108881708243,
+        "ema_compression": 1.9403599395779327,
+        "dist_ema25_atr": -2.54835015487167,
+        "dist_ema80_atr": -3.57282790319936,
+        "dist_ema220_atr": -4.314729681380367,
+        "dist_reg_atr": -1.8538375184355436,
+        "hour_utc": 5,
+        "is_weekend": 0.0,
+        "dist_pivot_P_atr": -2.5318444707199483,
+        "nearest_support_distance_atr": 0.342421588253105,
+        "nearest_resistance_distance_atr": 0.6018318823842534,
+        "h4_dir": "sell",
+        "d1_dir": "sell",
+        "w1_dir": "neutral",
+        "ai_prob_entry": null,
+        "filled_qty": 1.0
+      },
+      "_features": {
+        "alignment": 1.0,
+        "slope_score": -0.8738677964964268,
+        "regression_slope_pct": -0.032123262323778,
+        "regression_r2": 0.4404847493130001,
+        "adx": 22.057085498823106,
+        "atr": 0.0016062071401685572,
+        "confluence_levels": 0.18918918918918912,
+        "confluence_fibo": 0.0,
+        "alligator_mouth": 0.44129053996029893,
+        "wick_reject_ratio": 0.1666666666666474,
+        "fractal_distance_atr": 1.6809787059698256,
+        "trend_age_bars": 3.0,
+        "signal_age_bars": 3.0,
+        "atr_pct": 0.5616108881708243,
+        "ema_compression": 1.9403599395779327,
+        "dist_ema25_atr": -2.54835015487167,
+        "dist_ema80_atr": -3.57282790319936,
+        "dist_ema220_atr": -4.314729681380367,
+        "dist_reg_atr": -1.8538375184355436,
+        "hour_utc": 5.0,
+        "is_weekend": 0.0,
+        "dist_pivot_P_atr": -2.5318444707199483,
+        "nearest_support_distance_atr": 0.342421588253105,
+        "nearest_resistance_distance_atr": 0.6018318823842534,
+        "ai_prob_entry": 0.0
+      }
+    }
+  ]
+}

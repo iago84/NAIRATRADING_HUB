@@ -1,0 +1,157 @@
+{
+  "symbol": "MATICUSDT",
+  "provider": "binance",
+  "base_timeframe": "30m",
+  "start": "2024-08-20T07:00:00",
+  "end": "2024-09-10T02:30:00",
+  "metrics": {
+    "trades": 1,
+    "win_rate_pct": 100.0,
+    "profit_factor": 1400000.0000000123,
+    "total_pnl": 0.001399999999193824,
+    "equity_last": 10000.0014,
+    "max_drawdown_pct": -2.99999950516318e-06,
+    "CAGR_pct": 0.0002555003081772256,
+    "exit_reason_counts": {
+      "flip_4h": 1
+    },
+    "entry_kind_counts": {
+      "pullback": 1
+    },
+    "pnl_avg_by_exit_reason": {
+      "flip_4h": 0.0014000000000000123
+    },
+    "pnl_avg_by_entry_kind": {
+      "pullback": 0.0014000000000000123
+    },
+    "gates_timing_blocked": 24,
+    "risk_stop_triggered": false,
+    "risk_stop_reason": "",
+    "risk_stop_policy": "stop_immediate",
+    "risk_stop_at_index": null,
+    "risk_stop_at_time": "",
+    "risk_threshold_equity": 5000.0,
+    "risk_threshold_free_cash": 2000.0,
+    "late_entry_report": {
+      "wins": {
+        "trend_age_bars": {
+          "p50": 2.0,
+          "p75": 2.0,
+          "p90": 2.0
+        },
+        "ema_compression": {
+          "p50": 2.216098881054216,
+          "p75": 2.216098881054216,
+          "p90": 2.216098881054216
+        },
+        "dist_ema25_atr": {
+          "p50": -1.323767195105107,
+          "p75": -1.323767195105107,
+          "p90": -1.323767195105107
+        },
+        "dist_reg_atr": {
+          "p50": -1.1067895872050337,
+          "p75": -1.1067895872050337,
+          "p90": -1.1067895872050337
+        },
+        "signal_age_bars": {
+          "p50": 2.0,
+          "p75": 2.0,
+          "p90": 2.0
+        }
+      },
+      "losses": {
+        "trend_age_bars": {},
+        "ema_compression": {},
+        "dist_ema25_atr": {},
+        "dist_reg_atr": {},
+        "signal_age_bars": {}
+      },
+      "recommendations": {
+        "trend_age_max_bars": 2,
+        "ema_compression_max": 2.216098881054216,
+        "ai_entry_threshold": 0.0
+      }
+    },
+    "regime_report": {
+      "adx<=18": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "18<adx<=25": {
+        "n": 1,
+        "pf": 1400000.0000000123,
+        "avg_pnl": 0.0014000000000000123
+      },
+      "adx>25": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      }
+    }
+  },
+  "trades": [
+    {
+      "side": "sell",
+      "entry_time": "2024-09-08T14:00:00",
+      "exit_time": "2024-09-08T16:00:00",
+      "entry": 0.3699,
+      "exit": 0.3685,
+      "pnl": 0.0014000000000000123,
+      "bars_held": 4,
+      "entry_index": 926,
+      "exit_index": 930,
+      "entry_kind": "pullback",
+      "exit_reason": "flip_4h",
+      "entry_sub_index": null,
+      "entry_meta": {
+        "trend_age_bars": 2,
+        "signal_age_bars": 2,
+        "atr_pct": 0.5001849930704405,
+        "ema_compression": 2.216098881054216,
+        "dist_ema25_atr": -1.323767195105107,
+        "dist_ema80_atr": -1.0635405140998093,
+        "dist_ema220_atr": -4.4047535023340645,
+        "dist_reg_atr": -1.1067895872050337,
+        "hour_utc": 14,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -0.09008111658091895,
+        "nearest_support_distance_atr": 0.3693325779816747,
+        "nearest_resistance_distance_atr": 0.5404866994853937,
+        "h4_dir": "sell",
+        "d1_dir": "sell",
+        "w1_dir": "neutral",
+        "ai_prob_entry": null,
+        "filled_qty": 1.0
+      },
+      "_features": {
+        "alignment": 0.875,
+        "slope_score": -0.1691189942888081,
+        "regression_slope_pct": -0.0030509804841807693,
+        "regression_r2": 0.006364622511997764,
+        "adx": 21.306667683946337,
+        "atr": 0.0018501842893675596,
+        "confluence_levels": 0.16216216216216212,
+        "confluence_fibo": 0.0,
+        "alligator_mouth": 0.7135400830572348,
+        "wick_reject_ratio": 0.19047619047619677,
+        "fractal_distance_atr": 0.21619467979416349,
+        "trend_age_bars": 2.0,
+        "signal_age_bars": 2.0,
+        "atr_pct": 0.5001849930704405,
+        "ema_compression": 2.216098881054216,
+        "dist_ema25_atr": -1.323767195105107,
+        "dist_ema80_atr": -1.0635405140998093,
+        "dist_ema220_atr": -4.4047535023340645,
+        "dist_reg_atr": -1.1067895872050337,
+        "hour_utc": 14.0,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -0.09008111658091895,
+        "nearest_support_distance_atr": 0.3693325779816747,
+        "nearest_resistance_distance_atr": 0.5404866994853937,
+        "ai_prob_entry": 0.0
+      }
+    }
+  ]
+}

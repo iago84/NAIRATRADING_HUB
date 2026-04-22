@@ -1,0 +1,67 @@
+{
+  "symbol": "TONUSDT",
+  "provider": "binance",
+  "base_timeframe": "1h",
+  "start": "2025-10-24T15:00:00",
+  "end": "2026-04-22T19:00:00",
+  "metrics": {
+    "trades": 0,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "total_pnl": 0.0,
+    "equity_last": 10000.0,
+    "max_drawdown_pct": 0.0,
+    "CAGR_pct": 0.0,
+    "exit_reason_counts": {},
+    "entry_kind_counts": {},
+    "pnl_avg_by_exit_reason": {},
+    "pnl_avg_by_entry_kind": {},
+    "gates_timing_blocked": 266,
+    "risk_stop_triggered": false,
+    "risk_stop_reason": "",
+    "risk_stop_policy": "stop_immediate",
+    "risk_stop_at_index": null,
+    "risk_stop_at_time": "",
+    "risk_threshold_equity": 5000.0,
+    "risk_threshold_free_cash": 2000.0,
+    "late_entry_report": {
+      "wins": {
+        "trend_age_bars": {},
+        "ema_compression": {},
+        "dist_ema25_atr": {},
+        "dist_reg_atr": {},
+        "signal_age_bars": {}
+      },
+      "losses": {
+        "trend_age_bars": {},
+        "ema_compression": {},
+        "dist_ema25_atr": {},
+        "dist_reg_atr": {},
+        "signal_age_bars": {}
+      },
+      "recommendations": {
+        "trend_age_max_bars": 240,
+        "ema_compression_max": 6.0,
+        "ai_entry_threshold": 0.0
+      }
+    },
+    "regime_report": {
+      "adx<=18": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "18<adx<=25": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "adx>25": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      }
+    }
+  },
+  "trades": []
+}

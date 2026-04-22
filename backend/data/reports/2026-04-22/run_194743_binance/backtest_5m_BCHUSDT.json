@@ -1,0 +1,301 @@
+{
+  "symbol": "BCHUSDT",
+  "provider": "binance",
+  "base_timeframe": "5m",
+  "start": "2026-04-08T14:40:00",
+  "end": "2026-04-22T19:45:00",
+  "metrics": {
+    "trades": 3,
+    "win_rate_pct": 66.66666666666666,
+    "profit_factor": 15.981778693891865,
+    "total_pnl": 0.2693469713012746,
+    "equity_last": 10000.269346971301,
+    "max_drawdown_pct": -0.003999999999996362,
+    "CAGR_pct": 0.0702463187151725,
+    "exit_reason_counts": {
+      "tp": 3
+    },
+    "entry_kind_counts": {
+      "pullback": 1,
+      "break_retest": 2
+    },
+    "pnl_avg_by_exit_reason": {
+      "tp": 0.08978232376665574
+    },
+    "pnl_avg_by_entry_kind": {
+      "pullback": 0.16079315479055367,
+      "break_retest": 0.05427690825470677
+    },
+    "gates_timing_blocked": 25,
+    "risk_stop_triggered": false,
+    "risk_stop_reason": "",
+    "risk_stop_policy": "stop_immediate",
+    "risk_stop_at_index": null,
+    "risk_stop_at_time": "",
+    "risk_threshold_equity": 5000.0,
+    "risk_threshold_free_cash": 2000.0,
+    "late_entry_report": {
+      "wins": {
+        "trend_age_bars": {
+          "p50": 1.5,
+          "p75": 1.75,
+          "p90": 1.9
+        },
+        "ema_compression": {
+          "p50": 0.9650164657939052,
+          "p75": 0.9706071160156322,
+          "p90": 0.9739615061486685
+        },
+        "dist_ema25_atr": {
+          "p50": -2.512624523585922,
+          "p75": -1.9755162497514274,
+          "p90": -1.6532512854507304
+        },
+        "dist_reg_atr": {
+          "p50": -1.038465007396407,
+          "p75": -0.5751994022245517,
+          "p90": -0.2972400391214384
+        },
+        "signal_age_bars": {
+          "p50": 1.5,
+          "p75": 1.75,
+          "p90": 1.9
+        }
+      },
+      "losses": {
+        "trend_age_bars": {
+          "p50": 2.0,
+          "p75": 2.0,
+          "p90": 2.0
+        },
+        "ema_compression": {
+          "p50": 0.4696137991765332,
+          "p75": 0.4696137991765332,
+          "p90": 0.4696137991765332
+        },
+        "dist_ema25_atr": {
+          "p50": 0.12116096960115955,
+          "p75": 0.12116096960115955,
+          "p90": 0.12116096960115955
+        },
+        "dist_reg_atr": {
+          "p50": -1.806670752118094,
+          "p75": -1.806670752118094,
+          "p90": -1.806670752118094
+        },
+        "signal_age_bars": {
+          "p50": 2.0,
+          "p75": 2.0,
+          "p90": 2.0
+        }
+      },
+      "recommendations": {
+        "trend_age_max_bars": 1,
+        "ema_compression_max": 0.9706071160156322,
+        "ai_entry_threshold": 0.0
+      }
+    },
+    "regime_report": {
+      "adx<=18": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "18<adx<=25": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "adx>25": {
+        "n": 3,
+        "pf": 15.981778693891865,
+        "avg_pnl": 0.08978232376665574
+      }
+    }
+  },
+  "trades": [
+    {
+      "side": "sell",
+      "entry_time": "2026-04-19T09:25:00",
+      "exit_time": "2026-04-19T09:45:00",
+      "entry": 439.4,
+      "exit": 439.2392068452094,
+      "pnl": 0.16079315479055367,
+      "bars_held": 4,
+      "entry_index": 3105,
+      "exit_index": 3109,
+      "entry_kind": "pullback",
+      "exit_reason": "tp",
+      "entry_sub_index": null,
+      "entry_meta": {
+        "trend_age_bars": 1,
+        "signal_age_bars": 1,
+        "atr_pct": 0.16508916372939725,
+        "ema_compression": 0.9538351653504511,
+        "dist_ema25_atr": -3.5868410712549115,
+        "dist_ema80_atr": -5.181596710926507,
+        "dist_ema220_atr": -7.417493882934499,
+        "dist_reg_atr": -1.9649962177401177,
+        "hour_utc": 9,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -11.350031801324096,
+        "nearest_support_distance_atr": 0.038292954795359796,
+        "nearest_resistance_distance_atr": 0.551418549052225,
+        "h4_dir": "sell",
+        "d1_dir": "neutral",
+        "w1_dir": "neutral",
+        "ai_prob_entry": null,
+        "filled_qty": 1.0
+      },
+      "_features": {
+        "alignment": 0.875,
+        "slope_score": -0.17442729725877248,
+        "regression_slope_pct": -0.019412278471031896,
+        "regression_r2": 0.5348530171944494,
+        "adx": 26.46174792360233,
+        "atr": 0.7254017854269715,
+        "confluence_levels": 0.1351351351351351,
+        "confluence_fibo": 0.08333333333333333,
+        "alligator_mouth": 0.285802855072869,
+        "wick_reject_ratio": 0.6499999999999773,
+        "fractal_distance_atr": 3.5842205688391884,
+        "trend_age_bars": 1.0,
+        "signal_age_bars": 1.0,
+        "atr_pct": 0.16508916372939725,
+        "ema_compression": 0.9538351653504511,
+        "dist_ema25_atr": -3.5868410712549115,
+        "dist_ema80_atr": -5.181596710926507,
+        "dist_ema220_atr": -7.417493882934499,
+        "dist_reg_atr": -1.9649962177401177,
+        "hour_utc": 9.0,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -11.350031801324096,
+        "nearest_support_distance_atr": 0.038292954795359796,
+        "nearest_resistance_distance_atr": 0.551418549052225,
+        "ai_prob_entry": 0.0
+      }
+    },
+    {
+      "side": "sell",
+      "entry_time": "2026-04-19T10:55:00",
+      "exit_time": "2026-04-19T11:00:00",
+      "entry": 439.6,
+      "exit": 439.4734678795253,
+      "pnl": 0.12653212047473517,
+      "bars_held": 1,
+      "entry_index": 3123,
+      "exit_index": 3124,
+      "entry_kind": "break_retest",
+      "exit_reason": "tp",
+      "entry_sub_index": null,
+      "entry_meta": {
+        "trend_age_bars": 2,
+        "signal_age_bars": 2,
+        "atr_pct": 0.12671791656792047,
+        "ema_compression": 0.9761977662373593,
+        "dist_ema25_atr": -1.4384079759169326,
+        "dist_ema80_atr": -4.2588242364874205,
+        "dist_ema220_atr": -7.971378340441252,
+        "dist_reg_atr": -0.11193379705269631,
+        "hour_utc": 10,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -14.421156180041363,
+        "nearest_support_distance_atr": 0.33068822863153463,
+        "nearest_resistance_distance_atr": 0.17951646697150947,
+        "h4_dir": "sell",
+        "d1_dir": "neutral",
+        "w1_dir": "neutral",
+        "ai_prob_entry": null,
+        "filled_qty": 1.0
+      },
+      "_features": {
+        "alignment": 0.875,
+        "slope_score": -0.05546414506285326,
+        "regression_slope_pct": -0.013893181829585988,
+        "regression_r2": 0.4229016596475904,
+        "adx": 39.42216274541558,
+        "atr": 0.5570519612325784,
+        "confluence_levels": 0.1351351351351351,
+        "confluence_fibo": 0.08333333333333333,
+        "alligator_mouth": 1.3448217246210137,
+        "wick_reject_ratio": 8.999999999997726,
+        "fractal_distance_atr": 0.0,
+        "trend_age_bars": 2.0,
+        "signal_age_bars": 2.0,
+        "atr_pct": 0.12671791656792047,
+        "ema_compression": 0.9761977662373593,
+        "dist_ema25_atr": -1.4384079759169326,
+        "dist_ema80_atr": -4.2588242364874205,
+        "dist_ema220_atr": -7.971378340441252,
+        "dist_reg_atr": -0.11193379705269631,
+        "hour_utc": 10.0,
+        "is_weekend": 1.0,
+        "dist_pivot_P_atr": -14.421156180041363,
+        "nearest_support_distance_atr": 0.33068822863153463,
+        "nearest_resistance_distance_atr": 0.17951646697150947,
+        "ai_prob_entry": 0.0
+      }
+    },
+    {
+      "side": "sell",
+      "entry_time": "2026-04-20T02:15:00",
+      "exit_time": "2026-04-20T02:20:00",
+      "entry": 438.0,
+      "exit": 438.0179783039653,
+      "pnl": -0.01797830396532163,
+      "bars_held": 1,
+      "entry_index": 3307,
+      "exit_index": 3308,
+      "entry_kind": "break_retest",
+      "exit_reason": "tp",
+      "entry_sub_index": null,
+      "entry_meta": {
+        "trend_age_bars": 2,
+        "signal_age_bars": 2,
+        "atr_pct": 0.12241617699589599,
+        "ema_compression": 0.4696137991765332,
+        "dist_ema25_atr": 0.12116096960115955,
+        "dist_ema80_atr": -0.1370360615673596,
+        "dist_ema220_atr": -3.530516978127973,
+        "dist_reg_atr": -1.806670752118094,
+        "hour_utc": 2,
+        "is_weekend": 0.0,
+        "dist_pivot_P_atr": -0.7460141555987775,
+        "nearest_support_distance_atr": 0.11190212333994914,
+        "nearest_resistance_distance_atr": 0.4973427703992557,
+        "h4_dir": "sell",
+        "d1_dir": "neutral",
+        "w1_dir": "neutral",
+        "ai_prob_entry": null,
+        "filled_qty": 1.0
+      },
+      "_features": {
+        "alignment": 0.875,
+        "slope_score": -0.036593838906238685,
+        "regression_slope_pct": 0.01990842990646736,
+        "regression_r2": 0.7017915022338326,
+        "adx": 32.227370620005544,
+        "atr": 0.5361828552420245,
+        "confluence_levels": 0.16216216216216212,
+        "confluence_fibo": 0.08333333333333333,
+        "alligator_mouth": 1.5968052000653867,
+        "wick_reject_ratio": 0.5,
+        "fractal_distance_atr": 0.9325176944986574,
+        "trend_age_bars": 2.0,
+        "signal_age_bars": 2.0,
+        "atr_pct": 0.12241617699589599,
+        "ema_compression": 0.4696137991765332,
+        "dist_ema25_atr": 0.12116096960115955,
+        "dist_ema80_atr": -0.1370360615673596,
+        "dist_ema220_atr": -3.530516978127973,
+        "dist_reg_atr": -1.806670752118094,
+        "hour_utc": 2.0,
+        "is_weekend": 0.0,
+        "dist_pivot_P_atr": -0.7460141555987775,
+        "nearest_support_distance_atr": 0.11190212333994914,
+        "nearest_resistance_distance_atr": 0.4973427703992557,
+        "ai_prob_entry": 0.0
+      }
+    }
+  ]
+}
