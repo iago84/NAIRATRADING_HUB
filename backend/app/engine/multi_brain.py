@@ -13,6 +13,7 @@ from .ensemble import combine
 from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate, timing_gate
 from .naira_engine import NairaEngine
 from .regime_router import Regime, classify_regime, pick_brains
+from .setup_classifier import classify_setups
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,7 @@ def run_multi_brain(
     df_base = engine.load_ohlc(symbol=symbol, timeframe=base_timeframe, provider=provider, csv_path=csv_path)
     df_feat = engine._apply_features(df_base)
     frames = list(analysis.get("frames") or [])
+    setup = classify_setups(df_feat_base=df_feat, frames=frames, base_timeframe=str(base_timeframe))
     regime = classify_regime(frames)
     g1 = structural_gate(frames)
     g2 = confluence_gate(frames, base_timeframe=str(base_timeframe))
@@ -101,9 +103,11 @@ def run_multi_brain(
         merged["direction"] = "neutral"
         merged["confidence"] = float(analysis.get("confidence") or 0.0) * 0.2
         merged["opportunity_score"] = 0.0
+        merged["setup_primary"] = setup.get("setup_primary")
+        merged["setup_candidates"] = setup.get("setup_candidates")
         merged["reasons"] = list(analysis.get("reasons") or []) + list(g1.reasons) + list(g2.reasons) + list(g3.reasons) + list(g4.reasons) + [f"regime={regime}"]
         if include_debug:
-            merged["debug"] = {"regime": regime, "gates": {"structural": g1.debug, "confluence": g2.debug, "execution": g3.debug, "timing": g4.debug}}
+            merged["debug"] = {"regime": regime, "gates": {"structural": g1.debug, "confluence": g2.debug, "execution": g3.debug, "timing": g4.debug}, "setup": setup}
         neutral = BrainSignal(brain="trend", direction="neutral", confidence=float(merged["confidence"]), opportunity_score=0.0, reasons=list(merged["reasons"]), risk=dict(analysis.get("risk") or {}), ai_p_win=None)
         return merged, MultiBrainResult(regime=regime, dominant=neutral, secondary=None, final=neutral, gate={"ok": False, "reason": "execution_gates"})
     active = pick_brains(regime)
@@ -138,6 +142,8 @@ def run_multi_brain(
     merged["direction"] = combined.direction
     merged["confidence"] = float(combined.confidence)
     merged["opportunity_score"] = float(combined.opportunity_score)
+    merged["setup_primary"] = setup.get("setup_primary")
+    merged["setup_candidates"] = setup.get("setup_candidates")
     b = str(combined.brain)
     if b == "breakout":
         merged["entry_kind"] = "break_retest"
@@ -158,5 +164,6 @@ def run_multi_brain(
         }
         dbg["gates"] = {"structural": g1.debug, "confluence": g2.debug, "execution": g3.debug, "timing": g4.debug}
         dbg["entry_kind"] = str(merged.get("entry_kind") or "")
+        dbg["setup"] = setup
         merged["debug"] = dbg
     return merged, MultiBrainResult(regime=regime, dominant=dom2, secondary=sec2, final=combined, gate=gate.__dict__)

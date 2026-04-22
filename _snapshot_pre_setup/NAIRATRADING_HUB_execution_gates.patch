@@ -1,0 +1,515 @@
+diff --git a/.env.example b/.env.example
+index 407773e..1c36105 100644
+--- a/.env.example
++++ b/.env.example
+@@ -30,6 +30,14 @@ AI_GATE_T1=0.58
+ AI_GATE_T2=0.54
+ AI_GATE_T3=0.50
+ 
++STRUCT_ALIGN_4H_MIN=0.6
++STRUCT_ALIGN_1D_MIN=0.6
++CONFLUENCE_MIN=0.2
++EXEC_CONF_MIN=0.65
++EXEC_ALIGN_MIN=0.7
++MR_SPREAD_FAST_PCT_MIN=1.0
++MR_REQUIRE_OPPOSITE_CURVATURE=1
++
+ FX_SESSION_START_UTC=6
+ FX_SESSION_END_UTC=21
+ MIN_ATR_PCT=0.02
+diff --git a/README.md b/README.md
+index e316fcc..2cc11ba 100644
+--- a/README.md
++++ b/README.md
+@@ -37,6 +37,10 @@ Variables principales:
+ - CRYPTO_T0_MAX/CRYPTO_T1_MAX/CRYPTO_T2_MAX (tramos crypto)
+ - FX_T0_MAX/FX_T1_MAX/FX_T2_MAX (tramos FX/metales)
+ - AI_GATE_T0..AI_GATE_T3 (umbral p(win) por tramo)
++- STRUCT_ALIGN_4H_MIN/STRUCT_ALIGN_1D_MIN (filtro estructural obligatorio)
++- CONFLUENCE_MIN (confluencia mínima; por debajo no entra)
++- EXEC_CONF_MIN/EXEC_ALIGN_MIN (umbral de ejecución)
++- MR_SPREAD_FAST_PCT_MIN/MR_REQUIRE_OPPOSITE_CURVATURE (requisitos MR)
+ - API_KEY_PRO / API_KEY_TRADER (tiers)
+ - REDIS_URL (opcional, cache)
+ - TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID / WEBHOOK_URLS (notificaciones)
+diff --git a/backend/app/core/config.py b/backend/app/core/config.py
+index 8fe10b6..d13a7d4 100644
+--- a/backend/app/core/config.py
++++ b/backend/app/core/config.py
+@@ -55,5 +55,14 @@ class Settings:
+     AI_GATE_T2: float = float(_env("AI_GATE_T2", "0.54"))
+     AI_GATE_T3: float = float(_env("AI_GATE_T3", "0.50"))
+ 
++    STRUCT_ALIGN_4H_MIN: float = float(_env("STRUCT_ALIGN_4H_MIN", "0.6"))
++    STRUCT_ALIGN_1D_MIN: float = float(_env("STRUCT_ALIGN_1D_MIN", "0.6"))
++    CONFLUENCE_MIN: float = float(_env("CONFLUENCE_MIN", "0.2"))
++    EXEC_CONF_MIN: float = float(_env("EXEC_CONF_MIN", "0.65"))
++    EXEC_ALIGN_MIN: float = float(_env("EXEC_ALIGN_MIN", "0.7"))
++
++    MR_SPREAD_FAST_PCT_MIN: float = float(_env("MR_SPREAD_FAST_PCT_MIN", "1.0"))
++    MR_REQUIRE_OPPOSITE_CURVATURE: int = _env_int("MR_REQUIRE_OPPOSITE_CURVATURE", 1)
++
+ 
+ settings = Settings()
+diff --git a/backend/app/engine/brains/mean_reversion.py b/backend/app/engine/brains/mean_reversion.py
+index a442c17..2745fc5 100644
+--- a/backend/app/engine/brains/mean_reversion.py
++++ b/backend/app/engine/brains/mean_reversion.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++from ...core.config import settings
+ from ..entry_rules import decide_entry
+ from .types import BrainContext, BrainSignal
+ 
+@@ -20,6 +21,51 @@ def run(ctx: BrainContext) -> BrainSignal:
+             risk=dict(a.get("risk") or {}),
+             ai_p_win=None,
+         )
++    try:
++        last = ctx.df_feat_base.iloc[-1]
++        spread = float(last.get("ema_spread_fast_pct") or 0.0)
++        curv = float(last.get("curvature") or 0.0)
++        if abs(float(spread)) < float(settings.MR_SPREAD_FAST_PCT_MIN):
++            return BrainSignal(
++                brain="mean_reversion",
++                direction="neutral",
++                confidence=float(confidence) * 0.2,
++                opportunity_score=0.0,
++                reasons=reasons + ["mr_spread_not_extreme"],
++                risk=dict(a.get("risk") or {}),
++                ai_p_win=None,
++            )
++        if int(settings.MR_REQUIRE_OPPOSITE_CURVATURE) == 1:
++            if direction == "buy" and float(curv) <= 0:
++                return BrainSignal(
++                    brain="mean_reversion",
++                    direction="neutral",
++                    confidence=float(confidence) * 0.2,
++                    opportunity_score=0.0,
++                    reasons=reasons + ["mr_curvature_not_confirming"],
++                    risk=dict(a.get("risk") or {}),
++                    ai_p_win=None,
++                )
++            if direction == "sell" and float(curv) >= 0:
++                return BrainSignal(
++                    brain="mean_reversion",
++                    direction="neutral",
++                    confidence=float(confidence) * 0.2,
++                    opportunity_score=0.0,
++                    reasons=reasons + ["mr_curvature_not_confirming"],
++                    risk=dict(a.get("risk") or {}),
++                    ai_p_win=None,
++                )
++    except Exception:
++        return BrainSignal(
++            brain="mean_reversion",
++            direction="neutral",
++            confidence=float(confidence) * 0.2,
++            opportunity_score=0.0,
++            reasons=reasons + ["mr_requirements_failed"],
++            risk=dict(a.get("risk") or {}),
++            ai_p_win=None,
++        )
+     dec = decide_entry(df=ctx.df_feat_base, side=direction, mode="mean_reversion", tol_atr=0.6)
+     if not dec.ok:
+         return BrainSignal(
+diff --git a/backend/app/engine/brains/trend.py b/backend/app/engine/brains/trend.py
+index dacda2e..a05007b 100644
+--- a/backend/app/engine/brains/trend.py
++++ b/backend/app/engine/brains/trend.py
+@@ -9,6 +9,35 @@ def run(ctx: BrainContext) -> BrainSignal:
+     confidence = float(a.get("confidence") or 0.0)
+     score = float(a.get("opportunity_score") or 0.0)
+     reasons = [f"brain=trend"]
++    by_tf = {str(f.get("timeframe") or ""): f for f in (ctx.frames or [])}
++    f1d = by_tf.get("1d") or {}
++    f1w = by_tf.get("1w") or {}
++    d1d = str(f1d.get("direction") or "neutral")
++    d1w = str(f1w.get("direction") or "neutral")
++    a1d = float(f1d.get("alignment") or 0.0)
++    a1w = float(f1w.get("alignment") or 0.0)
++    req_ok = True
++    if direction in ("buy", "sell"):
++        if d1d != direction:
++            req_ok = False
++        if "1w" in by_tf and d1w != direction:
++            req_ok = False
++        if a1d < 0.7:
++            req_ok = False
++        if "1w" in by_tf and a1w < 0.7:
++            req_ok = False
++    else:
++        req_ok = False
++    if not req_ok:
++        return BrainSignal(
++            brain="trend",
++            direction="neutral",
++            confidence=float(confidence) * 0.2,
++            opportunity_score=0.0,
++            reasons=reasons + ["trend_requirements_failed"],
++            risk=dict(a.get("risk") or {}),
++            ai_p_win=None,
++        )
+     reasons.extend(list(a.get("reasons") or [])[:6])
+     return BrainSignal(
+         brain="trend",
+diff --git a/backend/app/engine/execution_gates.py b/backend/app/engine/execution_gates.py
+new file mode 100644
+index 0000000..357315f
+--- /dev/null
++++ b/backend/app/engine/execution_gates.py
+@@ -0,0 +1,48 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, List
++
++from ..core.config import settings
++
++
++@dataclass(frozen=True)
++class GateResult:
++    ok: bool
++    reasons: List[str]
++    debug: Dict[str, Any]
++
++
++def _frames_by_tf(frames: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
++    out: Dict[str, Dict[str, Any]] = {}
++    for f in frames or []:
++        tf = str(f.get("timeframe") or "")
++        if tf:
++            out[tf] = dict(f)
++    return out
++
++
++def structural_gate(frames: List[Dict[str, Any]]) -> GateResult:
++    by_tf = _frames_by_tf(frames)
++    a4 = float((by_tf.get("4h") or {}).get("alignment") or 0.0)
++    a1 = float((by_tf.get("1d") or {}).get("alignment") or 0.0)
++    ok = not (a4 < float(settings.STRUCT_ALIGN_4H_MIN) and a1 < float(settings.STRUCT_ALIGN_1D_MIN))
++    return GateResult(ok=bool(ok), reasons=([] if ok else ["gate_structural"]), debug={"alignment_4h": a4, "alignment_1d": a1})
++
++
++def confluence_gate(frames: List[Dict[str, Any]], base_timeframe: str) -> GateResult:
++    by_tf = _frames_by_tf(frames)
++    f = by_tf.get(str(base_timeframe)) or by_tf.get("4h") or {}
++    lv = float(f.get("level_confluence_score") or 0.0)
++    ok = lv >= float(settings.CONFLUENCE_MIN)
++    return GateResult(ok=bool(ok), reasons=([] if ok else ["gate_low_confluence"]), debug={"level_confluence_score": lv})
++
++
++def execution_threshold_gate(frames: List[Dict[str, Any]], base_timeframe: str) -> GateResult:
++    by_tf = _frames_by_tf(frames)
++    f = by_tf.get(str(base_timeframe)) or {}
++    conf = float(f.get("confidence") or 0.0)
++    ali = float(f.get("alignment") or 0.0)
++    ok = (conf >= float(settings.EXEC_CONF_MIN)) and (ali >= float(settings.EXEC_ALIGN_MIN))
++    return GateResult(ok=bool(ok), reasons=([] if ok else ["gate_execution_threshold"]), debug={"exec_conf": conf, "exec_align": ali})
++
+diff --git a/backend/app/engine/multi_brain.py b/backend/app/engine/multi_brain.py
+index eac33e4..b373689 100644
+--- a/backend/app/engine/multi_brain.py
++++ b/backend/app/engine/multi_brain.py
+@@ -10,6 +10,7 @@ from .brains import run_breakout, run_mean_reversion, run_pullback, run_trend
+ from .brains.types import BrainContext, BrainSignal
+ from .dataset import FEATURES
+ from .ensemble import combine
++from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate
+ from .naira_engine import NairaEngine
+ from .regime_router import Regime, classify_regime, pick_brains
+ 
+@@ -81,6 +82,19 @@ def run_multi_brain(
+     df_feat = engine._apply_features(df_base)
+     frames = list(analysis.get("frames") or [])
+     regime = classify_regime(frames)
++    g1 = structural_gate(frames)
++    g2 = confluence_gate(frames, base_timeframe=str(base_timeframe))
++    g3 = execution_threshold_gate(frames, base_timeframe=str(base_timeframe))
++    if not (g1.ok and g2.ok and g3.ok):
++        merged = dict(analysis)
++        merged["direction"] = "neutral"
++        merged["confidence"] = float(analysis.get("confidence") or 0.0) * 0.2
++        merged["opportunity_score"] = 0.0
++        merged["reasons"] = list(analysis.get("reasons") or []) + list(g1.reasons) + list(g2.reasons) + list(g3.reasons) + [f"regime={regime}"]
++        if include_debug:
++            merged["debug"] = {"regime": regime, "gates": {"structural": g1.debug, "confluence": g2.debug, "execution": g3.debug}}
++        neutral = BrainSignal(brain="trend", direction="neutral", confidence=float(merged["confidence"]), opportunity_score=0.0, reasons=list(merged["reasons"]), risk=dict(analysis.get("risk") or {}), ai_p_win=None)
++        return merged, MultiBrainResult(regime=regime, dominant=neutral, secondary=None, final=neutral, gate={"ok": False, "reason": "execution_gates"})
+     active = pick_brains(regime)
+     ctx = BrainContext(
+         symbol=str(symbol),
+@@ -115,11 +129,13 @@ def run_multi_brain(
+     merged["opportunity_score"] = float(combined.opportunity_score)
+     merged["reasons"] = list(analysis.get("reasons") or []) + [f"regime={regime}", f"brain={combined.brain}"]
+     if include_debug:
+-        merged["debug"] = {
++        dbg = {
+             "regime": regime,
+             "dominant": dom2.brain,
+             "secondary": sec2.brain if sec2 else None,
+             "ai_p_win": p_win,
+             "ai_gate": gate.__dict__,
+         }
++        dbg["gates"] = {"structural": g1.debug, "confluence": g2.debug, "execution": g3.debug}
++        merged["debug"] = dbg
+     return merged, MultiBrainResult(regime=regime, dominant=dom2, secondary=sec2, final=combined, gate=gate.__dict__)
+diff --git a/backend/app/engine/naira_engine.py b/backend/app/engine/naira_engine.py
+index ee9d887..617da70 100644
+--- a/backend/app/engine/naira_engine.py
++++ b/backend/app/engine/naira_engine.py
+@@ -17,6 +17,7 @@ from .levels import build_levels, confluence_score, pivot_points_prev_day, fract
+ from .alligator import latest_alligator
+ from .regression import rolling_linreg_slope_pct, linreg_metrics
+ from .entry_rules import decide_entry
++from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate
+ from .filters import OperationalFilterConfig, apply_operational_filters
+ from ..core.logger import get_logger
+ from ..core.config import settings
+@@ -866,12 +867,14 @@ class NairaEngine:
+         ht_index: Dict[str, np.ndarray] = {}
+         ht_dir: Dict[str, np.ndarray] = {}
+         ht_conf: Dict[str, np.ndarray] = {}
++        ht_align: Dict[str, np.ndarray] = {}
+         ht_valid: Dict[str, np.ndarray] = {}
+         for tf, st in ht_states.items():
+             tarr = pd.to_datetime(st["datetime"]).to_numpy(dtype="datetime64[ns]")
+             ht_index[tf] = tarr
+             ht_dir[tf] = st["direction"].to_numpy()
+             ht_conf[tf] = st["confidence"].to_numpy(dtype=float)
++            ht_align[tf] = st["alignment"].to_numpy(dtype=float)
+             ht_valid[tf] = (st["slope_score"].notna() & st["alignment"].notna() & st["regression_r2"].notna()).to_numpy()
+ 
+         def get_ht_state(tf: str, t: np.datetime64) -> Tuple[str, float, bool]:
+@@ -883,6 +886,19 @@ class NairaEngine:
+                 return "neutral", 0.0, False
+             return str(ht_dir[tf][j]), float(ht_conf[tf][j]), bool(ht_valid[tf][j])
+ 
++        def get_ht_alignment(tf: str, t: np.datetime64) -> float:
++            idx = ht_index.get(tf)
++            if idx is None or len(idx) == 0:
++                return 0.0
++            j = int(np.searchsorted(idx, t, side="right") - 1)
++            if j < 0:
++                return 0.0
++            try:
++                v = float(ht_align[tf][j])
++                return float(v) if np.isfinite(v) else 0.0
++            except Exception:
++                return 0.0
++
+         timing_tf = str(self.config.timing_timeframe or "").strip()
+         timing_state: Optional[pd.DataFrame] = None
+         timing_index: Optional[np.ndarray] = None
+@@ -1114,6 +1130,35 @@ class NairaEngine:
+                     except Exception:
+                         pass
+ 
++                    try:
++                        frames_min = []
++                        align_base = float(base_state.get("alignment").iloc[i]) if "alignment" in base_state.columns and pd.notna(base_state.get("alignment").iloc[i]) else 0.0
++                        frames_min.append(
++                            {
++                                "timeframe": str(base_timeframe),
++                                "confidence": float(base_conf),
++                                "alignment": float(align_base),
++                            }
++                        )
++                        frames_min.append({"timeframe": "4h", "alignment": float(get_ht_alignment("4h", t))})
++                        frames_min.append({"timeframe": "1d", "alignment": float(get_ht_alignment("1d", t))})
++                        g_struct = structural_gate(frames_min)
++                        g_exec = execution_threshold_gate(frames_min, base_timeframe=str(base_timeframe))
++                        if not g_struct.ok or not g_exec.ok:
++                            equity_curve.append(float(cash))
++                            continue
++                        piv_c = pivot_points_prev_day(df_base.iloc[: i + 1])
++                        lv_c = build_levels(df_base.iloc[: i + 1], atr=float(atr_v), lookback=3)
++                        conf_c = float(confluence_score(price=float(price), pivots=piv_c, levels=lv_c, atr=float(atr_v)))
++                        frames_min[0]["level_confluence_score"] = float(conf_c)
++                        g_conf = confluence_gate(frames_min, base_timeframe=str(base_timeframe))
++                        if not g_conf.ok:
++                            equity_curve.append(float(cash))
++                            continue
++                    except Exception:
++                        equity_curve.append(float(cash))
++                        continue
++
+                     entry_price = float(price)
+                     entry_dt = pd.to_datetime(dt_arr[i])
+                     entry_sub_idx = None
+@@ -1986,16 +2031,19 @@ class NairaEngine:
+             ht_index = {}
+             ht_dir = {}
+             ht_conf = {}
++            ht_align = {}
+             ht_valid = {}
+             for tf, st_tf in (pack.get("ht") or {}).items():
+                 tarr = pd.to_datetime(st_tf["datetime"]).to_numpy(dtype="datetime64[ns]")
+                 ht_index[tf] = tarr
+                 ht_dir[tf] = st_tf["direction"].to_numpy()
+                 ht_conf[tf] = st_tf["confidence"].to_numpy(dtype=float)
++                ht_align[tf] = st_tf["alignment"].to_numpy(dtype=float)
+                 ht_valid[tf] = (st_tf["slope_score"].notna() & st_tf["alignment"].notna() & st_tf["regression_r2"].notna()).to_numpy()
+             pack["ht_index"] = ht_index
+             pack["ht_dir"] = ht_dir
+             pack["ht_conf"] = ht_conf
++            pack["ht_align"] = ht_align
+             pack["ht_valid"] = ht_valid
+ 
+         base_sec = int(_TF_SECONDS.get(bt, 0))
+@@ -2043,6 +2091,22 @@ class NairaEngine:
+                 return "neutral", 0.0, False
+             return str(pack["ht_dir"][tf][j]), float(pack["ht_conf"][tf][j]), bool(pack["ht_valid"][tf][j])
+ 
++        def _get_ht_alignment(pack: Dict[str, Any], tf: str, t: np.datetime64) -> float:
++            idx = (pack.get("ht_index") or {}).get(tf)
++            if idx is None or len(idx) == 0:
++                return 0.0
++            j = int(np.searchsorted(idx, t, side="right") - 1)
++            if j < 0:
++                return 0.0
++            try:
++                arr = (pack.get("ht_align") or {}).get(tf)
++                if arr is None:
++                    return 0.0
++                v = float(arr[j])
++                return float(v) if np.isfinite(v) else 0.0
++            except Exception:
++                return 0.0
++
+         def _score_candidate(g_conf: float, ai_p: Optional[float], alignment: float, slope_score: float, adx: float) -> float:
+             s = float(self.config.ensemble_w_conf) * float(g_conf)
+             if ai_p is not None:
+@@ -2252,12 +2316,33 @@ class NairaEngine:
+                     if float(g_conf) < float(self.config.min_confidence):
+                         continue
+ 
++                    row = st.iloc[i]
++                    try:
++                        align_base = float(row.get("alignment") or 0.0)
++                    except Exception:
++                        align_base = 0.0
++                    try:
++                        piv_c = pivot_points_prev_day(pack["df"].iloc[: i + 1])
++                        lv_c = build_levels(pack["df"].iloc[: i + 1], atr=float(atr_v), lookback=3)
++                        conf_c = float(confluence_score(price=float(row.get("close") or 0.0), pivots=piv_c, levels=lv_c, atr=float(atr_v)))
++                    except Exception:
++                        conf_c = 0.0
++                    frames_min = [
++                        {"timeframe": str(bt), "confidence": float(base_conf), "alignment": float(align_base), "level_confluence_score": float(conf_c)},
++                        {"timeframe": "4h", "alignment": float(_get_ht_alignment(pack, "4h", t))},
++                        {"timeframe": "1d", "alignment": float(_get_ht_alignment(pack, "1d", t))},
++                    ]
++                    g_struct = structural_gate(frames_min)
++                    g_conf2 = confluence_gate(frames_min, base_timeframe=str(bt))
++                    g_exec = execution_threshold_gate(frames_min, base_timeframe=str(bt))
++                    if not (g_struct.ok and g_conf2.ok and g_exec.ok):
++                        continue
++
+                     df_feat = pack["df_feat"]
+                     w0 = max(0, int(i) - 300)
+                     ed = decide_entry(df_feat.iloc[w0 : i + 1], side=g_dir, mode=entry_mode, tol_atr=float(self.config.entry_tol_atr))
+                     if not ed.ok:
+                         continue
+-                    row = st.iloc[i]
+                     feats = {
+                         "alignment": float(row.get("alignment") or 0.0),
+                         "slope_score": float(row.get("slope_score") or 0.0),
+@@ -2265,7 +2350,7 @@ class NairaEngine:
+                         "regression_r2": float(row.get("regression_r2") or 0.0),
+                         "adx": float(row.get("adx") or 0.0),
+                         "atr": float(row.get("atr") or 0.0),
+-                        "confluence_levels": 0.0,
++                        "confluence_levels": float(conf_c),
+                         "confluence_fibo": 0.0,
+                         "alligator_mouth": 0.0,
+                     }
+diff --git a/backend/tests/test_engine.py b/backend/tests/test_engine.py
+index 7b0a5e9..a7628bf 100644
+--- a/backend/tests/test_engine.py
++++ b/backend/tests/test_engine.py
+@@ -140,6 +140,41 @@ class TestNairaEngine(unittest.TestCase):
+             self.assertIn("metrics", r)
+             self.assertIn("trades", r)
+ 
++    def test_backtest_confluence_gate_blocks_entries(self):
++        import pandas as pd
++        import numpy as np
++
++        with tempfile.TemporaryDirectory() as td:
++            base_dir = td
++            sym_dir = Path(base_dir) / "history" / "csv" / "GATE"
++            os.makedirs(sym_dir, exist_ok=True)
++
++            start = pd.Timestamp("2025-01-01T00:00:00Z")
++            n = 120
++            times = pd.date_range(start=start, periods=n, freq="1h")
++            close = np.concatenate([np.linspace(100.0, 110.0, 60), np.linspace(200.0, 210.0, 60)])
++            open_ = np.roll(close, 1)
++            open_[0] = close[0]
++            high = np.maximum(open_, close) + 0.2
++            low = np.minimum(open_, close) - 0.2
++            df_1h = pd.DataFrame({"datetime": times, "open": open_, "high": high, "low": low, "close": close, "volume": 1.0})
++            df_1h.to_csv(sym_dir / "1h.csv", index=False)
++
++            cfg = NairaConfig(
++                strategy_mode="multi",
++                entry_mode="hybrid",
++                confirm_higher_tfs=False,
++                timing_timeframe="",
++                alignment_threshold=0.0,
++                slope_threshold_pct=0.0,
++                adx_threshold=0.0,
++                min_confidence=0.0,
++            )
++            e = NairaEngine(data_dir=base_dir, config=cfg)
++            r = e.backtest(symbol="GATE", provider="csv", base_timeframe="1h", max_bars=120)
++            self.assertIn("trades", r)
++            self.assertEqual(len(r.get("trades") or []), 0)
++
+     def test_history_file_exists(self):
+         p = Path(settings.DATA_DIR) / "history" / "csv" / "TEST" / "1h.csv"
+         self.assertTrue(p.exists())
+diff --git a/backend/tests/test_execution_gates.py b/backend/tests/test_execution_gates.py
+new file mode 100644
+index 0000000..f586894
+--- /dev/null
++++ b/backend/tests/test_execution_gates.py
+@@ -0,0 +1,36 @@
++import unittest
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++from app.engine.execution_gates import structural_gate, confluence_gate, execution_threshold_gate
++
++
++class TestExecutionGates(unittest.TestCase):
++    def test_structural_gate_blocks(self):
++        frames = [
++            {"timeframe": "4h", "alignment": 0.5},
++            {"timeframe": "1d", "alignment": 0.5},
++        ]
++        r = structural_gate(frames)
++        self.assertFalse(r.ok)
++        self.assertIn("gate_structural", r.reasons)
++
++    def test_confluence_gate_blocks(self):
++        frames = [{"timeframe": "1h", "level_confluence_score": 0.1}]
++        r = confluence_gate(frames, base_timeframe="1h")
++        self.assertFalse(r.ok)
++        self.assertIn("gate_low_confluence", r.reasons)
++
++    def test_exec_threshold_blocks(self):
++        frames = [{"timeframe": "1h", "confidence": 0.6, "alignment": 0.6}]
++        r = execution_threshold_gate(frames, base_timeframe="1h")
++        self.assertFalse(r.ok)
++        self.assertIn("gate_execution_threshold", r.reasons)
++
++
++if __name__ == "__main__":
++    unittest.main()
++

@@ -1,0 +1,4 @@
+-r requirements.txt
+ccxt>=4.0
+redis>=5.0
+MetaTrader5>=5.0

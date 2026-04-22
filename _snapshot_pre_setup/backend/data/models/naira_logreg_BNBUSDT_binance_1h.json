@@ -1,0 +1,25 @@
+{
+  "feature_names": [
+    "alignment",
+    "slope_score",
+    "regression_slope_pct",
+    "regression_r2",
+    "adx",
+    "atr",
+    "confluence_levels",
+    "confluence_fibo",
+    "alligator_mouth"
+  ],
+  "weights": [
+    6.29257632058483,
+    -0.05951541810805478,
+    6.581361634296466,
+    0.3967432403435538,
+    -0.05855163043652479,
+    0.05118056670424483,
+    8.880241851004795e-08,
+    1.9788364845032864e-06,
+    -7.267461104105786e-07
+  ],
+  "bias": -4.68509727768885
+}

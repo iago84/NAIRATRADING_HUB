@@ -1,0 +1,6 @@
+{
+  "kill_switch": false,
+  "max_notifies_per_day": 300,
+  "max_signals_per_day": 600,
+  "cooldown_minutes": 0
+}
