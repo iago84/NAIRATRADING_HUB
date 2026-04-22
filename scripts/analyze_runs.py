@@ -6,15 +6,18 @@ import os
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from scripts.pipeline_lib.log import info, log
 
 
 def load_scan_json(path: str) -> List[Dict[str, Any]]:
+    log(f"load_scan_json path={path}", verbose=False)
     with open(path, "r", encoding="utf-8") as f:
         v = json.loads(f.read() or "[]")
     return list(v or [])
 
 
 def load_random_jsonl(path: str) -> List[Dict[str, Any]]:
+    log(f"load_random_jsonl path={path}", verbose=False)
     out: List[Dict[str, Any]] = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
@@ -26,6 +29,7 @@ def load_random_jsonl(path: str) -> List[Dict[str, Any]]:
 
 
 def load_dataset_csv(path: str) -> List[Dict[str, Any]]:
+    log(f"load_dataset_csv path={path}", verbose=False)
     df = pd.read_csv(path)
     out: List[Dict[str, Any]] = []
     for _, row in df.iterrows():
@@ -37,6 +41,7 @@ def load_dataset_csv(path: str) -> List[Dict[str, Any]]:
 
 
 def load_backtest_json(path: str) -> List[Dict[str, Any]]:
+    log(f"load_backtest_json path={path}", verbose=False)
     with open(path, "r", encoding="utf-8") as f:
         obj = json.loads(f.read() or "{}")
     trades = obj.get("trades") or []
@@ -184,6 +189,7 @@ def main() -> int:
     ap.add_argument("--out-md", default="")
     ap.add_argument("--out-json", default="")
     args = ap.parse_args()
+    info("analyze_runs start")
 
     scan_items: List[Dict[str, Any]] = []
     random_items: List[Dict[str, Any]] = []
@@ -198,6 +204,7 @@ def main() -> int:
     for p in list(args.backtest_json or []):
         if str(p).strip():
             trade_rows += load_backtest_json(str(p))
+    info(f"inputs scan={len(scan_items)} random={len(random_items)} trades_raw={len(trade_rows)}")
 
     md = build_markdown_report(scan_items, random_items)
     if trade_rows:
@@ -211,6 +218,7 @@ def main() -> int:
         os.makedirs(os.path.dirname(str(args.out_md)) or ".", exist_ok=True)
         with open(str(args.out_md), "w", encoding="utf-8") as f:
             f.write(md)
+        info(f"wrote md={args.out_md}")
     else:
         print(md)
 
@@ -221,6 +229,8 @@ def main() -> int:
         os.makedirs(os.path.dirname(str(args.out_json)) or ".", exist_ok=True)
         with open(str(args.out_json), "w", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False, indent=2))
+        info(f"wrote json={args.out_json}")
+    info("analyze_runs done")
     return 0
 
 

@@ -37,3 +37,9 @@ def test_parser_scan():
     p = build_parser()
     ns = p.parse_args(["scan", "--provider", "csv", "--base-timeframe", "1h", "--symbols", "TEST", "--mode", "multi"])
     assert ns.cmd == "scan"
+
+
+def test_parser_verbose_flag():
+    p = build_parser()
+    ns = p.parse_args(["--verbose", "env"])
+    assert ns.verbose is True

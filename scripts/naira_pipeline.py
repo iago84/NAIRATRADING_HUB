@@ -10,11 +10,13 @@ sys.path.insert(0, REPO_ROOT)
 sys.path.insert(0, os.path.join(REPO_ROOT, "backend"))
 
 from scripts.pipeline_lib.docs_gen import render_html, write_html
+from scripts.pipeline_lib.log import info, log
 from scripts.pipeline_lib.paths import PipelinePaths
 
 
 def cmd_env(args: argparse.Namespace) -> int:
     pp = PipelinePaths(repo_root=REPO_ROOT, data_dir=str(args.data_dir))
+    log("cmd=env", verbose=bool(getattr(args, "verbose", False)))
     print(pp.data_dir)
     print(pp.history_dir)
     print(pp.reports_dir)
@@ -23,6 +25,7 @@ def cmd_env(args: argparse.Namespace) -> int:
 
 def cmd_docs(args: argparse.Namespace) -> int:
     pp = PipelinePaths(repo_root=REPO_ROOT, data_dir=str(args.data_dir))
+    log("cmd=docs", verbose=bool(getattr(args, "verbose", False)))
     sections = [
         {"h": "Comandos", "p": "<pre>python scripts/naira_pipeline.py env</pre>"},
     ]
@@ -52,12 +55,14 @@ def cmd_download(args: argparse.Namespace) -> int:
     limit = max(1, int(args.limit))
     store = HistoryStore(base_dir=str(args.data_dir))
     out = []
+    info(f"download provider={provider} symbols={len(symbols)} tfs={','.join(tfs)} years={years} limit={limit}")
     if provider == "binance":
         ex = BinanceRestOHLCVProvider()
         end = datetime.utcnow()
         start = end - timedelta(days=365 * years)
         for sym in symbols:
             for tf in tfs:
+                log(f"download binance sym={sym} tf={tf}", verbose=bool(getattr(args, "verbose", False)))
                 since = int(start.timestamp() * 1000)
                 chunks = []
                 for _ in range(5000):
@@ -80,6 +85,7 @@ def cmd_download(args: argparse.Namespace) -> int:
                 path = store.upsert(provider="binance", symbol=sym, timeframe=tf, df=df_all)
                 out.append({"symbol": sym, "timeframe": tf, "path": path})
         print(json.dumps(out, ensure_ascii=False, indent=2))
+        info(f"download done items={len(out)}")
         return 0
     if provider == "mt5":
         mt5 = MT5OHLCVProvider()
@@ -87,12 +93,14 @@ def cmd_download(args: argparse.Namespace) -> int:
         start = end - timedelta(days=365 * years)
         for sym in symbols:
             for tf in tfs:
+                log(f"download mt5 sym={sym} tf={tf}", verbose=bool(getattr(args, "verbose", False)))
                 df = mt5.get_ohlc_range(symbol=sym, timeframe=tf, start_ts=int(start.timestamp()), end_ts=int(end.timestamp()))
                 if df is None or df.empty:
                     continue
                 path = store.upsert(provider="mt5", symbol=sym, timeframe=tf, df=df)
                 out.append({"symbol": sym, "timeframe": tf, "path": path})
         print(json.dumps(out, ensure_ascii=False, indent=2))
+        info(f"download done items={len(out)}")
         return 0
     raise SystemExit("provider inválido (binance|mt5)")
 
@@ -110,6 +118,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
     symbols = [s.strip() for s in str(args.symbols).split(",") if s.strip()]
     eng = NairaEngine(data_dir=str(args.data_dir))
     out = []
+    info(f"scan provider={provider} tf={base_timeframe} mode={mode} symbols={len(symbols)}")
     for sym in symbols[: int(settings.MAX_SCAN_SYMBOLS)]:
         try:
             if mode == "multi":
@@ -124,6 +133,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
             continue
     out.sort(key=lambda x: float(x.get("opportunity_score") or 0.0), reverse=True)
     print(json.dumps(out, ensure_ascii=False, indent=2))
+    info(f"scan done items={len(out)}")
     return 0
 
 
@@ -131,6 +141,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="naira_pipeline")
     p.add_argument("--data-dir", default=os.path.join(REPO_ROOT, "backend", "data"))
     p.add_argument("--timing-mode", default="")
+    p.add_argument("--verbose", action="store_true", default=False)
     sp = p.add_subparsers(dest="cmd", required=True)
     sp_env = sp.add_parser("env")
     sp_env.set_defaults(fn=cmd_env)

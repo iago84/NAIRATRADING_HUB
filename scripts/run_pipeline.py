@@ -16,6 +16,7 @@ from app.engine.history_store import HistoryStore
 from app.engine.naira_engine import NairaEngine, NairaConfig
 from app.engine.multi_brain import run_multi_brain
 from scripts.tasks import cmd_data_update, RUN_TFS, HT_TFS
+from scripts.pipeline_lib.log import info
 
 
 def pick_top_symbols(scan_items: List[Dict[str, Any]], top_n: int) -> List[str]:
@@ -68,6 +69,7 @@ def main() -> int:
 
     run_dir = os.path.join(str(settings.DATA_DIR), "reports", _utc_stamp(), f"run_{_run_stamp()}")
     os.makedirs(run_dir, exist_ok=True)
+    info(f"run_pipeline start run_dir={run_dir}")
 
     symbols = _read_watchlist(wl_path, universe_size)
     if not symbols:
@@ -83,6 +85,7 @@ def main() -> int:
     all_backtests: List[str] = []
 
     for tf in tfs:
+        info(f"scan tf={tf} symbols={min(len(symbols), int(settings.MAX_SCAN_SYMBOLS))}")
         scan_out = []
         for sym in symbols[: int(settings.MAX_SCAN_SYMBOLS)]:
             try:
@@ -94,6 +97,7 @@ def main() -> int:
         scan_path = os.path.join(run_dir, f"scan_{tf}.json")
         with open(scan_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(scan_out, ensure_ascii=False, indent=2))
+        info(f"scan tf={tf} done items={len(scan_out)} out={scan_path}")
 
         top_syms = pick_top_symbols(scan_out, top_n=top_n)
         for sym in top_syms:
@@ -103,6 +107,7 @@ def main() -> int:
                 with open(bt_path, "w", encoding="utf-8") as f:
                     f.write(json.dumps(r, ensure_ascii=False))
                 all_backtests.append(bt_path)
+                info(f"backtest tf={tf} sym={sym} out={bt_path}")
             except Exception:
                 continue
             try:
@@ -110,6 +115,7 @@ def main() -> int:
                 ds = build_trade_dataset(eng, symbol=sym, provider="csv", base_timeframe=tf, out_path=ds_path)
                 if ds.rows > 0:
                     all_datasets.append(ds.path)
+                    info(f"dataset tf={tf} sym={sym} rows={ds.rows} out={ds.path}")
             except Exception:
                 continue
 
@@ -131,6 +137,7 @@ def main() -> int:
         analyze_main()
     except Exception:
         pass
+    info("run_pipeline done")
 
     return 0
 

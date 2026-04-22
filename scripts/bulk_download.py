@@ -13,6 +13,8 @@ from app.engine.providers.mt5_provider import MT5OHLCVProvider
 import pandas as pd
 from datetime import datetime, timedelta
 
+from scripts.pipeline_lib.log import info, log
+
 
 def normalize_timeframe(tf: str) -> str:
     s = str(tf).strip()
@@ -71,8 +73,10 @@ def main():
     symbols = [s.strip() for s in str(args.symbols).split(",") if s.strip()]
     tfs = [normalize_timeframe(t) for t in str(args.timeframes).split(",") if str(t).strip()]
     out = []
+    info(f"bulk_download provider={args.provider} symbols={len(symbols)} tfs={','.join(tfs)} years={args.years}")
     for sym in symbols:
         for tf in tfs:
+            log(f"bulk_download sym={sym} tf={tf}", verbose=True)
             if args.provider == "binance":
                 path = download_binance(store, sym, tf, years=args.years, limit=args.limit)
             else:
@@ -80,6 +84,7 @@ def main():
             out.append({"symbol": sym, "timeframe": tf, "path": path})
             print(path)
     print(out)
+    info(f"bulk_download done items={len(out)}")
 
 
 if __name__ == "__main__":

@@ -15,6 +15,8 @@ from app.core.config import settings
 from app.engine.naira_engine import NairaEngine, NairaConfig
 from app.engine.history_store import HistoryStore
 
+from scripts.pipeline_lib.log import info, log
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -53,6 +55,7 @@ def main():
 
     eng = NairaEngine(data_dir=settings.DATA_DIR, config=NairaConfig(entry_mode="none"))
     results = []
+    info(f"random_backtests start provider={provider} symbol={symbol} tf={tf} runs={args.runs} out={out_path}")
     for i in range(int(args.runs)):
         dur_days = rnd.randint(int(args.min_days), int(args.max_days))
         dur = timedelta(days=dur_days)
@@ -77,10 +80,11 @@ def main():
         with open(out_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
         print(row)
+        log(f"random_backtests run={i} metrics={metrics}", verbose=bool(os.getenv("PIPELINE_VERBOSE", "")))
 
     print({"out": out_path, "runs": len(results)})
+    info(f"random_backtests done runs={len(results)} out={out_path}")
 
 
 if __name__ == "__main__":
     main()
-

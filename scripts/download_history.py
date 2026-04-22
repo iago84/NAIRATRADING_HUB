@@ -13,6 +13,8 @@ from app.engine.history_store import HistoryStore
 from app.engine.providers.binance_rest_provider import BinanceRestOHLCVProvider
 from app.engine.providers.mt5_provider import MT5OHLCVProvider
 
+from scripts.pipeline_lib.log import info, log
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -33,12 +35,14 @@ def main():
 
     end = datetime.utcnow()
     start = end - timedelta(days=365 * years)
+    info(f"download_history provider={provider} symbol={symbol} tf={timeframe} years={years}")
 
     if provider == "binance":
         tf = timeframe
         ex = BinanceRestOHLCVProvider()
         since = int(start.timestamp() * 1000)
         chunks = []
+        log("download_history binance start", verbose=True)
         for _ in range(2000):
             df = ex.get_ohlc(symbol=symbol, timeframe=tf, limit=args.limit, since_ms=since)
             if df is None or df.empty:
@@ -58,6 +62,7 @@ def main():
             raise RuntimeError("No se pudo descargar histórico (binance)")
         path = store.upsert(provider="binance", symbol=symbol, timeframe=tf, df=df_all)
         print(path)
+        info(f"download_history done out={path}")
         return
 
     mt5 = MT5OHLCVProvider()
@@ -66,6 +71,7 @@ def main():
         raise RuntimeError("No se pudo descargar histórico (mt5)")
     path = store.upsert(provider="mt5", symbol=symbol, timeframe=timeframe, df=df)
     print(path)
+    info(f"download_history done out={path}")
 
 
 if __name__ == "__main__":
