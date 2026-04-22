@@ -324,7 +324,7 @@ def cmd_backtest_top(
 
     w = int(max(1, int(workers)))
     try:
-        print(f"backtest:top tasks={len(tasks)} workers={w} sizing_mode={sizing_mode}")
+        print(f"backtest:top tasks={len(tasks)} workers={w} sizing_mode={str(sizing_mode)}")
     except Exception:
         pass
     if w <= 1:
@@ -401,7 +401,7 @@ def cmd_backtest_global(
 
     w = int(max(1, int(workers)))
     try:
-        print(f"backtest:global tasks={len(tasks)} workers={w} sizing_mode={sizing_mode}")
+        print(f"backtest:global tasks={len(tasks)} workers={w} sizing_mode={str(sizing_mode)}")
     except Exception:
         pass
     if w <= 1:
