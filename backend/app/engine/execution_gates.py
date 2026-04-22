@@ -46,3 +46,29 @@ def execution_threshold_gate(frames: List[Dict[str, Any]], base_timeframe: str) 
     ok = (conf >= float(settings.EXEC_CONF_MIN)) and (ali >= float(settings.EXEC_ALIGN_MIN))
     return GateResult(ok=bool(ok), reasons=([] if ok else ["gate_execution_threshold"]), debug={"exec_conf": conf, "exec_align": ali})
 
+
+def timing_gate(trend_age_bars: int, ema_compression: float) -> GateResult:
+    mode = str(settings.TIMING_MODE or "expansion").lower()
+    if mode == "continuation":
+        max_age = int(settings.CONTINUATION_MAX_TREND_AGE)
+        max_comp = float(settings.CONTINUATION_MAX_EMA_COMPRESSION)
+    else:
+        max_age = int(settings.EXPANSION_MAX_TREND_AGE)
+        max_comp = float(settings.EXPANSION_MAX_EMA_COMPRESSION)
+    reasons: List[str] = []
+    if int(trend_age_bars) > int(max_age):
+        reasons.append("gate_timing_age")
+    if float(ema_compression) > float(max_comp):
+        reasons.append("gate_timing_compression")
+    ok = len(reasons) == 0
+    return GateResult(
+        ok=bool(ok),
+        reasons=reasons,
+        debug={
+            "timing_mode": mode,
+            "trend_age_bars": int(trend_age_bars),
+            "ema_compression": float(ema_compression),
+            "max_trend_age": int(max_age),
+            "max_ema_compression": float(max_comp),
+        },
+    )

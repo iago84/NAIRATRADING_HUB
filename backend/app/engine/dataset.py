@@ -52,7 +52,7 @@ def build_trade_dataset(
     max_bars: int = 6000,
 ) -> DatasetResult:
     def collect(e: NairaEngine) -> List[Dict[str, Any]]:
-        res = e.backtest(symbol=symbol, provider=provider, base_timeframe=base_timeframe, max_bars=int(max_bars), feature_mode="fast")
+        res = e.backtest(symbol=symbol, provider=provider, base_timeframe=base_timeframe, max_bars=int(max_bars), feature_mode="fast", apply_execution_gates=False)
         trades = res.get("trades") or []
         out: List[Dict[str, Any]] = []
         for t in trades[-int(max_trades):]:
