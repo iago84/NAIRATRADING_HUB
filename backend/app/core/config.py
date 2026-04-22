@@ -64,5 +64,11 @@ class Settings:
     MR_SPREAD_FAST_PCT_MIN: float = float(_env("MR_SPREAD_FAST_PCT_MIN", "1.0"))
     MR_REQUIRE_OPPOSITE_CURVATURE: int = _env_int("MR_REQUIRE_OPPOSITE_CURVATURE", 1)
 
+    TIMING_MODE: str = _env("TIMING_MODE", "expansion").strip().lower()
+    EXPANSION_MAX_TREND_AGE: int = _env_int("EXPANSION_MAX_TREND_AGE", 2)
+    EXPANSION_MAX_EMA_COMPRESSION: float = float(_env("EXPANSION_MAX_EMA_COMPRESSION", "1.5"))
+    CONTINUATION_MAX_TREND_AGE: int = _env_int("CONTINUATION_MAX_TREND_AGE", 8)
+    CONTINUATION_MAX_EMA_COMPRESSION: float = float(_env("CONTINUATION_MAX_EMA_COMPRESSION", "5.0"))
+
 
 settings = Settings()

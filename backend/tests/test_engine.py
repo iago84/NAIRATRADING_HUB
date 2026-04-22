@@ -28,6 +28,18 @@ class TestNairaEngine(unittest.TestCase):
         self.assertIn("valid_until", r["risk"])
         self.assertIn("ttl_bars", r["risk"])
 
+    def test_analyze_includes_trend_age_bars(self):
+        e = NairaEngine(data_dir=settings.DATA_DIR)
+        r = e.analyze(symbol="TEST", provider="csv", base_timeframe="1h")
+        f = None
+        for fr in r.get("frames") or []:
+            if str(fr.get("timeframe") or "") == "1h":
+                f = fr
+                break
+        self.assertIsNotNone(f)
+        self.assertIn("trend_age_bars", f)
+        self.assertGreaterEqual(int(f.get("trend_age_bars") or 0), 0)
+
     def test_backtest_from_csv(self):
         e = NairaEngine(data_dir=settings.DATA_DIR)
         r = e.backtest(symbol="TEST", provider="csv", base_timeframe="1h")

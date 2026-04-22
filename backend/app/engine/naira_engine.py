@@ -17,7 +17,8 @@ from .levels import build_levels, confluence_score, pivot_points_prev_day, fract
 from .alligator import latest_alligator
 from .regression import rolling_linreg_slope_pct, linreg_metrics
 from .entry_rules import decide_entry
-from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate
+from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate, timing_gate
+from .timing import trend_age_bars_from_directions
 from .filters import OperationalFilterConfig, apply_operational_filters
 from ..core.logger import get_logger
 from ..core.config import settings
@@ -477,6 +478,13 @@ class NairaEngine:
             if tf == base_timeframe:
                 base_features = st_df
             last = st_df.iloc[-1]
+            trend_age_bars = 0
+            if tf == base_timeframe:
+                try:
+                    dirs = [str(x) for x in st_df["direction"].to_list()][-300:]
+                    trend_age_bars = int(trend_age_bars_from_directions(dirs))
+                except Exception:
+                    trend_age_bars = 0
             if tf == base_timeframe:
                 price = float(last["close"])
                 ts = pd.to_datetime(last["datetime"]).isoformat()
@@ -485,6 +493,7 @@ class NairaEngine:
                 "timeframe": tf,
                 "direction": str(last["direction"]),
                 "confidence": float(last["confidence"]),
+                "trend_age_bars": int(trend_age_bars) if tf == base_timeframe else None,
                 "alignment": float(last.get("alignment") or 0.0),
                 "slope_score": float(last.get("slope_score")) if pd.notna(last.get("slope_score")) else float("nan"),
                 "regression_slope_pct": float(last.get("regression_slope_pct")) if pd.notna(last.get("regression_slope_pct")) else float("nan"),
@@ -530,6 +539,8 @@ class NairaEngine:
             states_latest[tf] = st
             st_public = dict(st)
             st_public.pop("valid", None)
+            if st_public.get("trend_age_bars") is None:
+                st_public.pop("trend_age_bars", None)
             try:
                 if not np.isfinite(float(st_public.get("slope_score"))):
                     st_public["slope_score"] = 0.0
@@ -781,6 +792,7 @@ class NairaEngine:
         magnifier_timeframe: str = "1m",
         entry_magnifier: bool = False,
         entry_magnifier_timeframe: str = "5m",
+        apply_execution_gates: bool = True,
     ) -> Dict[str, Any]:
         df_base = self.load_ohlc(symbol=symbol, timeframe=base_timeframe, provider=provider, csv_path=csv_path)
         df_base = normalize_ohlcv(df_base)
@@ -957,6 +969,8 @@ class NairaEngine:
         signals_entry_sell = 0
         signals_by_month_raw: Dict[str, int] = {}
         signals_by_month_entry: Dict[str, int] = {}
+        gates_timing_blocked = 0
+        apply_gates = bool(apply_execution_gates)
 
         price_arr = base_state["close"].to_numpy(dtype=float)
         open_arr = df_base["open"].to_numpy(dtype=float)
@@ -1130,34 +1144,48 @@ class NairaEngine:
                     except Exception:
                         pass
 
-                    try:
-                        frames_min = []
-                        align_base = float(base_state.get("alignment").iloc[i]) if "alignment" in base_state.columns and pd.notna(base_state.get("alignment").iloc[i]) else 0.0
-                        frames_min.append(
-                            {
-                                "timeframe": str(base_timeframe),
-                                "confidence": float(base_conf),
-                                "alignment": float(align_base),
-                            }
-                        )
-                        frames_min.append({"timeframe": "4h", "alignment": float(get_ht_alignment("4h", t))})
-                        frames_min.append({"timeframe": "1d", "alignment": float(get_ht_alignment("1d", t))})
-                        g_struct = structural_gate(frames_min)
-                        g_exec = execution_threshold_gate(frames_min, base_timeframe=str(base_timeframe))
-                        if not g_struct.ok or not g_exec.ok:
+                    if apply_gates:
+                        try:
+                            comp_eff = float(comp_v) if comp_v is not None else 0.0
+                            tg = timing_gate(trend_age_bars=int(trend_age), ema_compression=float(comp_eff))
+                            if not tg.ok:
+                                gates_timing_blocked += 1
+                                equity_curve.append(float(cash))
+                                continue
+                        except Exception:
+                            gates_timing_blocked += 1
                             equity_curve.append(float(cash))
                             continue
-                        piv_c = pivot_points_prev_day(df_base.iloc[: i + 1])
-                        lv_c = build_levels(df_base.iloc[: i + 1], atr=float(atr_v), lookback=3)
-                        conf_c = float(confluence_score(price=float(price), pivots=piv_c, levels=lv_c, atr=float(atr_v)))
-                        frames_min[0]["level_confluence_score"] = float(conf_c)
-                        g_conf = confluence_gate(frames_min, base_timeframe=str(base_timeframe))
-                        if not g_conf.ok:
+
+                    if apply_gates:
+                        try:
+                            frames_min = []
+                            align_base = float(base_state.get("alignment").iloc[i]) if "alignment" in base_state.columns and pd.notna(base_state.get("alignment").iloc[i]) else 0.0
+                            frames_min.append(
+                                {
+                                    "timeframe": str(base_timeframe),
+                                    "confidence": float(base_conf),
+                                    "alignment": float(align_base),
+                                }
+                            )
+                            frames_min.append({"timeframe": "4h", "alignment": float(get_ht_alignment("4h", t))})
+                            frames_min.append({"timeframe": "1d", "alignment": float(get_ht_alignment("1d", t))})
+                            g_struct = structural_gate(frames_min)
+                            g_exec = execution_threshold_gate(frames_min, base_timeframe=str(base_timeframe))
+                            if not g_struct.ok or not g_exec.ok:
+                                equity_curve.append(float(cash))
+                                continue
+                            piv_c = pivot_points_prev_day(df_base.iloc[: i + 1])
+                            lv_c = build_levels(df_base.iloc[: i + 1], atr=float(atr_v), lookback=3)
+                            conf_c = float(confluence_score(price=float(price), pivots=piv_c, levels=lv_c, atr=float(atr_v)))
+                            frames_min[0]["level_confluence_score"] = float(conf_c)
+                            g_conf = confluence_gate(frames_min, base_timeframe=str(base_timeframe))
+                            if not g_conf.ok:
+                                equity_curve.append(float(cash))
+                                continue
+                        except Exception:
                             equity_curve.append(float(cash))
                             continue
-                    except Exception:
-                        equity_curve.append(float(cash))
-                        continue
 
                     entry_price = float(price)
                     entry_dt = pd.to_datetime(dt_arr[i])
@@ -1846,6 +1874,7 @@ class NairaEngine:
             "entry_kind_counts": dict(entry_counts),
             "pnl_avg_by_exit_reason": dict(pnl_avg_by_exit),
             "pnl_avg_by_entry_kind": dict(pnl_avg_by_entry),
+            "gates_timing_blocked": int(gates_timing_blocked),
         }
         try:
             def _arr(key: str, only_wins: Optional[bool]) -> np.ndarray:
@@ -2045,6 +2074,35 @@ class NairaEngine:
             pack["ht_conf"] = ht_conf
             pack["ht_align"] = ht_align
             pack["ht_valid"] = ht_valid
+            try:
+                m = pack["map"]
+                st = pack["st"]
+                dirs = st["direction"].to_numpy()
+                comps = pd.to_numeric(st.get("ema_compression"), errors="coerce").fillna(0.0).to_numpy(dtype=float)
+                age = np.zeros(len(common_times), dtype=int)
+                comp_aligned = np.zeros(len(common_times), dtype=float)
+                run = 0
+                prev = "neutral"
+                for ti, j in enumerate(m):
+                    if int(j) < 0:
+                        age[ti] = 0
+                        comp_aligned[ti] = 0.0
+                        continue
+                    d = str(dirs[int(j)])
+                    if d in ("buy", "sell") and d == prev:
+                        run += 1
+                    elif d in ("buy", "sell"):
+                        run = 1
+                    else:
+                        run = 0
+                    age[ti] = int(run)
+                    prev = d
+                    comp_aligned[ti] = float(comps[int(j)]) if np.isfinite(float(comps[int(j)])) else 0.0
+                pack["trend_age"] = age
+                pack["comp"] = comp_aligned
+            except Exception:
+                pack["trend_age"] = np.zeros(len(common_times), dtype=int)
+                pack["comp"] = np.zeros(len(common_times), dtype=float)
 
         base_sec = int(_TF_SECONDS.get(bt, 0))
         mag_tf = str(magnifier_timeframe or "").strip()
@@ -2321,6 +2379,20 @@ class NairaEngine:
                         align_base = float(row.get("alignment") or 0.0)
                     except Exception:
                         align_base = 0.0
+                    try:
+                        age_pf = int((pack.get("trend_age") or np.zeros(len(common_times), dtype=int))[ti])
+                    except Exception:
+                        age_pf = 0
+                    try:
+                        comp_pf = float((pack.get("comp") or np.zeros(len(common_times), dtype=float))[ti])
+                    except Exception:
+                        comp_pf = 0.0
+                    try:
+                        tg = timing_gate(trend_age_bars=int(age_pf), ema_compression=float(comp_pf))
+                        if not tg.ok:
+                            continue
+                    except Exception:
+                        continue
                     try:
                         piv_c = pivot_points_prev_day(pack["df"].iloc[: i + 1])
                         lv_c = build_levels(pack["df"].iloc[: i + 1], atr=float(atr_v), lookback=3)
