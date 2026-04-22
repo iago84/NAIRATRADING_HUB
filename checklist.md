@@ -224,8 +224,8 @@
   - Mirar `metrics.gates_timing_blocked` y el `late_entry_report.recommendations`.
 
 ## 15) Mejoras Prioritarias (próximas)
-- [ ] Gestión de salida: BE + lock + trailing (sin conflicto) expresado en R/ATR.
-- [ ] Métricas por trade: `pnl_partials` y `pnl_total` (evitar confusión cuando hay parciales).
-- [ ] “Explicabilidad” de no-entrada: contadores por gate y por regla (para tuning rápido).
-- [ ] Optimización de provider/rate limits: backoff y throttling configurable en `data:update`.
+- [x] Gestión de salida: BE + lock + trailing (sin conflicto) expresado en R/ATR.
+- [x] Métricas por trade: `pnl_partials` y `pnl_total` (evitar confusión cuando hay parciales).
+- [x] “Explicabilidad” de no-entrada: contadores por gate y por regla (para tuning rápido).
+- [x] Optimización de provider/rate limits: backoff y throttling configurable en `data:update`.
 - [ ] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).
