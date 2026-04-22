@@ -200,3 +200,32 @@
   - [x] engine de backtest
   - [x] patrones de gating por suscripción
 - [x] Copiar sólo lo necesario al nuevo hub (sin arrastrar dependencias/ruido).
+
+## 14) Operativa y Debug (rápido)
+- [ ] Pipeline end-to-end (binance):
+  - `python scripts/tasks.py all --provider binance --workers 8 --update-workers 2`
+- [ ] Flags clave del pipeline:
+  - `--entry-mode` (default: hybrid)
+  - `--sizing-mode` (default: ai_risk)
+  - `--risk-per-trade-pct` (fallback fixed_risk, default: 2.0)
+  - `--ai-risk-min-pct/--ai-risk-max-pct` (default: 1.0/5.0)
+  - `--max-equity-drawdown-pct/--free-cash-min-pct/--risk-stop-policy`
+- [ ] Artefactos por run:
+  - `scan_<tf>.json`, `backtest_<tf>_<sym>.json`, `datasets_manifest.json`, `setup_edge.json/.md`, `train.json`, `calibration.json`
+- [ ] Datasets manifest:
+  - Incluir `rows` por dataset (incluye `rows=0` para ver que “se intentó” en cada símbolo/TF).
+  - Entrenamiento/calibración deben usar sólo datasets con `rows > 0`.
+- [ ] Auditoría de sizing (por trade):
+  - `entry_meta.risk_pct_used` y `entry_meta.sizing_mode_used` para identificar `ai_risk` vs `fixed_risk_fallback`.
+- [ ] “TP negativo” / PnL raro:
+  - Revisar si hubo parciales (pnl del trade final es sólo del remanente) y fees/slippage.
+  - Verificar `filled_qty` y que el sizing no sea `fixed_qty=1` por fallback incorrecto.
+- [ ] Timing gate bloqueando demasiado:
+  - Mirar `metrics.gates_timing_blocked` y el `late_entry_report.recommendations`.
+
+## 15) Mejoras Prioritarias (próximas)
+- [ ] Gestión de salida: BE + lock + trailing (sin conflicto) expresado en R/ATR.
+- [ ] Métricas por trade: `pnl_partials` y `pnl_total` (evitar confusión cuando hay parciales).
+- [ ] “Explicabilidad” de no-entrada: contadores por gate y por regla (para tuning rápido).
+- [ ] Optimización de provider/rate limits: backoff y throttling configurable en `data:update`.
+- [ ] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).

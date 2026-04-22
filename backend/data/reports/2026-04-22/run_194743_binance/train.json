@@ -1,0 +1,32 @@
+{
+  "model_path": "D:\\ALL_ABOUT_THE_JOB\\MONEY\\NAIRATRADING_HUB\\backend\\app\\core\\..\\..\\data\\models\\naira_logreg_stack.json",
+  "rows": 3245,
+  "accuracy": 0.5167950693374422,
+  "feature_names": [
+    "alignment",
+    "slope_score",
+    "regression_slope_pct",
+    "regression_r2",
+    "adx",
+    "atr",
+    "atr_pct",
+    "ema_compression",
+    "trend_age_bars",
+    "signal_age_bars",
+    "dist_ema25_atr",
+    "dist_ema80_atr",
+    "dist_ema220_atr",
+    "dist_reg_atr",
+    "hour_utc",
+    "is_weekend",
+    "dist_pivot_P_atr",
+    "nearest_support_distance_atr",
+    "nearest_resistance_distance_atr",
+    "confluence_levels",
+    "confluence_fibo",
+    "alligator_mouth",
+    "ai_prob_entry",
+    "wick_reject_ratio",
+    "fractal_distance_atr"
+  ]
+}
