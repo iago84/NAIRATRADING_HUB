@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -134,13 +135,25 @@ def _timeframe_window_days(tf: str) -> int:
     return 365
 
 
-def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str], update_workers: int) -> Dict[str, Any]:
+def cmd_data_update(
+    provider: str,
+    run_dir: str,
+    symbols: List[str],
+    tfs: List[str],
+    update_workers: int,
+    update_min_sleep_ms: int,
+    update_backoff_ms: int,
+    update_max_retries: int,
+) -> Dict[str, Any]:
     p = str(provider).lower()
     store = HistoryStore(base_dir=str(settings.DATA_DIR))
     updated = 0
     errors: List[str] = []
     if p in ("binance", "csv"):
         ex = BinanceRestOHLCVProvider()
+        min_sleep_s = float(max(0, int(update_min_sleep_ms))) / 1000.0
+        backoff_s = float(max(0, int(update_backoff_ms))) / 1000.0
+        max_retries = int(max(0, int(update_max_retries)))
         def _update_one(sym: str, tf: str) -> tuple[bool, Optional[str]]:
             try:
                 latest = store.latest_datetime(provider="csv", symbol=sym, timeframe=tf)
@@ -155,7 +168,23 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
                 chunks = []
                 cur = int(since_ms)
                 for _ in range(50):
-                    df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                    df = None
+                    last_err: Optional[BaseException] = None
+                    for attempt in range(int(max_retries) + 1):
+                        try:
+                            if min_sleep_s > 0:
+                                time.sleep(float(min_sleep_s))
+                            df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                            last_err = None
+                            break
+                        except BaseException as e:
+                            last_err = e
+                            if attempt >= int(max_retries):
+                                break
+                            if backoff_s > 0:
+                                time.sleep(float(backoff_s) * float(attempt + 1))
+                    if last_err is not None and df is None:
+                        raise last_err
                     if df is None or df.empty:
                         break
                     chunks.append(df)
@@ -470,6 +499,235 @@ def cmd_report_setup_edge(run_dir: str, dataset_paths: List[str], backtest_paths
         return {}
 
 
+def _sparkline_svg(values: List[float], width: int = 240, height: int = 48) -> str:
+    if not values:
+        return ""
+    xs = [float(i) for i in range(len(values))]
+    ys = [float(v) for v in values]
+    y_min = min(ys)
+    y_max = max(ys)
+    if y_max <= y_min:
+        y_max = y_min + 1.0
+    x_min = 0.0
+    x_max = float(max(1, len(xs) - 1))
+
+    pts = []
+    for i, v in enumerate(ys):
+        x = (float(i) - x_min) / (x_max - x_min) * float(width)
+        y = float(height) - ((float(v) - float(y_min)) / (float(y_max) - float(y_min)) * float(height))
+        pts.append(f"{x:.2f},{y:.2f}")
+    poly = " ".join(pts)
+    return f'<svg width="{int(width)}" height="{int(height)}" viewBox="0 0 {int(width)} {int(height)}" xmlns="http://www.w3.org/2000/svg"><polyline fill="none" stroke="currentColor" stroke-width="1.5" points="{poly}"/></svg>'
+
+
+def cmd_report_html(run_dir: str, backtest_paths: List[str], datasets: List[Dict[str, Any]]) -> Dict[str, str]:
+    rows = []
+    for p in list(backtest_paths or []):
+        try:
+            d = _read_json(str(p), {})
+            met = d.get("metrics") or {}
+            trades = d.get("trades") or []
+            sym = str(d.get("symbol") or "")
+            tf = str(d.get("base_timeframe") or "")
+            total_pnl = float(met.get("total_pnl") or 0.0)
+            pf = float(met.get("profit_factor") or 0.0)
+            win = float(met.get("win_rate_pct") or 0.0)
+            ntr = int(met.get("trades") or 0)
+
+            ai_vals = []
+            ai_w = []
+            ai_l = []
+            brier = []
+            eq = []
+            for t in trades:
+                pnl = float(t.get("pnl_total") if t.get("pnl_total") is not None else (t.get("pnl") or 0.0))
+                y = 1.0 if pnl > 0 else 0.0
+                em = t.get("entry_meta") or {}
+                ap = em.get("ai_prob_entry")
+                if ap is not None:
+                    try:
+                        apf = float(ap)
+                        ai_vals.append(apf)
+                        if y > 0:
+                            ai_w.append(apf)
+                        else:
+                            ai_l.append(apf)
+                        brier.append((apf - y) ** 2)
+                    except Exception:
+                        pass
+                eq.append((eq[-1] if eq else 10000.0) + float(pnl))
+
+            ai_mean = float(sum(ai_vals) / max(1, len(ai_vals))) if ai_vals else None
+            ai_mean_w = float(sum(ai_w) / max(1, len(ai_w))) if ai_w else None
+            ai_mean_l = float(sum(ai_l) / max(1, len(ai_l))) if ai_l else None
+            ai_sep = (float(ai_mean_w) - float(ai_mean_l)) if (ai_mean_w is not None and ai_mean_l is not None) else None
+            brier_mean = float(sum(brier) / max(1, len(brier))) if brier else None
+
+            rows.append(
+                {
+                    "symbol": sym,
+                    "timeframe": tf,
+                    "trades": ntr,
+                    "total_pnl": total_pnl,
+                    "profit_factor": pf,
+                    "win_rate_pct": win,
+                    "ai_mean": ai_mean,
+                    "ai_sep": ai_sep,
+                    "ai_brier": brier_mean,
+                    "spark": _sparkline_svg(eq),
+                    "blocked_timing_gate": int(met.get("blocked_timing_gate") or 0),
+                    "blocked_structural_gate": int(met.get("blocked_structural_gate") or 0),
+                    "blocked_confluence_gate": int(met.get("blocked_confluence_gate") or 0),
+                    "blocked_threshold_gate": int(met.get("blocked_threshold_gate") or 0),
+                    "blocked_higher_tf": int(met.get("blocked_higher_tf") or 0),
+                }
+            )
+        except Exception:
+            continue
+
+    rows.sort(key=lambda x: float(x.get("total_pnl") or 0.0), reverse=True)
+    top = rows[:20]
+    bottom = list(reversed(rows[-20:])) if rows else []
+
+    ds_rows = []
+    for d in list(datasets or []):
+        try:
+            ds_rows.append(
+                {
+                    "symbol": str(d.get("symbol") or ""),
+                    "timeframe": str(d.get("timeframe") or ""),
+                    "rows": int(d.get("rows") or 0),
+                    "path": str(d.get("path") or ""),
+                }
+            )
+        except Exception:
+            continue
+    ds_rows.sort(key=lambda x: (str(x.get("timeframe")), str(x.get("symbol"))))
+
+    def fmt(x: Any, nd: int = 6) -> str:
+        if x is None:
+            return ""
+        try:
+            return f"{float(x):.{int(nd)}f}"
+        except Exception:
+            return str(x)
+
+    html_rows_top = []
+    for r in top:
+        html_rows_top.append(
+            "<tr>"
+            f"<td>{r['symbol']}</td>"
+            f"<td>{r['timeframe']}</td>"
+            f"<td>{int(r['trades'])}</td>"
+            f"<td>{fmt(r['total_pnl'], 6)}</td>"
+            f"<td>{fmt(r['profit_factor'], 3)}</td>"
+            f"<td>{fmt(r['win_rate_pct'], 2)}</td>"
+            f"<td>{fmt(r['ai_mean'], 3)}</td>"
+            f"<td>{fmt(r['ai_sep'], 3)}</td>"
+            f"<td>{fmt(r['ai_brier'], 3)}</td>"
+            f"<td class='spark'>{r['spark']}</td>"
+            "</tr>"
+        )
+
+    html_rows_bottom = []
+    for r in bottom:
+        html_rows_bottom.append(
+            "<tr>"
+            f"<td>{r['symbol']}</td>"
+            f"<td>{r['timeframe']}</td>"
+            f"<td>{int(r['trades'])}</td>"
+            f"<td>{fmt(r['total_pnl'], 6)}</td>"
+            f"<td>{fmt(r['profit_factor'], 3)}</td>"
+            f"<td>{fmt(r['win_rate_pct'], 2)}</td>"
+            f"<td>{fmt(r['ai_mean'], 3)}</td>"
+            f"<td>{fmt(r['ai_sep'], 3)}</td>"
+            f"<td>{fmt(r['ai_brier'], 3)}</td>"
+            f"<td class='spark'>{r['spark']}</td>"
+            "</tr>"
+        )
+
+    ds_html = []
+    for r in ds_rows:
+        ds_html.append(
+            "<tr>"
+            f"<td>{r['symbol']}</td>"
+            f"<td>{r['timeframe']}</td>"
+            f"<td>{int(r['rows'])}</td>"
+            f"<td class='mono'>{r['path']}</td>"
+            "</tr>"
+        )
+
+    summary = {"n_backtests": int(len(rows)), "n_datasets": int(len(ds_rows))}
+    _write_json(os.path.join(run_dir, "report_summary.json"), summary)
+
+    out_html = os.path.join(run_dir, "report.html")
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Naira Pipeline Report</title>
+  <style>
+    body {{ font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; color: #111; }}
+    h1 {{ font-size: 20px; margin: 0 0 12px 0; }}
+    h2 {{ font-size: 16px; margin: 20px 0 8px 0; }}
+    table {{ border-collapse: collapse; width: 100%; }}
+    th, td {{ border-bottom: 1px solid #eee; padding: 8px 10px; text-align: left; vertical-align: top; }}
+    th {{ font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #444; }}
+    .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; }}
+    .spark {{ color: #0f766e; }}
+    .grid {{ display: grid; grid-template-columns: 1fr; gap: 16px; }}
+    .note {{ color: #555; font-size: 13px; }}
+  </style>
+</head>
+<body>
+  <h1>Naira Pipeline Report</h1>
+  <div class="note mono">{out_html}</div>
+  <div class="note">Top/Bottom se calculan por total_pnl del backtest. Las curvas son equity acumulada por trades (pnl_total si existe).</div>
+
+  <h2>Top Mercados</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th><th>TF</th><th>Trades</th><th>Total PnL</th><th>PF</th><th>Win%</th><th>AI mean</th><th>AI sep</th><th>Brier</th><th>Equity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {''.join(html_rows_top)}
+    </tbody>
+  </table>
+
+  <h2>Mercados Negativos / No Rentables</h2>
+  <div class="note">Diagnóstico rápido: si hay pocos trades, o muchos bloqueos por gates (timing/struct/threshold/confluence), revisar tuning.</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th><th>TF</th><th>Trades</th><th>Total PnL</th><th>PF</th><th>Win%</th><th>AI mean</th><th>AI sep</th><th>Brier</th><th>Equity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {''.join(html_rows_bottom)}
+    </tbody>
+  </table>
+
+  <h2>Datasets</h2>
+  <div class="note">Incluye rows=0 para visibilidad. Entrenamiento usa solo rows &gt; 0.</div>
+  <table>
+    <thead>
+      <tr><th>Symbol</th><th>TF</th><th>Rows</th><th>Path</th></tr>
+    </thead>
+    <tbody>
+      {''.join(ds_html)}
+    </tbody>
+  </table>
+</body>
+</html>
+"""
+    with open(out_html, "w", encoding="utf-8") as f:
+        f.write(html)
+    return {"html": out_html}
+
+
 def cmd_train_stack(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
     if not dataset_paths:
         return {"error": "no datasets"}
@@ -517,12 +775,28 @@ def cmd_calibrate(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="tasks")
     sp = p.add_subparsers(dest="cmd", required=True)
-    for name in ("data:update", "scan", "backtest:top", "backtest:global", "dataset:build", "report:setup-edge", "train:stack", "train:calibrate", "all"):
+    for name in (
+        "data:update",
+        "scan",
+        "backtest:top",
+        "backtest:global",
+        "dataset:build",
+        "report:setup-edge",
+        "report:html",
+        "pipeline:report",
+        "pipeline:train",
+        "train:stack",
+        "train:calibrate",
+        "all",
+    ):
         sub = sp.add_parser(name)
         sub.add_argument("--provider", required=True, choices=["binance", "mt5", "csv"])
         sub.add_argument("--entry-mode", default=os.getenv("PIPELINE_ENTRY_MODE", "hybrid"), choices=["hybrid", "pullback", "break_retest", "mean_reversion", "regime"])
         sub.add_argument("--workers", type=int, default=int(os.getenv("PIPELINE_WORKERS", "8") or "8"))
         sub.add_argument("--update-workers", type=int, default=int(os.getenv("PIPELINE_UPDATE_WORKERS", "2") or "2"))
+        sub.add_argument("--update-min-sleep-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_MIN_SLEEP_MS", "0") or "0"))
+        sub.add_argument("--update-backoff-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_BACKOFF_MS", "250") or "250"))
+        sub.add_argument("--update-max-retries", type=int, default=int(os.getenv("PIPELINE_UPDATE_MAX_RETRIES", "3") or "3"))
         sub.add_argument("--max-equity-drawdown-pct", type=float, default=float(os.getenv("PIPELINE_MAX_DD_PCT", "50.0") or "50.0"))
         sub.add_argument("--free-cash-min-pct", type=float, default=float(os.getenv("PIPELINE_FREE_CASH_MIN_PCT", "0.20") or "0.20"))
         sub.add_argument(
@@ -530,6 +804,11 @@ def build_parser() -> argparse.ArgumentParser:
             default=os.getenv("PIPELINE_RISK_STOP_POLICY", "stop_immediate"),
             choices=["stop_immediate", "stop_no_new_trades", "stop_after_close"],
         )
+        sub.add_argument("--sizing-mode", default=os.getenv("PIPELINE_SIZING_MODE", "ai_risk"), choices=["fixed_qty", "fixed_risk", "ai_risk"])
+        sub.add_argument("--risk-per-trade-pct", type=float, default=float(os.getenv("PIPELINE_RISK_PCT", "2.0") or "2.0"))
+        sub.add_argument("--ai-risk-min-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MIN_PCT", "1.0") or "1.0"))
+        sub.add_argument("--ai-risk-max-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MAX_PCT", "5.0") or "5.0"))
+        sub.add_argument("--max-leverage", type=float, default=float(os.getenv("PIPELINE_MAX_LEVERAGE", "1.0") or "1.0"))
     return p
 
 
@@ -544,21 +823,29 @@ def main(argv: List[str]) -> int:
     entry_mode = str(args.entry_mode)
     workers = int(args.workers)
     update_workers = int(args.update_workers)
+    update_min_sleep_ms = int(args.update_min_sleep_ms)
+    update_backoff_ms = int(args.update_backoff_ms)
+    update_max_retries = int(args.update_max_retries)
     max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
     free_cash_min_pct = float(args.free_cash_min_pct)
     risk_stop_policy = str(args.risk_stop_policy)
+    sizing_mode = str(args.sizing_mode)
+    risk_per_trade_pct = float(args.risk_per_trade_pct)
+    ai_risk_min_pct = float(args.ai_risk_min_pct)
+    ai_risk_max_pct = float(args.ai_risk_max_pct)
+    max_leverage = float(args.max_leverage)
     scan_paths: Dict[str, str] = {}
     backtests: List[str] = []
     datasets: List[str] = []
     if args.cmd == "data:update":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         return 0
     if args.cmd == "scan":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "backtest:top":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         cmd_backtest_top(
             provider,
@@ -579,7 +866,7 @@ def main(argv: List[str]) -> int:
         )
         return 0
     if args.cmd == "backtest:global":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_backtest_global(
             provider,
             run_dir,
@@ -598,11 +885,11 @@ def main(argv: List[str]) -> int:
         )
         return 0
     if args.cmd == "dataset:build":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_dataset_build(provider, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "report:setup-edge":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         backtests = cmd_backtest_top(
             provider,
@@ -626,9 +913,83 @@ def main(argv: List[str]) -> int:
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
         ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
         cmd_report_setup_edge(run_dir, ds_paths, backtests)
+        cmd_report_html(run_dir, backtests, datasets)
+        return 0
+    if args.cmd == "report:html":
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+        backtests = cmd_backtest_top(
+            provider,
+            run_dir,
+            scan_paths,
+            top_n=_top_n(),
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
+        )
+        top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+        cmd_report_html(run_dir, backtests, datasets)
+        return 0
+    if args.cmd == "pipeline:report":
+        print("updating data...")
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
+        print("scanning...")
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+        print("backtesting...")
+        backtests = cmd_backtest_top(
+            provider,
+            run_dir,
+            scan_paths,
+            top_n=_top_n(),
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
+        )
+        print("building datasets...")
+        top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10]
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        print("setup-edge report...")
+        cmd_report_setup_edge(run_dir, ds_paths, backtests)
+        print("html report...")
+        cmd_report_html(run_dir, backtests, datasets)
+        return 0
+    if args.cmd == "pipeline:train":
+        print("updating data...")
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
+        print("scanning...")
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+        print("building datasets...")
+        top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10]
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": []})
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        print("training stack...")
+        cmd_train_stack(run_dir, ds_paths)
+        print("calibrating...")
+        cmd_calibrate(run_dir, ds_paths)
         return 0
     if args.cmd == "train:stack":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -637,7 +998,7 @@ def main(argv: List[str]) -> int:
         cmd_train_stack(run_dir, ds_paths)
         return 0
     if args.cmd == "train:calibrate":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -647,7 +1008,7 @@ def main(argv: List[str]) -> int:
         return 0
     if args.cmd == "all":
         print("updating data...")
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         print("scanning...")
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         print("backtesting...")
@@ -681,6 +1042,8 @@ def main(argv: List[str]) -> int:
         print("setting up report...")
         ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
         cmd_report_setup_edge(run_dir, ds_paths, backtests)
+        print("writing html report...")
+        cmd_report_html(run_dir, backtests, datasets)
         print("training stack...")
         cmd_train_stack(run_dir, ds_paths)
         print("calibrating...")

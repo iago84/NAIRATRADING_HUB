@@ -82,6 +82,9 @@ class NairaConfig:
     ensemble_w_adx: float = 0.03
     partial_1r_pct: float = 0.5
     partial_2r_pct: float = 0.25
+    be_trigger_r: float = 1.0
+    trail_trigger_r: float = 1.5
+    lock_r: float = 0.10
     trailing_atr_mult: float = 1.4
     structure_trailing: bool = False
     structure_trailing_lookback: int = 2
@@ -798,6 +801,7 @@ class NairaEngine:
         entry_magnifier: bool = False,
         entry_magnifier_timeframe: str = "5m",
         apply_execution_gates: bool = True,
+        include_debug: bool = False,
         max_equity_drawdown_pct: float = 50.0,
         free_cash_min_pct: float = 0.20,
         risk_stop_policy: str = "stop_immediate",
@@ -962,12 +966,16 @@ class NairaEngine:
         entry_kind: str = ""
         sl = None
         tp = None
+        sl_initial = None
         be_done = False
         qty = 1.0
         p1_done = False
         p2_done = False
         pending_features: Dict[str, float] = {}
         entry_meta: Dict[str, Any] = {}
+        partials: List[Dict[str, Any]] = []
+        pnl_partials_sum = 0.0
+        sl_updates: List[Dict[str, Any]] = []
         mg_step = 0
         signals_raw_total = 0
         signals_raw_buy = 0
@@ -978,6 +986,15 @@ class NairaEngine:
         signals_by_month_raw: Dict[str, int] = {}
         signals_by_month_entry: Dict[str, int] = {}
         gates_timing_blocked = 0
+        blocked_no_signal = 0
+        blocked_min_confidence = 0
+        blocked_higher_tf = 0
+        blocked_timing_gate = 0
+        blocked_structural_gate = 0
+        blocked_confluence_gate = 0
+        blocked_threshold_gate = 0
+        blocked_risk_stop = 0
+        blocked_ai = 0
         apply_gates = bool(apply_execution_gates)
 
         risk_policy_eff = str(risk_stop_policy)
@@ -1148,6 +1165,19 @@ class NairaEngine:
 
             if side is None:
                 if block_new_trades:
+                    blocked_risk_stop += 1
+                    equity_curve.append(float(cash))
+                    continue
+                if g_dir == "neutral" or g_dir != base_dir:
+                    blocked_no_signal += 1
+                    equity_curve.append(float(cash))
+                    continue
+                if g_conf < float(self.config.min_confidence):
+                    blocked_min_confidence += 1
+                    equity_curve.append(float(cash))
+                    continue
+                if not atr_v:
+                    blocked_no_signal += 1
                     equity_curve.append(float(cash))
                     continue
                 if g_dir != "neutral" and g_dir == base_dir and g_conf >= float(self.config.min_confidence) and atr_v:
@@ -1161,14 +1191,17 @@ class NairaEngine:
                                     higher_ok = False
                                     break
                     if not higher_ok:
+                        blocked_higher_tf += 1
                         equity_curve.append(float(cash))
                         continue
                     if timing_state is not None and timing_index is not None:
                         td, tc, tv = get_timing_state(t)
                         if tv and str(td) != g_dir:
+                            blocked_higher_tf += 1
                             equity_curve.append(float(cash))
                             continue
                         if tv and float(tc) < float(self.config.timing_min_confidence):
+                            blocked_higher_tf += 1
                             equity_curve.append(float(cash))
                             continue
                     try:
@@ -1197,10 +1230,12 @@ class NairaEngine:
                             tg = timing_gate(trend_age_bars=int(trend_age), ema_compression=float(comp_eff), base_timeframe=str(base_timeframe))
                             if not tg.ok:
                                 gates_timing_blocked += 1
+                                blocked_timing_gate += 1
                                 equity_curve.append(float(cash))
                                 continue
                         except Exception:
                             gates_timing_blocked += 1
+                            blocked_timing_gate += 1
                             equity_curve.append(float(cash))
                             continue
 
@@ -1219,7 +1254,12 @@ class NairaEngine:
                             frames_min.append({"timeframe": "1d", "alignment": float(get_ht_alignment("1d", t))})
                             g_struct = structural_gate(frames_min)
                             g_exec = execution_threshold_gate(frames_min, base_timeframe=str(base_timeframe))
-                            if not g_struct.ok or not g_exec.ok:
+                            if not g_struct.ok:
+                                blocked_structural_gate += 1
+                                equity_curve.append(float(cash))
+                                continue
+                            if not g_exec.ok:
+                                blocked_threshold_gate += 1
                                 equity_curve.append(float(cash))
                                 continue
                             piv_c = pivot_points_prev_day(df_base.iloc[: i + 1])
@@ -1228,6 +1268,7 @@ class NairaEngine:
                             frames_min[0]["level_confluence_score"] = float(conf_c)
                             g_conf = confluence_gate(frames_min, base_timeframe=str(base_timeframe))
                             if not g_conf.ok:
+                                blocked_confluence_gate += 1
                                 equity_curve.append(float(cash))
                                 continue
                         except Exception:
@@ -1352,6 +1393,10 @@ class NairaEngine:
                     else:
                         sl = entry + float(self.config.sl_atr_mult) * atr_v
                         tp = entry - float(self.config.tp_atr_mult) * atr_v
+                    sl_initial = float(sl) if sl is not None else None
+                    partials = []
+                    pnl_partials_sum = 0.0
+                    sl_updates = []
                     qty = float(fixed_qty)
                     if bool(self.config.use_structure_exits) and atr_v:
                         try:
@@ -1432,6 +1477,7 @@ class NairaEngine:
                             qty_max = (float(cash) * float(max_leverage)) / float(price) if float(max_leverage) > 0 else qty_risk
                             qty = float(max(0.0, min(qty_risk, qty_max)))
                     if float(self.config.ai_entry_threshold) > 0 and ai_p_entry is not None and float(ai_p_entry) < float(self.config.ai_entry_threshold):
+                        blocked_ai += 1
                         side = None
                         entry = None
                         entry_time = None
@@ -1440,11 +1486,15 @@ class NairaEngine:
                         entry_kind = ""
                         sl = None
                         tp = None
+                        sl_initial = None
                         be_done = False
                         qty = 1.0
                         p1_done = False
                         p2_done = False
                         pending_features = {}
+                        partials = []
+                        pnl_partials_sum = 0.0
+                        sl_updates = []
                         equity_curve.append(float(cash))
                         continue
                     if float(qty) <= 0:
@@ -1456,11 +1506,15 @@ class NairaEngine:
                         entry_kind = ""
                         sl = None
                         tp = None
+                        sl_initial = None
                         be_done = False
                         qty = 1.0
                         p1_done = False
                         p2_done = False
                         pending_features = {}
+                        partials = []
+                        pnl_partials_sum = 0.0
+                        sl_updates = []
                         equity_curve.append(float(cash))
                         continue
                     try:
@@ -1479,11 +1533,15 @@ class NairaEngine:
                         entry_kind = ""
                         sl = None
                         tp = None
+                        sl_initial = None
                         be_done = False
                         qty = 1.0
                         p1_done = False
                         p2_done = False
                         pending_features = {}
+                        partials = []
+                        pnl_partials_sum = 0.0
+                        sl_updates = []
                         equity_curve.append(float(cash))
                         continue
                     qty_initial = float(qty)
@@ -1668,7 +1726,9 @@ class NairaEngine:
                                     "exit_time": pd.to_datetime(dt_arr[i]).isoformat(),
                                     "entry": float(entry_eff),
                                     "exit": float(exit_eff),
-                                    "pnl": float(pnl),
+                                    "pnl": float(float(pnl) + float(pnl_partials_sum)),
+                                    "pnl_final": float(pnl),
+                                    "pnl_total": float(float(pnl) + float(pnl_partials_sum)),
                                     "bars_held": int(i - entry_i),
                                     "entry_index": int(entry_i),
                                     "exit_index": int(i),
@@ -1678,6 +1738,8 @@ class NairaEngine:
                                     "entry_sub_index": int(entry_sub_index) if entry_sub_index is not None else None,
                                     "entry_meta": dict(entry_meta) if entry_meta else {},
                                     "_features": dict(pending_features),
+                                    "partials": list(partials) if include_debug else [],
+                                    "sl_updates": list(sl_updates) if include_debug else [],
                                 }
                             )
                             side = None
@@ -1689,11 +1751,15 @@ class NairaEngine:
                             entry_meta = {}
                             sl = None
                             tp = None
+                            sl_initial = None
                             be_done = False
                             qty = 1.0
                             p1_done = False
                             p2_done = False
                             pending_features = {}
+                            partials = []
+                            pnl_partials_sum = 0.0
+                            sl_updates = []
                             if str(sizing_mode or "").lower() in ("martingale",):
                                 if float(pnl) < 0:
                                     mg_step = int(min(int(martingale_max_steps), int(mg_step) + 1))
@@ -1709,42 +1775,79 @@ class NairaEngine:
                             continue
                     price = float(bar_price)
                 if entry is not None and sl is not None and not be_done:
-                    r = abs(float(entry) - float(sl))
-                    if r > 0:
-                        if side == "buy" and hi >= float(entry) + r:
+                    r0 = abs(float(entry) - float(sl_initial)) if sl_initial is not None else abs(float(entry) - float(sl))
+                    if r0 > 0:
+                        be_r = float(self.config.be_trigger_r)
+                        if side == "buy" and hi >= float(entry) + float(be_r) * float(r0):
                             sl = float(entry)
                             be_done = True
-                        elif side == "sell" and lo <= float(entry) - r:
+                            if include_debug:
+                                sl_updates.append({"time": pd.to_datetime(dt_arr[i]).isoformat(), "sl": float(sl), "reason": "be"})
+                        elif side == "sell" and lo <= float(entry) - float(be_r) * float(r0):
                             sl = float(entry)
                             be_done = True
+                            if include_debug:
+                                sl_updates.append({"time": pd.to_datetime(dt_arr[i]).isoformat(), "sl": float(sl), "reason": "be"})
                 if entry is not None and sl is not None:
-                    r = abs(float(entry) - float(sl))
-                    if r > 0 and not p1_done:
-                        if side == "buy" and hi >= float(entry) + r:
-                            cash += (float(entry) + r - float(entry)) * qty * float(self.config.partial_1r_pct)
-                            qty = qty * (1.0 - float(self.config.partial_1r_pct))
-                            p1_done = True
-                        elif side == "sell" and lo <= float(entry) - r:
-                            cash += (float(entry) - (float(entry) - r)) * qty * float(self.config.partial_1r_pct)
-                            qty = qty * (1.0 - float(self.config.partial_1r_pct))
-                            p1_done = True
-                    if r > 0 and p1_done and not p2_done:
-                        if side == "buy" and hi >= float(entry) + (2.0 * r):
-                            cash += (float(entry) + (2.0 * r) - float(entry)) * qty * float(self.config.partial_2r_pct)
-                            qty = qty * (1.0 - float(self.config.partial_2r_pct))
-                            p2_done = True
-                        elif side == "sell" and lo <= float(entry) - (2.0 * r):
-                            cash += (float(entry) - (float(entry) - (2.0 * r))) * qty * float(self.config.partial_2r_pct)
-                            qty = qty * (1.0 - float(self.config.partial_2r_pct))
-                            p2_done = True
-                if side is not None and entry is not None and atr_v is not None and sl is not None and p1_done:
-                    if side == "buy":
-                        trail = float(price) - float(self.config.trailing_atr_mult) * float(atr_v)
-                        sl = float(max(float(sl), trail))
-                    else:
-                        trail = float(price) + float(self.config.trailing_atr_mult) * float(atr_v)
-                        sl = float(min(float(sl), trail))
-                if bool(self.config.structure_trailing) and side is not None and entry is not None and sl is not None and atr_v is not None and p1_done:
+                    r0 = abs(float(entry) - float(sl_initial)) if sl_initial is not None else abs(float(entry) - float(sl))
+                    if r0 > 0 and not p1_done:
+                        qty_close = float(qty) * float(self.config.partial_1r_pct)
+                        if qty_close > 0:
+                            if side == "buy" and hi >= float(entry) + float(r0):
+                                pnl_ev = float(r0) * float(qty_close)
+                                cash += float(pnl_ev)
+                                qty = float(qty) - float(qty_close)
+                                p1_done = True
+                                pnl_partials_sum = float(pnl_partials_sum) + float(pnl_ev)
+                                if include_debug:
+                                    partials.append({"time": pd.to_datetime(dt_arr[i]).isoformat(), "qty": float(qty_close), "price": float(entry) + float(r0), "pnl": float(pnl_ev)})
+                            elif side == "sell" and lo <= float(entry) - float(r0):
+                                pnl_ev = float(r0) * float(qty_close)
+                                cash += float(pnl_ev)
+                                qty = float(qty) - float(qty_close)
+                                p1_done = True
+                                pnl_partials_sum = float(pnl_partials_sum) + float(pnl_ev)
+                                if include_debug:
+                                    partials.append({"time": pd.to_datetime(dt_arr[i]).isoformat(), "qty": float(qty_close), "price": float(entry) - float(r0), "pnl": float(pnl_ev)})
+                    if r0 > 0 and p1_done and not p2_done:
+                        qty_close = float(qty) * float(self.config.partial_2r_pct)
+                        if qty_close > 0:
+                            if side == "buy" and hi >= float(entry) + (2.0 * float(r0)):
+                                pnl_ev = (2.0 * float(r0)) * float(qty_close)
+                                cash += float(pnl_ev)
+                                qty = float(qty) - float(qty_close)
+                                p2_done = True
+                                pnl_partials_sum = float(pnl_partials_sum) + float(pnl_ev)
+                                if include_debug:
+                                    partials.append({"time": pd.to_datetime(dt_arr[i]).isoformat(), "qty": float(qty_close), "price": float(entry) + (2.0 * float(r0)), "pnl": float(pnl_ev)})
+                            elif side == "sell" and lo <= float(entry) - (2.0 * float(r0)):
+                                pnl_ev = (2.0 * float(r0)) * float(qty_close)
+                                cash += float(pnl_ev)
+                                qty = float(qty) - float(qty_close)
+                                p2_done = True
+                                pnl_partials_sum = float(pnl_partials_sum) + float(pnl_ev)
+                                if include_debug:
+                                    partials.append({"time": pd.to_datetime(dt_arr[i]).isoformat(), "qty": float(qty_close), "price": float(entry) - (2.0 * float(r0)), "pnl": float(pnl_ev)})
+
+                if side is not None and entry is not None and atr_v is not None and sl is not None:
+                    r0 = abs(float(entry) - float(sl_initial)) if sl_initial is not None else abs(float(entry) - float(sl))
+                    if r0 > 0:
+                        move_r = ((float(price) - float(entry)) / float(r0)) if side == "buy" else ((float(entry) - float(price)) / float(r0))
+                        if float(move_r) >= float(self.config.trail_trigger_r):
+                            lock = float(self.config.lock_r) * float(r0)
+                            lock_sl = (float(entry) + float(lock)) if side == "buy" else (float(entry) - float(lock))
+                            if side == "buy":
+                                trail_sl = float(price) - float(self.config.trailing_atr_mult) * float(atr_v)
+                                new_sl = float(max(float(sl), float(lock_sl), float(trail_sl)))
+                            else:
+                                trail_sl = float(price) + float(self.config.trailing_atr_mult) * float(atr_v)
+                                new_sl = float(min(float(sl), float(lock_sl), float(trail_sl)))
+                            if new_sl != float(sl):
+                                sl = float(new_sl)
+                                if include_debug:
+                                    sl_updates.append({"time": pd.to_datetime(dt_arr[i]).isoformat(), "sl": float(sl), "reason": "lock_trail"})
+
+                if bool(self.config.structure_trailing) and side is not None and entry is not None and sl is not None and atr_v is not None:
                     try:
                         buf = float(self.config.structure_sl_buffer_atr) * float(atr_v)
                         if side == "buy" and np.isfinite(fractal_low_last[i]):
@@ -1950,6 +2053,15 @@ class NairaEngine:
             "pnl_avg_by_exit_reason": dict(pnl_avg_by_exit),
             "pnl_avg_by_entry_kind": dict(pnl_avg_by_entry),
             "gates_timing_blocked": int(gates_timing_blocked),
+            "blocked_no_signal": int(blocked_no_signal),
+            "blocked_min_confidence": int(blocked_min_confidence),
+            "blocked_higher_tf": int(blocked_higher_tf),
+            "blocked_timing_gate": int(blocked_timing_gate),
+            "blocked_structural_gate": int(blocked_structural_gate),
+            "blocked_confluence_gate": int(blocked_confluence_gate),
+            "blocked_threshold_gate": int(blocked_threshold_gate),
+            "blocked_risk_stop": int(blocked_risk_stop),
+            "blocked_ai": int(blocked_ai),
             "risk_stop_triggered": bool(risk_triggered),
             "risk_stop_reason": str(risk_reason),
             "risk_stop_policy": str(risk_policy),
@@ -2619,7 +2731,7 @@ class NairaEngine:
         eq = np.asarray(equity_curve, dtype=float) if equity_curve else np.asarray([float(starting_cash)], dtype=float)
         peak = np.maximum.accumulate(eq)
         dd = (eq - peak) / np.maximum(1e-9, peak)
-        max_dd_pct = float(dd.min() * 100.0) if len(dd) else 0.0
+        max_dd_pct = float((-dd.min()) * 100.0) if len(dd) else 0.0
         wins = sum(1 for t in trades if float(t["pnl"]) > 0)
         gp = sum(float(t["pnl"]) for t in trades if float(t["pnl"]) > 0)
         gl = -sum(float(t["pnl"]) for t in trades if float(t["pnl"]) < 0)
@@ -2636,12 +2748,15 @@ class NairaEngine:
             exit_counts[k] = int(exit_counts.get(k, 0)) + 1
             ek = str(t.get("entry_kind") or "unknown")
             entry_counts[ek] = int(entry_counts.get(ek, 0)) + 1
+        times_out = [pd.to_datetime(x).isoformat() for x in common_times[60:]] if len(common_times) > 60 else [pd.to_datetime(x).isoformat() for x in common_times]
         return {
             "symbols": list(per_sym.keys()),
             "provider": p,
             "base_timeframe": bt,
             "start": start_dt,
             "end": end_dt,
+            "times": times_out,
+            "equity_curve": [float(x) for x in eq.tolist()],
             "metrics": {
                 "trades": int(len(trades)),
                 "win_rate_pct": float((wins / max(1, len(trades))) * 100.0),
