@@ -261,7 +261,7 @@ def main(argv: List[str]) -> int:
     if args.cmd == "all":
         scan_paths = cmd_scan(provider, run_dir, symbols, tfs)
         backtests = cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=tfs)
-        datasets = cmd_dataset_build(provider, symbols=pick_top_symbols(_read_json(scan_paths.get("1h", ""), []), _top_n()) or symbols[:10], tfs=["1h"])
+        datasets = cmd_dataset_build(provider, symbols=pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10], tfs=["1h"])
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
         cmd_report_setup_edge(run_dir, datasets, backtests)
         cmd_train_stack(run_dir, datasets)

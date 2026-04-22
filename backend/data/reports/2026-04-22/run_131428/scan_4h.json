@@ -1,0 +1,692 @@
+[
+  {
+    "timestamp": "2026-04-22T13:14:29.182420",
+    "symbol": "BTCUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.183426",
+    "symbol": "ETHUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.185472",
+    "symbol": "BNBUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.187496",
+    "symbol": "SOLUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.190663",
+    "symbol": "XRPUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.192260",
+    "symbol": "ADAUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.193766",
+    "symbol": "DOGEUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.196298",
+    "symbol": "TRXUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.198297",
+    "symbol": "LINKUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.199769",
+    "symbol": "AVAXUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.201834",
+    "symbol": "TONUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.203843",
+    "symbol": "DOTUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.204859",
+    "symbol": "MATICUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.208744",
+    "symbol": "LTCUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.211282",
+    "symbol": "BCHUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.213315",
+    "symbol": "SHIBUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.216348",
+    "symbol": "ATOMUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.218356",
+    "symbol": "NEARUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.221375",
+    "symbol": "ICPUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.222947",
+    "symbol": "FILUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.225081",
+    "symbol": "APTUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.226829",
+    "symbol": "ARBUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.229336",
+    "symbol": "OPUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.230366",
+    "symbol": "INJUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.231895",
+    "symbol": "ETCUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.233433",
+    "symbol": "RNDRUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.234971",
+    "symbol": "IMXUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.236990",
+    "symbol": "SUIUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.239499",
+    "symbol": "SEIUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  },
+  {
+    "timestamp": "2026-04-22T13:14:29.242054",
+    "symbol": "XLMUSDT",
+    "provider": "csv",
+    "base_timeframe": "4h",
+    "direction": "neutral",
+    "confidence": 0.0,
+    "opportunity_score": 0.0,
+    "price": 0.0,
+    "frames": [],
+    "reasons": [
+      "Sin datos (CSV no encontrado o vacío)",
+      "gate_structural",
+      "gate_low_confluence",
+      "gate_execution_threshold",
+      "regime=transition"
+    ],
+    "risk": {
+      "entry_price": 0.0
+    },
+    "setup_primary": "unknown",
+    "setup_candidates": []
+  }
+]

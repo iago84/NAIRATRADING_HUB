@@ -1,0 +1,5 @@
+{
+  "scan": [],
+  "random": [],
+  "markdown": "# Reporte: scan + random_backtests\n\n## Scan\n- items: 0\n- direction_counts: {}\n- entry_kind_counts: {}\n\n## Random Backtests\n- runs: 0\n- total_trades: 0\n- total_pnl: 0.000000\n- expectancy_per_trade: 0.000000\n\n"
+}
