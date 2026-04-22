@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Añadir un CLI único cross-platform (`argparse`) para descargar datos, correr pipelines (scan/backtest/dataset/train/calibrate/report) y generar documentación HTML/PDF-like.
+**Goal:** Añadir un CLI único cross-platform (`argparse`) para descargar datos, correr pipelines (scan/backtest/dataset/train/calibrate/report) incorporando `TIMING_MODE=expansion` y generar documentación HTML/PDF-like.
 
 **Architecture:** Un script `scripts/naira_pipeline.py` con subcomandos; wrappers sobre scripts/endpoints existentes; writer de manifests y docs generadas auto-contenidas.
 
@@ -217,6 +217,7 @@ Crear `scripts/naira_pipeline.py` con:
 - `argparse` + subparsers
 - `--data-dir` opcional (default: `backend/data`)
 - `download` llama a `scripts/download_history.py`/`scripts/bulk_download.py` vía import (no shell)
+- `--timing-mode` opcional (default: expansion) para comandos `scan/backtest/report`
 - `docs` genera HTML en `docs/generated/pipeline.html` y `docs/generated/pipeline.pdf.html`
 - `env` imprime rutas
 
@@ -346,4 +347,3 @@ Expected: PASS.
 - Soporta Windows/Linux con comandos de una línea.
 - Artefactos y manifests reproducibles.
 - Docs generadas en repo.
-

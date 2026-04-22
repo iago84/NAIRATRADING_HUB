@@ -1,11 +1,11 @@
 # Diseño: Pipeline CLI + Auto-ML Loop + Documentación (HTML/PDF)
 
-## Objetivo
+## Objetivo (actualizado)
 
 Unificar el flujo de trabajo en un único CLI cross-platform (Windows PowerShell + Linux server) para:
 
 1) Descargar/actualizar histórico de mercados (principalmente crypto)
-2) Ejecutar pipelines completos (scan → backtest → dataset → train → calibrate → report)
+2) Ejecutar pipelines completos (scan → backtest → dataset → train → calibrate → report) incorporando `TIMING_MODE=expansion` por defecto
 3) Operar un loop de autoalimentación ML (con control de versiones/manifest)
 4) Generar documentación técnica (HTML y “PDF-like” vía HTML) de comandos y artefactos
 
@@ -74,8 +74,8 @@ Secuencia recomendada:
 2) `dataset build` (features + labels)
 3) `model train` (por símbolo o stack)
 4) `model calibrate` (umbral y calibración)
-5) `scan --mode multi` para producir señales “ejecutables” (gates ya aplican)
-6) `report` (resumen + drift simple)
+5) `scan --mode multi --timing-mode expansion` para producir señales “ejecutables” (gates ya aplican)
+6) `report` (resumen + drift simple + buckets por timing/entry_kind)
 
 ## Documentación
 
@@ -95,4 +95,3 @@ El “PDF” en MVP es HTML con CSS para impresión:
   - parse de args por subcomando
   - paths resueltos correctamente
   - manifest writer genera sha256 y lista outputs
-
