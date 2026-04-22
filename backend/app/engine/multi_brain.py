@@ -10,6 +10,7 @@ from .brains import run_breakout, run_mean_reversion, run_pullback, run_trend
 from .brains.types import BrainContext, BrainSignal
 from .dataset import FEATURES
 from .ensemble import combine
+from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate
 from .naira_engine import NairaEngine
 from .regime_router import Regime, classify_regime, pick_brains
 
@@ -81,6 +82,19 @@ def run_multi_brain(
     df_feat = engine._apply_features(df_base)
     frames = list(analysis.get("frames") or [])
     regime = classify_regime(frames)
+    g1 = structural_gate(frames)
+    g2 = confluence_gate(frames, base_timeframe=str(base_timeframe))
+    g3 = execution_threshold_gate(frames, base_timeframe=str(base_timeframe))
+    if not (g1.ok and g2.ok and g3.ok):
+        merged = dict(analysis)
+        merged["direction"] = "neutral"
+        merged["confidence"] = float(analysis.get("confidence") or 0.0) * 0.2
+        merged["opportunity_score"] = 0.0
+        merged["reasons"] = list(analysis.get("reasons") or []) + list(g1.reasons) + list(g2.reasons) + list(g3.reasons) + [f"regime={regime}"]
+        if include_debug:
+            merged["debug"] = {"regime": regime, "gates": {"structural": g1.debug, "confluence": g2.debug, "execution": g3.debug}}
+        neutral = BrainSignal(brain="trend", direction="neutral", confidence=float(merged["confidence"]), opportunity_score=0.0, reasons=list(merged["reasons"]), risk=dict(analysis.get("risk") or {}), ai_p_win=None)
+        return merged, MultiBrainResult(regime=regime, dominant=neutral, secondary=None, final=neutral, gate={"ok": False, "reason": "execution_gates"})
     active = pick_brains(regime)
     ctx = BrainContext(
         symbol=str(symbol),
@@ -115,11 +129,13 @@ def run_multi_brain(
     merged["opportunity_score"] = float(combined.opportunity_score)
     merged["reasons"] = list(analysis.get("reasons") or []) + [f"regime={regime}", f"brain={combined.brain}"]
     if include_debug:
-        merged["debug"] = {
+        dbg = {
             "regime": regime,
             "dominant": dom2.brain,
             "secondary": sec2.brain if sec2 else None,
             "ai_p_win": p_win,
             "ai_gate": gate.__dict__,
         }
+        dbg["gates"] = {"structural": g1.debug, "confluence": g2.debug, "execution": g3.debug}
+        merged["debug"] = dbg
     return merged, MultiBrainResult(regime=regime, dominant=dom2, secondary=sec2, final=combined, gate=gate.__dict__)
