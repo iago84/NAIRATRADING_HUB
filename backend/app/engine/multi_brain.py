@@ -97,7 +97,7 @@ def run_multi_brain(
         comp = float(bf.get("ema_compression") or 0.0)
     except Exception:
         comp = 0.0
-    g4 = timing_gate(trend_age_bars=age, ema_compression=comp)
+    g4 = timing_gate(trend_age_bars=age, ema_compression=comp, base_timeframe=str(base_timeframe))
     if not (g1.ok and g2.ok and g3.ok and g4.ok):
         merged = dict(analysis)
         merged["direction"] = "neutral"

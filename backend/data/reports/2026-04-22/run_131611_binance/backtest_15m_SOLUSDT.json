@@ -1,0 +1,60 @@
+{
+  "symbol": "SOLUSDT",
+  "provider": "binance",
+  "base_timeframe": "15m",
+  "start": "2026-02-28T21:30:00",
+  "end": "2026-04-21T23:15:00",
+  "metrics": {
+    "trades": 0,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "total_pnl": 0.0,
+    "equity_last": 10000.0,
+    "max_drawdown_pct": 0.0,
+    "CAGR_pct": 0.0,
+    "exit_reason_counts": {},
+    "entry_kind_counts": {},
+    "pnl_avg_by_exit_reason": {},
+    "pnl_avg_by_entry_kind": {},
+    "gates_timing_blocked": 547,
+    "late_entry_report": {
+      "wins": {
+        "trend_age_bars": {},
+        "ema_compression": {},
+        "dist_ema25_atr": {},
+        "dist_reg_atr": {},
+        "signal_age_bars": {}
+      },
+      "losses": {
+        "trend_age_bars": {},
+        "ema_compression": {},
+        "dist_ema25_atr": {},
+        "dist_reg_atr": {},
+        "signal_age_bars": {}
+      },
+      "recommendations": {
+        "trend_age_max_bars": 240,
+        "ema_compression_max": 6.0,
+        "ai_entry_threshold": 0.0
+      }
+    },
+    "regime_report": {
+      "adx<=18": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "18<adx<=25": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      },
+      "adx>25": {
+        "n": 0,
+        "pf": 0.0,
+        "avg_pnl": 0.0
+      }
+    }
+  },
+  "trades": []
+}

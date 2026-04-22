@@ -15,6 +15,7 @@ from app.engine.dataset import build_trade_dataset
 from app.engine.history_store import HistoryStore
 from app.engine.naira_engine import NairaEngine, NairaConfig
 from app.engine.multi_brain import run_multi_brain
+from scripts.tasks import cmd_data_update, RUN_TFS, HT_TFS
 
 
 def pick_top_symbols(scan_items: List[Dict[str, Any]], top_n: int) -> List[str]:
@@ -60,7 +61,8 @@ def main() -> int:
     top_n = 10
     balance_usdt = 1000.0
     provider = "csv"
-    tfs = ["5m", "15m", "1h", "4h", "1d"]
+    tfs = list(RUN_TFS)
+    update_tfs = list(RUN_TFS) + list(HT_TFS)
     wl = "crypto_top100.json" if universe_size >= 100 else "crypto_top30.json"
     wl_path = os.path.join(str(settings.DATA_DIR), "watchlists", wl)
 
@@ -72,7 +74,10 @@ def main() -> int:
         raise SystemExit(f"watchlist vacía: {wl_path}")
 
     eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
-    store = HistoryStore(base_dir=str(settings.DATA_DIR))
+    try:
+        cmd_data_update("csv", run_dir, symbols, update_tfs)
+    except Exception:
+        pass
 
     all_datasets: List[str] = []
     all_backtests: List[str] = []
@@ -132,4 +137,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -4,8 +4,10 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, REPO_ROOT)
@@ -14,12 +16,16 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "backend"))
 from app.core.config import settings
 from app.engine.calibration import calibration_report
 from app.engine.dataset import build_trade_dataset
+from app.engine.history_store import HistoryStore
 from app.engine.model import train_logreg_sgd_multi
 from app.engine.naira_engine import NairaEngine, NairaConfig
 from app.engine.multi_brain import run_multi_brain
+from app.engine.providers.binance_rest_provider import BinanceRestOHLCVProvider
 
 
-DEFAULT_TFS = ["5m", "15m", "1h", "4h", "1d"]
+RUN_TFS = ["5m", "15m", "30m", "1h"]
+HT_TFS = ["4h", "1d", "1w"]
+DEFAULT_TFS = list(RUN_TFS)
 
 
 def _utc_day() -> str:
@@ -107,6 +113,97 @@ def make_run_dir(provider: str) -> str:
     return _ensure_dir(base)
 
 
+def _timeframe_window_days(tf: str) -> int:
+    t = str(tf)
+    if t == "5m":
+        return 14
+    if t == "15m":
+        return 45
+    if t == "30m":
+        return 90
+    if t == "1h":
+        return 180
+    if t == "4h":
+        return 365
+    if t == "1d":
+        return 365 * 3
+    if t == "1w":
+        return 365 * 7
+    return 365
+
+
+def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str]) -> Dict[str, Any]:
+    p = str(provider).lower()
+    store = HistoryStore(base_dir=str(settings.DATA_DIR))
+    updated = 0
+    errors: List[str] = []
+    if p in ("binance", "csv"):
+        ex = BinanceRestOHLCVProvider()
+        for sym in symbols:
+            for tf in tfs:
+                try:
+                    latest = store.latest_datetime(provider="csv", symbol=sym, timeframe=tf)
+                    end = datetime.now(timezone.utc)
+                    start = end - timedelta(days=_timeframe_window_days(tf))
+                    since_ms = int(start.timestamp() * 1000)
+                    if latest is not None:
+                        try:
+                            since_ms = int(pd.to_datetime(latest).timestamp() * 1000) - 1
+                        except Exception:
+                            since_ms = since_ms
+                    chunks = []
+                    cur = int(since_ms)
+                    for _ in range(50):
+                        df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                        if df is None or df.empty:
+                            break
+                        chunks.append(df)
+                        last_dt = pd.to_datetime(df["datetime"].iloc[-1])
+                        nxt = int(last_dt.timestamp() * 1000) + 1
+                        if nxt <= cur:
+                            break
+                        cur = nxt
+                        if len(df) < 1000:
+                            break
+                    if not chunks:
+                        continue
+                    df_all = pd.concat(chunks).drop_duplicates(subset=["datetime"]).sort_values("datetime").reset_index(drop=True)
+                    try:
+                        store.upsert(provider="binance", symbol=sym, timeframe=tf, df=df_all)
+                    except Exception:
+                        pass
+                    store.upsert(provider="csv", symbol=sym, timeframe=tf, df=df_all)
+                    updated += 1
+                except Exception as e:
+                    errors.append(f"{sym}:{tf}:{type(e).__name__}")
+                    continue
+    elif p == "mt5":
+        try:
+            from app.engine.providers.mt5_provider import MT5OHLCVProvider
+
+            mt5 = MT5OHLCVProvider()
+            for sym in symbols:
+                for tf in tfs:
+                    try:
+                        df = mt5.get_ohlc(symbol=sym, timeframe=tf, bars=5000)
+                        if df is None or df.empty:
+                            continue
+                        try:
+                            store.upsert(provider="mt5", symbol=sym, timeframe=tf, df=df)
+                        except Exception:
+                            pass
+                        store.upsert(provider="csv", symbol=sym, timeframe=tf, df=df)
+                        updated += 1
+                    except Exception as e:
+                        errors.append(f"{sym}:{tf}:{type(e).__name__}")
+                        continue
+        except Exception:
+            errors.append("mt5_provider_unavailable")
+    payload = {"provider": p, "updated": int(updated), "errors": errors, "tfs": list(tfs), "symbols": int(len(symbols))}
+    _write_json(os.path.join(run_dir, "data_update.json"), payload)
+    return payload
+
+
 def cmd_scan(provider: str, run_dir: str, symbols: List[str], tfs: List[str]) -> Dict[str, str]:
     eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
     out: Dict[str, str] = {}
@@ -133,6 +230,21 @@ def cmd_backtest_top(provider: str, run_dir: str, scan_paths: Dict[str, str], to
         scan_items = _read_json(sp, [])
         top_syms = pick_top_symbols(list(scan_items or []), top_n=int(top_n))
         for sym in top_syms:
+            try:
+                r = eng.backtest(symbol=sym, provider=str(provider), base_timeframe=tf, max_bars=5000)
+                p = os.path.join(run_dir, f"backtest_{tf}_{sym}.json")
+                _write_json(p, r)
+                out.append(p)
+            except Exception:
+                continue
+    return out
+
+
+def cmd_backtest_global(provider: str, run_dir: str, symbols: List[str], tfs: List[str]) -> List[str]:
+    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
+    out = []
+    for tf in tfs:
+        for sym in symbols:
             try:
                 r = eng.backtest(symbol=sym, provider=str(provider), base_timeframe=tf, max_bars=5000)
                 p = os.path.join(run_dir, f"backtest_{tf}_{sym}.json")
@@ -234,34 +346,63 @@ def main(argv: List[str]) -> int:
     args = build_parser().parse_args(argv)
     provider = str(args.provider).lower()
     run_dir = make_run_dir(provider)
-    tfs = list(DEFAULT_TFS)
+    run_tfs = list(RUN_TFS)
+    ht_tfs = list(HT_TFS)
+    update_tfs = run_tfs + ht_tfs
     symbols = load_symbols(provider)
     scan_paths: Dict[str, str] = {}
     backtests: List[str] = []
     datasets: List[str] = []
     if args.cmd == "data:update":
-        _write_json(os.path.join(run_dir, "data_update.json"), {"provider": provider, "status": "noop"})
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
         return 0
     if args.cmd == "scan":
-        cmd_scan(provider, run_dir, symbols, tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        cmd_scan(provider, run_dir, symbols, run_tfs)
         return 0
     if args.cmd == "backtest:top":
-        scan_paths = cmd_scan(provider, run_dir, symbols, tfs)
-        cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=run_tfs)
+        return 0
+    if args.cmd == "backtest:global":
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        cmd_backtest_global(provider, run_dir, symbols, run_tfs)
         return 0
     if args.cmd == "dataset:build":
-        cmd_dataset_build(provider, symbols, tfs)
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        cmd_dataset_build(provider, symbols, run_tfs)
         return 0
     if args.cmd == "report:setup-edge":
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        backtests = cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=run_tfs)
+        top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs)
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+        cmd_report_setup_edge(run_dir, datasets, backtests)
         return 0
     if args.cmd == "train:stack":
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs)
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": []})
+        cmd_train_stack(run_dir, datasets)
         return 0
     if args.cmd == "train:calibrate":
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs)
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": []})
+        cmd_calibrate(run_dir, datasets)
         return 0
     if args.cmd == "all":
-        scan_paths = cmd_scan(provider, run_dir, symbols, tfs)
-        backtests = cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=tfs)
-        datasets = cmd_dataset_build(provider, symbols=pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10], tfs=["1h"])
+        cmd_data_update(provider, run_dir, symbols, update_tfs)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs)
+        backtests = cmd_backtest_top(provider, run_dir, scan_paths, top_n=_top_n(), tfs=run_tfs)
+        datasets = cmd_dataset_build(provider, symbols=pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10], tfs=run_tfs)
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
         cmd_report_setup_edge(run_dir, datasets, backtests)
         cmd_train_stack(run_dir, datasets)
@@ -272,4 +413,3 @@ def main(argv: List[str]) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))
-
