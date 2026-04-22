@@ -19,6 +19,7 @@ from .regression import rolling_linreg_slope_pct, linreg_metrics
 from .entry_rules import decide_entry
 from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate, timing_gate
 from .timing import trend_age_bars_from_directions
+from .setup_classifier import classify_setups
 from .filters import OperationalFilterConfig, apply_operational_filters
 from ..core.logger import get_logger
 from ..core.config import settings
@@ -704,6 +705,7 @@ class NairaEngine:
             conf_adj = float(np.clip((0.65 * conf_adj) + (0.35 * ai_prob), 0.0, 1.0))
             reasons.append(f"AI prob(win): {ai_prob:.2f}")
 
+        setup = classify_setups(df_feat_base=df_feat_base, frames=frames_out, base_timeframe=str(base_timeframe))
         out: Dict[str, Any] = {
             "timestamp": ts,
             "symbol": symbol,
@@ -715,6 +717,8 @@ class NairaEngine:
             "price": float(price),
             "frames": frames_out,
             "reasons": reasons,
+            "setup_primary": setup.get("setup_primary"),
+            "setup_candidates": setup.get("setup_candidates"),
             "risk": {
                 "entry_price": float(price),
                 "sl": float(sl) if sl is not None else None,
@@ -1272,6 +1276,33 @@ class NairaEngine:
                         feats["confluence_fibo"] = 0.0
                         feats["alligator_mouth"] = 0.0
                     pending_features = feats
+                    try:
+                        frames_setup = [
+                            {
+                                "timeframe": str(base_timeframe),
+                                "direction": str(g_dir),
+                                "trend_age_bars": int(trend_age_arr[i]),
+                                "ema_compression": float(comp_arr[i]) if np.isfinite(comp_arr[i]) else 0.0,
+                                "level_confluence_score": float(feats.get("confluence_levels") or 0.0),
+                            }
+                        ]
+                        setup = classify_setups(df_feat_base=df_feat_all.iloc[: i + 1], frames=frames_setup, base_timeframe=str(base_timeframe), top_n=3)
+                        entry_meta["setup_primary"] = str(setup.get("setup_primary") or "")
+                        entry_meta["setup_candidates"] = list(setup.get("setup_candidates") or [])
+                        sf = setup.get("setup_features") or {}
+                        try:
+                            pending_features["wick_reject_ratio"] = float(sf.get("wick_reject_ratio") or 0.0)
+                        except Exception:
+                            pending_features["wick_reject_ratio"] = 0.0
+                        try:
+                            pending_features["fractal_distance_atr"] = float(sf.get("fractal_distance_atr") or 0.0)
+                        except Exception:
+                            pending_features["fractal_distance_atr"] = 0.0
+                    except Exception:
+                        entry_meta["setup_primary"] = ""
+                        entry_meta["setup_candidates"] = []
+                        pending_features["wick_reject_ratio"] = 0.0
+                        pending_features["fractal_distance_atr"] = 0.0
                     if side == "buy":
                         sl = entry - float(self.config.sl_atr_mult) * atr_v
                         tp = entry + float(self.config.tp_atr_mult) * atr_v
@@ -1599,6 +1630,7 @@ class NairaEngine:
                                     "entry_index": int(entry_i),
                                     "exit_index": int(i),
                                     "entry_kind": str(entry_kind),
+                                    "setup_primary": str((entry_meta or {}).get("setup_primary") or ""),
                                     "exit_reason": str(exit_reason),
                                     "entry_sub_index": int(entry_sub_index) if entry_sub_index is not None else None,
                                     "entry_meta": dict(entry_meta) if entry_meta else {},

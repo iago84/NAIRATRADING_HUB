@@ -33,6 +33,8 @@ FEATURES = [
     "confluence_fibo",
     "alligator_mouth",
     "ai_prob_entry",
+    "wick_reject_ratio",
+    "fractal_distance_atr",
 ]
 
 
@@ -63,6 +65,7 @@ def build_trade_dataset(
             row["symbol"] = symbol
             row["provider"] = provider
             row["base_timeframe"] = base_timeframe
+            row["setup_primary"] = str(t.get("setup_primary") or (t.get("entry_meta") or {}).get("setup_primary") or "")
             row["pnl"] = float(t.get("pnl") or 0.0)
             row["win"] = 1 if float(t.get("pnl") or 0.0) > 0 else 0
             out.append(row)
@@ -73,7 +76,7 @@ def build_trade_dataset(
     if not rows and str(getattr(engine, "config", None) and getattr(engine.config, "entry_mode", "")) != "none":
         rows = collect(engine)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    cols = ["symbol", "provider", "base_timeframe", "pnl", "win"] + list(FEATURES)
+    cols = ["symbol", "provider", "base_timeframe", "setup_primary", "pnl", "win"] + list(FEATURES)
     df = pd.DataFrame(rows, columns=cols)
     df.to_csv(out_path, index=False)
     return DatasetResult(path=out_path, rows=int(len(df)))
