@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,7 @@ from .alligator import latest_alligator
 from .regression import rolling_linreg_slope_pct, linreg_metrics
 from .entry_rules import decide_entry
 from .execution_gates import confluence_gate, execution_threshold_gate, structural_gate, timing_gate
+from .risk_stops import RiskStopConfig, RiskStopPolicy, apply_risk_stop
 from .timing import trend_age_bars_from_directions
 from .setup_classifier import classify_setups
 from .filters import OperationalFilterConfig, apply_operational_filters
@@ -797,6 +798,9 @@ class NairaEngine:
         entry_magnifier: bool = False,
         entry_magnifier_timeframe: str = "5m",
         apply_execution_gates: bool = True,
+        max_equity_drawdown_pct: float = 50.0,
+        free_cash_min_pct: float = 0.20,
+        risk_stop_policy: str = "stop_immediate",
     ) -> Dict[str, Any]:
         df_base = self.load_ohlc(symbol=symbol, timeframe=base_timeframe, provider=provider, csv_path=csv_path)
         df_base = normalize_ohlcv(df_base)
@@ -976,6 +980,21 @@ class NairaEngine:
         gates_timing_blocked = 0
         apply_gates = bool(apply_execution_gates)
 
+        risk_policy_eff = str(risk_stop_policy)
+        if risk_policy_eff not in ("stop_immediate", "stop_no_new_trades", "stop_after_close"):
+            risk_policy_eff = "stop_immediate"
+        risk_cfg = RiskStopConfig(
+            max_equity_drawdown_pct=float(max_equity_drawdown_pct),
+            free_cash_min_pct=float(free_cash_min_pct),
+            policy=cast(RiskStopPolicy, risk_policy_eff),
+        )
+        risk_triggered = False
+        risk_reason = ""
+        risk_policy = str(risk_policy_eff)
+        risk_stop_at_index: Optional[int] = None
+        risk_stop_at_time: Optional[str] = None
+        block_new_trades = False
+
         price_arr = base_state["close"].to_numpy(dtype=float)
         open_arr = df_base["open"].to_numpy(dtype=float)
         high_arr = df_base["high"].to_numpy(dtype=float)
@@ -1075,8 +1094,6 @@ class NairaEngine:
             return float(px) * (1.0 + bps / 10000.0)
 
         entry_mode = str(self.config.entry_mode or "hybrid")
-        if str(self.config.strategy_mode or "single").lower() == "multi":
-            entry_mode = "regime"
 
         for i in range(60, len(base_state)):
             t = base_times[i]
@@ -1090,6 +1107,29 @@ class NairaEngine:
             g_dir, g_conf, _ = self._vote(states)
             price = float(price_arr[i])
             atr_v = float(atr_arr[i]) if np.isfinite(atr_arr[i]) else None
+
+            floating = 0.0
+            if side is not None and entry is not None:
+                sign = 1.0 if side == "buy" else -1.0
+                floating = (float(price) - float(entry)) * sign * float(qty)
+            equity_now = float(cash + floating)
+            rs = apply_risk_stop(
+                cfg=risk_cfg,
+                starting_cash=float(starting_cash),
+                cash=float(cash),
+                equity=float(equity_now),
+                has_open_position=bool(side is not None),
+            )
+            if rs.triggered:
+                risk_triggered = True
+                risk_reason = str(rs.reason)
+                risk_policy = str(rs.policy)
+                block_new_trades = bool(rs.block_new_trades)
+                if risk_stop_at_index is None:
+                    risk_stop_at_index = int(i)
+                    risk_stop_at_time = pd.to_datetime(dt_arr[i]).isoformat()
+                if rs.should_terminate:
+                    break
             if g_dir != "neutral" and g_dir == base_dir and g_conf >= float(self.config.min_confidence):
                 signal_age += 1
             else:
@@ -1107,6 +1147,9 @@ class NairaEngine:
                     pass
 
             if side is None:
+                if block_new_trades:
+                    equity_curve.append(float(cash))
+                    continue
                 if g_dir != "neutral" and g_dir == base_dir and g_conf >= float(self.config.min_confidence) and atr_v:
                     higher_ok = True
                     if bool(self.config.confirm_higher_tfs):
@@ -1907,6 +1950,13 @@ class NairaEngine:
             "pnl_avg_by_exit_reason": dict(pnl_avg_by_exit),
             "pnl_avg_by_entry_kind": dict(pnl_avg_by_entry),
             "gates_timing_blocked": int(gates_timing_blocked),
+            "risk_stop_triggered": bool(risk_triggered),
+            "risk_stop_reason": str(risk_reason),
+            "risk_stop_policy": str(risk_policy),
+            "risk_stop_at_index": int(risk_stop_at_index) if risk_stop_at_index is not None else None,
+            "risk_stop_at_time": str(risk_stop_at_time) if risk_stop_at_time is not None else "",
+            "risk_threshold_equity": float(float(starting_cash) * (1.0 - float(max_equity_drawdown_pct) / 100.0)),
+            "risk_threshold_free_cash": float(float(starting_cash) * float(free_cash_min_pct)),
         }
         try:
             def _arr(key: str, only_wins: Optional[bool]) -> np.ndarray:
@@ -2039,8 +2089,6 @@ class NairaEngine:
             fee_bps_eff = 2.0
 
         entry_mode = str(self.config.entry_mode or "hybrid")
-        if str(self.config.strategy_mode or "single").lower() == "multi":
-            entry_mode = "regime"
 
         per_sym = {}
         common_times: Optional[np.ndarray] = None
