@@ -45,3 +45,9 @@ def test_tasks_parser_all_binance_overrides():
     assert ns.max_equity_drawdown_pct == 40
     assert ns.free_cash_min_pct == 0.30
     assert ns.risk_stop_policy == "stop_after_close"
+
+
+def test_parser_backtest_portfolio():
+    p = build_parser()
+    ns = p.parse_args(["backtest:portfolio", "--provider", "csv"])
+    assert ns.cmd == "backtest:portfolio"

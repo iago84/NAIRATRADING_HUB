@@ -56,7 +56,7 @@ def main() -> int:
     universe_size = 30
     try:
         v = int(os.getenv("PIPELINE_UNIVERSE", "30").strip() or "30")
-        universe_size = 100 if v >= 100 else 30
+        universe_size = 30 if v <= 0 else max(1, min(100, v))
     except Exception:
         universe_size = 30
     top_n = 10
@@ -77,7 +77,16 @@ def main() -> int:
 
     eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi"))
     try:
-        cmd_data_update("csv", run_dir, symbols, update_tfs)
+        cmd_data_update(
+            "csv",
+            run_dir,
+            symbols,
+            update_tfs,
+            update_workers=1,
+            update_min_sleep_ms=int(os.getenv("PIPELINE_UPDATE_MIN_SLEEP_MS", "0") or "0"),
+            update_backoff_ms=int(os.getenv("PIPELINE_UPDATE_BACKOFF_MS", "250") or "250"),
+            update_max_retries=int(os.getenv("PIPELINE_UPDATE_MAX_RETRIES", "3") or "3"),
+        )
     except Exception:
         pass
 

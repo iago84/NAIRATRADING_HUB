@@ -61,7 +61,9 @@ def _write_json(path: str, obj: Any) -> None:
 def _universe_size() -> int:
     try:
         v = int(os.getenv("PIPELINE_UNIVERSE", "30").strip() or "30")
-        return 100 if v >= 100 else 30
+        if v <= 0:
+            return 30
+        return max(1, min(100, v))
     except Exception:
         return 30
 
@@ -135,7 +137,37 @@ def _timeframe_window_days(tf: str) -> int:
     return 365
 
 
-def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str], update_workers: int) -> Dict[str, Any]:
+def _retry_get_ohlc(max_retries: int, backoff_ms: int, min_sleep_ms: int, fn):
+    last_err: Optional[Exception] = None
+    max_r = int(max(0, int(max_retries)))
+    backoff_s = float(max(0, int(backoff_ms))) / 1000.0
+    min_sleep_s = float(max(0, int(min_sleep_ms))) / 1000.0
+    for attempt in range(max_r + 1):
+        if min_sleep_s > 0:
+            time.sleep(min_sleep_s)
+        try:
+            return fn()
+        except Exception as e:
+            last_err = e
+            if attempt >= max_r:
+                raise
+            if backoff_s > 0:
+                time.sleep(backoff_s * float(attempt + 1))
+    if last_err is not None:
+        raise last_err
+    return None
+
+
+def cmd_data_update(
+    provider: str,
+    run_dir: str,
+    symbols: List[str],
+    tfs: List[str],
+    update_workers: int,
+    update_min_sleep_ms: int,
+    update_backoff_ms: int,
+    update_max_retries: int,
+) -> Dict[str, Any]:
     p = str(provider).lower()
     store = HistoryStore(base_dir=str(settings.DATA_DIR))
     updated = 0
@@ -145,6 +177,28 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
         min_sleep_s = float(max(0, int(update_min_sleep_ms))) / 1000.0
         backoff_s = float(max(0, int(update_backoff_ms))) / 1000.0
         max_retries = int(max(0, int(update_max_retries)))
+        throttle_lock = threading.Lock()
+        next_allowed = 0.0
+
+        def _throttle() -> None:
+            nonlocal next_allowed
+            if min_sleep_s <= 0:
+                return
+            with throttle_lock:
+                now = time.monotonic()
+                wait = max(0.0, next_allowed - now)
+                next_allowed = max(next_allowed, now) + min_sleep_s
+            if wait > 0:
+                time.sleep(wait)
+
+        def _get_ohlc(sym: str, tf: str, cur_ms: int) -> pd.DataFrame:
+            def _fn():
+                _throttle()
+                return ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur_ms)
+
+            out = _retry_get_ohlc(max_retries=max_retries, backoff_ms=update_backoff_ms, min_sleep_ms=0, fn=_fn)
+            return out if isinstance(out, pd.DataFrame) else pd.DataFrame()
+
         def _update_one(sym: str, tf: str) -> tuple[bool, Optional[str]]:
             try:
                 latest = store.latest_datetime(provider="csv", symbol=sym, timeframe=tf)
@@ -159,7 +213,7 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
                 chunks = []
                 cur = int(since_ms)
                 for _ in range(50):
-                    df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                    df = _get_ohlc(sym, tf, cur)
                     if df is None or df.empty:
                         break
                     chunks.append(df)
@@ -528,16 +582,16 @@ def cmd_dataset_build(provider: str, symbols: List[str], tfs: List[str], entry_m
     loc = threading.local()
 
     def _ds_one(tf: str, sym: str) -> Optional[Dict[str, Any]]:
+        ds_path = os.path.join(str(settings.DATASETS_DIR), f"{sym}_{str(provider).lower()}_{tf}_ml.csv")
         try:
             eng = getattr(loc, "eng", None)
             if eng is None:
                 eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
                 setattr(loc, "eng", eng)
-            ds_path = os.path.join(str(settings.DATASETS_DIR), f"{sym}_{str(provider).lower()}_{tf}_ml.csv")
             r = build_trade_dataset(eng, symbol=sym, provider=str(provider), base_timeframe=tf, out_path=ds_path)
             return {"path": str(r.path), "rows": int(r.rows), "symbol": str(sym), "timeframe": str(tf), "provider": str(provider).lower()}
-        except Exception:
-            return None
+        except Exception as e:
+            return {"path": str(ds_path), "rows": 0, "symbol": str(sym), "timeframe": str(tf), "provider": str(provider).lower(), "error": type(e).__name__}
 
     w = int(max(1, int(workers)))
     try:
@@ -644,6 +698,7 @@ def build_parser() -> argparse.ArgumentParser:
         "scan",
         "backtest:top",
         "backtest:global",
+        "backtest:portfolio",
         "dataset:build",
         "report:setup-edge",
         "report:html",
@@ -661,6 +716,15 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--update-min-sleep-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_MIN_SLEEP_MS", "0") or "0"))
         sub.add_argument("--update-backoff-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_BACKOFF_MS", "250") or "250"))
         sub.add_argument("--update-max-retries", type=int, default=int(os.getenv("PIPELINE_UPDATE_MAX_RETRIES", "3") or "3"))
+        sub.add_argument("--sizing-mode", default=os.getenv("PIPELINE_SIZING_MODE", "ai_risk"), choices=["ai_risk", "fixed_risk"])
+        sub.add_argument("--risk-per-trade-pct", type=float, default=float(os.getenv("PIPELINE_RISK_PER_TRADE_PCT", "2.0") or "2.0"))
+        sub.add_argument("--ai-risk-min-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MIN_PCT", "1.0") or "1.0"))
+        sub.add_argument("--ai-risk-max-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MAX_PCT", "5.0") or "5.0"))
+        sub.add_argument("--max-leverage", type=float, default=float(os.getenv("PIPELINE_MAX_LEVERAGE", "2.0") or "2.0"))
+        sub.add_argument("--leverage-sweep", default=False, action="store_true")
+        sub.add_argument("--portfolio-base-timeframe", default=os.getenv("PIPELINE_PORTFOLIO_TF", "1h"))
+        sub.add_argument("--portfolio-starting-cash", type=float, default=float(os.getenv("PIPELINE_PORTFOLIO_CASH", "10000") or "10000"))
+        sub.add_argument("--portfolio-max-positions", type=int, default=int(os.getenv("PIPELINE_PORTFOLIO_MAX_POS", "3") or "3"))
         sub.add_argument("--max-equity-drawdown-pct", type=float, default=float(os.getenv("PIPELINE_MAX_DD_PCT", "50.0") or "50.0"))
         sub.add_argument("--free-cash-min-pct", type=float, default=float(os.getenv("PIPELINE_FREE_CASH_MIN_PCT", "0.20") or "0.20"))
         sub.add_argument(
@@ -685,6 +749,15 @@ def main(argv: List[str]) -> int:
     update_min_sleep_ms = int(args.update_min_sleep_ms)
     update_backoff_ms = int(args.update_backoff_ms)
     update_max_retries = int(args.update_max_retries)
+    sizing_mode = str(args.sizing_mode)
+    risk_per_trade_pct = float(args.risk_per_trade_pct)
+    ai_risk_min_pct = float(args.ai_risk_min_pct)
+    ai_risk_max_pct = float(args.ai_risk_max_pct)
+    max_leverage = float(args.max_leverage)
+    leverage_sweep = bool(args.leverage_sweep)
+    portfolio_base_timeframe = str(args.portfolio_base_timeframe)
+    portfolio_starting_cash = float(args.portfolio_starting_cash)
+    portfolio_max_positions = int(args.portfolio_max_positions)
     max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
     free_cash_min_pct = float(args.free_cash_min_pct)
     risk_stop_policy = str(args.risk_stop_policy)
@@ -692,14 +765,14 @@ def main(argv: List[str]) -> int:
     backtests: List[str] = []
     datasets: List[str] = []
     if args.cmd == "data:update":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         return 0
     if args.cmd == "scan":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "backtest:top":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         cmd_backtest_top(
             provider,
@@ -720,7 +793,7 @@ def main(argv: List[str]) -> int:
         )
         return 0
     if args.cmd == "backtest:global":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_backtest_global(
             provider,
             run_dir,
@@ -738,12 +811,36 @@ def main(argv: List[str]) -> int:
             max_leverage=max_leverage,
         )
         return 0
+    if args.cmd == "backtest:portfolio":
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
+        tf = portfolio_base_timeframe
+        scan_paths = cmd_scan(provider, run_dir, symbols, [tf], entry_mode, workers)
+        scan_items = _read_json(scan_paths.get(tf, ""), [])
+        top_syms = pick_top_symbols(scan_items, _top_n()) or symbols[: _top_n()]
+        eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
+        rep = eng.portfolio_backtest(
+            symbols=top_syms,
+            provider=str(provider),
+            base_timeframe=str(tf),
+            starting_cash=float(portfolio_starting_cash),
+            max_positions=int(portfolio_max_positions),
+            sizing_mode=str(sizing_mode),
+            risk_per_trade_pct=float(risk_per_trade_pct),
+            max_leverage=float(max_leverage),
+            ai_assisted_sizing=bool(str(sizing_mode) == "ai_risk"),
+            ai_risk_min_pct=float(ai_risk_min_pct),
+            ai_risk_max_pct=float(ai_risk_max_pct),
+        )
+        out_json = os.path.join(run_dir, f"portfolio_backtest_{tf}.json")
+        _write_json(out_json, rep)
+        _require_files(run_dir, [os.path.basename(out_json)])
+        return 0
     if args.cmd == "dataset:build":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         cmd_dataset_build(provider, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "report:setup-edge":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         backtests = cmd_backtest_top(
             provider,
@@ -768,8 +865,72 @@ def main(argv: List[str]) -> int:
         ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
         cmd_report_setup_edge(run_dir, ds_paths, backtests)
         return 0
+    if args.cmd == "pipeline:report":
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+        backtests = cmd_backtest_top(
+            provider,
+            run_dir,
+            scan_paths,
+            top_n=_top_n(),
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
+        )
+        top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
+        datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        cmd_report_setup_edge(run_dir, ds_paths, backtests)
+        return 0
+    if args.cmd == "pipeline:train":
+        print("updating data...")
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
+        print("scanning...")
+        scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+        print("backtesting...")
+        backtests = cmd_backtest_top(
+            provider,
+            run_dir,
+            scan_paths,
+            top_n=_top_n(),
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+            max_equity_drawdown_pct=max_equity_drawdown_pct,
+            free_cash_min_pct=free_cash_min_pct,
+            risk_stop_policy=risk_stop_policy,
+            sizing_mode=sizing_mode,
+            risk_per_trade_pct=risk_per_trade_pct,
+            ai_risk_min_pct=ai_risk_min_pct,
+            ai_risk_max_pct=ai_risk_max_pct,
+            max_leverage=max_leverage,
+        )
+        print("building datasets...")
+        datasets = cmd_dataset_build(
+            provider,
+            symbols=pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[:10],
+            tfs=run_tfs,
+            entry_mode=entry_mode,
+            workers=workers,
+        )
+        _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+        _require_files(run_dir, ["datasets_manifest.json"])
+        ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+        cmd_train_stack(run_dir, ds_paths)
+        cmd_calibrate(run_dir, ds_paths)
+        _require_files(run_dir, ["train.json", "calibration.json"])
+        return 0
     if args.cmd == "train:stack":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -778,7 +939,7 @@ def main(argv: List[str]) -> int:
         cmd_train_stack(run_dir, ds_paths)
         return 0
     if args.cmd == "train:calibrate":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -788,7 +949,7 @@ def main(argv: List[str]) -> int:
         return 0
     if args.cmd == "all":
         print("updating data...")
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
         print("scanning...")
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         print("backtesting...")
