@@ -698,6 +698,7 @@ def build_parser() -> argparse.ArgumentParser:
         "scan",
         "backtest:top",
         "backtest:global",
+        "backtest:portfolio",
         "dataset:build",
         "report:setup-edge",
         "report:html",
@@ -721,6 +722,9 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--ai-risk-max-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MAX_PCT", "5.0") or "5.0"))
         sub.add_argument("--max-leverage", type=float, default=float(os.getenv("PIPELINE_MAX_LEVERAGE", "2.0") or "2.0"))
         sub.add_argument("--leverage-sweep", default=False, action="store_true")
+        sub.add_argument("--portfolio-base-timeframe", default=os.getenv("PIPELINE_PORTFOLIO_TF", "1h"))
+        sub.add_argument("--portfolio-starting-cash", type=float, default=float(os.getenv("PIPELINE_PORTFOLIO_CASH", "10000") or "10000"))
+        sub.add_argument("--portfolio-max-positions", type=int, default=int(os.getenv("PIPELINE_PORTFOLIO_MAX_POS", "3") or "3"))
         sub.add_argument("--max-equity-drawdown-pct", type=float, default=float(os.getenv("PIPELINE_MAX_DD_PCT", "50.0") or "50.0"))
         sub.add_argument("--free-cash-min-pct", type=float, default=float(os.getenv("PIPELINE_FREE_CASH_MIN_PCT", "0.20") or "0.20"))
         sub.add_argument(
@@ -751,6 +755,9 @@ def main(argv: List[str]) -> int:
     ai_risk_max_pct = float(args.ai_risk_max_pct)
     max_leverage = float(args.max_leverage)
     leverage_sweep = bool(args.leverage_sweep)
+    portfolio_base_timeframe = str(args.portfolio_base_timeframe)
+    portfolio_starting_cash = float(args.portfolio_starting_cash)
+    portfolio_max_positions = int(args.portfolio_max_positions)
     max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
     free_cash_min_pct = float(args.free_cash_min_pct)
     risk_stop_policy = str(args.risk_stop_policy)
@@ -803,6 +810,30 @@ def main(argv: List[str]) -> int:
             ai_risk_max_pct=ai_risk_max_pct,
             max_leverage=max_leverage,
         )
+        return 0
+    if args.cmd == "backtest:portfolio":
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)
+        tf = portfolio_base_timeframe
+        scan_paths = cmd_scan(provider, run_dir, symbols, [tf], entry_mode, workers)
+        scan_items = _read_json(scan_paths.get(tf, ""), [])
+        top_syms = pick_top_symbols(scan_items, _top_n()) or symbols[: _top_n()]
+        eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
+        rep = eng.portfolio_backtest(
+            symbols=top_syms,
+            provider=str(provider),
+            base_timeframe=str(tf),
+            starting_cash=float(portfolio_starting_cash),
+            max_positions=int(portfolio_max_positions),
+            sizing_mode=str(sizing_mode),
+            risk_per_trade_pct=float(risk_per_trade_pct),
+            max_leverage=float(max_leverage),
+            ai_assisted_sizing=bool(str(sizing_mode) == "ai_risk"),
+            ai_risk_min_pct=float(ai_risk_min_pct),
+            ai_risk_max_pct=float(ai_risk_max_pct),
+        )
+        out_json = os.path.join(run_dir, f"portfolio_backtest_{tf}.json")
+        _write_json(out_json, rep)
+        _require_files(run_dir, [os.path.basename(out_json)])
         return 0
     if args.cmd == "dataset:build":
         cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_min_sleep_ms, update_backoff_ms, update_max_retries)

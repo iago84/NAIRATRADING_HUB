@@ -228,4 +228,4 @@
 - [x] MÃ©tricas por trade: `pnl_partials` y `pnl_total` (evitar confusiÃ³n cuando hay parciales).
 - [x] â€œExplicabilidadâ€ de no-entrada: contadores por gate y por regla (para tuning rÃ¡pido).
 - [x] OptimizaciÃ³n de provider/rate limits: backoff y throttling configurable en `data:update`.
-- [ ] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).
+- [x] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).

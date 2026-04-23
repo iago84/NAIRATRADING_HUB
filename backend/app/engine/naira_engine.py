@@ -2303,8 +2303,8 @@ class NairaEngine:
             return {"error": "insufficient_common_data"}
 
         for sym, pack in per_sym.items():
-            idx = pd.DatetimeIndex(pd.to_datetime(pack["st"]["datetime"]))
-            pack["map"] = idx.get_indexer(pd.to_datetime(common_times))
+            idx = pd.DatetimeIndex(pd.to_datetime(pack["st"]["datetime"]).to_numpy(dtype="datetime64[ns]"))
+            pack["map"] = idx.get_indexer(pd.DatetimeIndex(common_times))
             try:
                 m = pack["map"]
                 closes = pack["st"]["close"].to_numpy(dtype=float)
@@ -2809,9 +2809,11 @@ class NairaEngine:
         pf = float(gp / max(1e-9, gl)) if trades else 0.0
         end_dt = pd.to_datetime(common_times[-1]).isoformat()
         days = max(1.0, float((pd.to_datetime(common_times[-1]) - pd.to_datetime(common_times[0])).days))
+        equity_last = float(eq[-1]) if len(eq) else float(starting_cash)
+        total_pnl = float(equity_last - float(starting_cash))
         cagr = -100.0
-        if float(starting_cash) > 0 and float(cash) > 0:
-            cagr = ((float(cash) / float(starting_cash)) ** (365.0 / days) - 1.0) * 100.0
+        if float(starting_cash) > 0 and float(equity_last) > 0:
+            cagr = ((float(equity_last) / float(starting_cash)) ** (365.0 / days) - 1.0) * 100.0
         exit_counts: Dict[str, int] = {}
         entry_counts: Dict[str, int] = {}
         for t in trades:
@@ -2832,8 +2834,8 @@ class NairaEngine:
                 "trades": int(len(trades)),
                 "win_rate_pct": float((wins / max(1, len(trades))) * 100.0),
                 "profit_factor": float(pf),
-                "equity_last": float(cash),
-                "total_pnl": float(cash - float(starting_cash)),
+                "equity_last": float(equity_last),
+                "total_pnl": float(total_pnl),
                 "max_drawdown_pct": float(max_dd_pct),
                 "CAGR_pct": float(cagr),
                 "open_positions_end": int(len(positions)),
