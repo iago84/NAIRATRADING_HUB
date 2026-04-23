@@ -119,7 +119,7 @@ def summarize_backtest_json(path: str) -> Dict[str, Any]:
             except Exception:
                 pass
     if isinstance(metrics, dict):
-        for k in ("trades", "win_rate_pct", "profit_factor", "total_pnl", "equity_last", "max_drawdown_pct"):
+        for k in ("trades", "win_rate_pct", "profit_factor", "total_pnl", "equity_last", "max_drawdown_pct", "gates_timing_blocked"):
             if k in metrics:
                 out[k] = metrics.get(k)
         try:
@@ -128,6 +128,16 @@ def summarize_backtest_json(path: str) -> Dict[str, Any]:
             out["pnl_per_trade"] = float(total_pnl) / max(1.0, trades)
         except Exception:
             pass
+    try:
+        ler = obj.get("late_entry_report") if isinstance(obj, dict) else None
+        if isinstance(ler, dict) and ler.get("recommendations") is not None:
+            recs = ler.get("recommendations")
+            if isinstance(recs, list):
+                out["late_entry_recommendations"] = [str(x) for x in recs]
+            else:
+                out["late_entry_recommendations"] = [str(recs)]
+    except Exception:
+        pass
     return out
 
 
@@ -406,6 +416,34 @@ def main() -> int:
                     ),
                 }
             )
+            timing_rows = []
+            for b in bt_ok:
+                gtb = b.get("gates_timing_blocked")
+                recs = b.get("late_entry_recommendations")
+                if gtb is None and not recs:
+                    continue
+                rec_s = ""
+                if isinstance(recs, list):
+                    rec_s = "; ".join(str(x) for x in recs[:10])
+                elif recs is not None:
+                    rec_s = str(recs)
+                timing_rows.append(
+                    [
+                        os.path.basename(str(b.get("path") or "")),
+                        b.get("symbol"),
+                        b.get("timeframe"),
+                        b.get("leverage"),
+                        gtb,
+                        rec_s,
+                    ]
+                )
+            if timing_rows:
+                sections.append(
+                    {
+                        "h": "Timing gate",
+                        "p": _table(["file", "symbol", "tf", "lev", "gates_timing_blocked", "recommendations"], timing_rows[:200]),
+                    }
+                )
         html = render_html("Setup Edge Report", sections)
         write_html(str(args.out_html), html)
         info(f"wrote html={args.out_html}")

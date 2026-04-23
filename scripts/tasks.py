@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -134,7 +135,38 @@ def _timeframe_window_days(tf: str) -> int:
     return 365
 
 
-def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str], update_workers: int) -> Dict[str, Any]:
+def _retry_get_ohlc(max_retries: int, backoff_ms: int, min_sleep_ms: int, fn):
+    last = None
+    tries = int(max(1, int(max_retries)))
+    base = int(max(0, int(backoff_ms)))
+    min_sleep = int(max(0, int(min_sleep_ms)))
+    for i in range(tries):
+        try:
+            out = fn()
+            if min_sleep > 0:
+                time.sleep(float(min_sleep) / 1000.0)
+            return out
+        except Exception as e:
+            last = e
+            if i >= tries - 1:
+                raise
+            if base > 0:
+                time.sleep(float(base * (2**i)) / 1000.0)
+    if last is not None:
+        raise last
+    return None
+
+
+def cmd_data_update(
+    provider: str,
+    run_dir: str,
+    symbols: List[str],
+    tfs: List[str],
+    update_workers: int,
+    update_max_retries: int = 3,
+    update_backoff_ms: int = 250,
+    update_min_sleep_ms: int = 0,
+) -> Dict[str, Any]:
     p = str(provider).lower()
     store = HistoryStore(base_dir=str(settings.DATA_DIR))
     updated = 0
@@ -155,7 +187,12 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
                 chunks = []
                 cur = int(since_ms)
                 for _ in range(50):
-                    df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
+                    df = _retry_get_ohlc(
+                        max_retries=int(update_max_retries),
+                        backoff_ms=int(update_backoff_ms),
+                        min_sleep_ms=int(update_min_sleep_ms),
+                        fn=lambda: ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur),
+                    )
                     if df is None or df.empty:
                         break
                     chunks.append(df)
@@ -580,9 +617,21 @@ def cmd_report_setup_edge(run_dir: str, dataset_paths: List[str], backtest_paths
         return {}
 
 
+def _require_files(run_dir: str, names: List[str]) -> None:
+    missing = []
+    for n in names:
+        p = os.path.join(str(run_dir), str(n))
+        if not os.path.exists(p):
+            missing.append(str(n))
+    if missing:
+        raise SystemExit(f"missing artifacts: {missing}")
+
+
 def cmd_train_stack(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
     if not dataset_paths:
-        return {"error": "no datasets"}
+        payload = {"error": "no datasets"}
+        _write_json(os.path.join(run_dir, "train.json"), payload)
+        return payload
     out_path = os.path.join(str(settings.MODELS_DIR), "naira_logreg_stack.json")
     feats = []
     try:
@@ -599,7 +648,9 @@ def cmd_train_stack(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
 
 def cmd_calibrate(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
     if not dataset_paths:
-        return {"error": "no datasets"}
+        rep = {"error": "no datasets"}
+        _write_json(os.path.join(run_dir, "calibration.json"), rep)
+        return rep
     out_path = os.path.join(str(settings.MODELS_DIR), "naira_logreg_stack.json")
     try:
         import pandas as pd
@@ -613,7 +664,9 @@ def cmd_calibrate(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
             except Exception:
                 continue
         if not dfs:
-            return {"error": "datasets vacíos"}
+            rep = {"error": "datasets vacíos"}
+            _write_json(os.path.join(run_dir, "calibration.json"), rep)
+            return rep
         df_all = pd.concat(dfs, ignore_index=True)
         tmp = os.path.join(run_dir, "calibration_dataset.csv")
         df_all.to_csv(tmp, index=False)
@@ -621,7 +674,9 @@ def cmd_calibrate(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
         _write_json(os.path.join(run_dir, "calibration.json"), rep)
         return rep
     except Exception:
-        return {"error": "calibration_failed"}
+        rep = {"error": "calibration_failed"}
+        _write_json(os.path.join(run_dir, "calibration.json"), rep)
+        return rep
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -633,6 +688,9 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--entry-mode", default=os.getenv("PIPELINE_ENTRY_MODE", "hybrid"), choices=["hybrid", "pullback", "break_retest", "mean_reversion", "regime"])
         sub.add_argument("--workers", type=int, default=int(os.getenv("PIPELINE_WORKERS", "8") or "8"))
         sub.add_argument("--update-workers", type=int, default=int(os.getenv("PIPELINE_UPDATE_WORKERS", "2") or "2"))
+        sub.add_argument("--update-min-sleep-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_MIN_SLEEP_MS", "0") or "0"))
+        sub.add_argument("--update-backoff-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_BACKOFF_MS", "250") or "250"))
+        sub.add_argument("--update-max-retries", type=int, default=int(os.getenv("PIPELINE_UPDATE_MAX_RETRIES", "3") or "3"))
         sub.add_argument("--max-equity-drawdown-pct", type=float, default=float(os.getenv("PIPELINE_MAX_DD_PCT", "50.0") or "50.0"))
         sub.add_argument("--free-cash-min-pct", type=float, default=float(os.getenv("PIPELINE_FREE_CASH_MIN_PCT", "0.20") or "0.20"))
         sub.add_argument(
@@ -664,6 +722,9 @@ def main(argv: List[str]) -> int:
     entry_mode = str(args.entry_mode)
     workers = int(args.workers)
     update_workers = int(args.update_workers)
+    update_min_sleep_ms = int(args.update_min_sleep_ms)
+    update_backoff_ms = int(args.update_backoff_ms)
+    update_max_retries = int(args.update_max_retries)
     max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
     free_cash_min_pct = float(args.free_cash_min_pct)
     risk_stop_policy = str(args.risk_stop_policy)
@@ -677,14 +738,14 @@ def main(argv: List[str]) -> int:
     backtests: List[str] = []
     datasets: List[str] = []
     if args.cmd == "data:update":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         return 0
     if args.cmd == "scan":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "backtest:top":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         cmd_backtest_top(
             provider,
@@ -705,7 +766,7 @@ def main(argv: List[str]) -> int:
         )
         return 0
     if args.cmd == "backtest:global":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         cmd_backtest_global(
             provider,
             run_dir,
@@ -724,11 +785,11 @@ def main(argv: List[str]) -> int:
         )
         return 0
     if args.cmd == "dataset:build":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         cmd_dataset_build(provider, symbols, run_tfs, entry_mode, workers)
         return 0
     if args.cmd == "report:setup-edge":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         backtests = cmd_backtest_top(
             provider,
@@ -752,9 +813,10 @@ def main(argv: List[str]) -> int:
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
         ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
         cmd_report_setup_edge(run_dir, ds_paths, backtests)
+        _require_files(run_dir, ["datasets_manifest.json", "setup_edge.md", "setup_edge.json", "setup_edge.html"])
         return 0
     if args.cmd == "train:stack":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -763,7 +825,7 @@ def main(argv: List[str]) -> int:
         cmd_train_stack(run_dir, ds_paths)
         return 0
     if args.cmd == "train:calibrate":
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
@@ -773,7 +835,7 @@ def main(argv: List[str]) -> int:
         return 0
     if args.cmd == "all":
         print("updating data...")
-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
+        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
         print("scanning...")
         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
         print("backtesting...")
@@ -822,13 +884,16 @@ def main(argv: List[str]) -> int:
         )
         print("writing datasets manifest...")
         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+        _require_files(run_dir, ["datasets_manifest.json"])
         print("setting up report...")
         ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
         cmd_report_setup_edge(run_dir, ds_paths, backtests)
+        _require_files(run_dir, ["setup_edge.md", "setup_edge.json", "setup_edge.html"])
         print("training stack...")
         cmd_train_stack(run_dir, ds_paths)
         print("calibrating...")
         cmd_calibrate(run_dir, ds_paths)
+        _require_files(run_dir, ["train.json", "calibration.json"])
         return 0
     return 0
 
