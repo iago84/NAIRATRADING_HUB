@@ -204,15 +204,15 @@
 ## 14) Operativa y Debug (rápido)
 - [ ] Pipeline end-to-end (binance):
   - `python scripts/tasks.py all --provider binance --workers 8 --update-workers 2`
-- [ ] Flags clave del pipeline:
+- [x] Flags clave del pipeline:
   - `--entry-mode` (default: hybrid)
   - `--sizing-mode` (default: ai_risk)
   - `--risk-per-trade-pct` (fallback fixed_risk, default: 2.0)
   - `--ai-risk-min-pct/--ai-risk-max-pct` (default: 1.0/5.0)
   - `--max-equity-drawdown-pct/--free-cash-min-pct/--risk-stop-policy`
 - [ ] Artefactos por run:
-  - `scan_<tf>.json`, `backtest_<tf>_<sym>.json`, `datasets_manifest.json`, `setup_edge.json/.md`, `train.json`, `calibration.json`
-- [ ] Datasets manifest:
+  - `scan_<tf>.json`, `backtest_<tf>_<sym>.json`, `datasets_manifest.json`, `setup_edge.json/.md/.html`, `train.json`, `calibration.json`
+- [x] Datasets manifest:
   - Incluir `rows` por dataset (incluye `rows=0` para ver que “se intentó” en cada símbolo/TF).
   - Entrenamiento/calibración deben usar sólo datasets con `rows > 0`.
 - [ ] Auditoría de sizing (por trade):
