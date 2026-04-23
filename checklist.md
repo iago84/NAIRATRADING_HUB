@@ -202,7 +202,7 @@
 - [x] Copiar sÃ³lo lo necesario al nuevo hub (sin arrastrar dependencias/ruido).
 
 ## 14) Operativa y Debug (rÃ¡pido)
-- [ ] Pipeline end-to-end (binance):
+- [x] Pipeline end-to-end (binance):
   - `python scripts/tasks.py all --provider binance --workers 8 --update-workers 2`
 - [x] Flags clave del pipeline:
   - `--entry-mode` (default: hybrid)
@@ -210,9 +210,9 @@
   - `--risk-per-trade-pct` (fallback fixed_risk, default: 2.0)
   - `--ai-risk-min-pct/--ai-risk-max-pct` (default: 1.0/5.0)
   - `--max-equity-drawdown-pct/--free-cash-min-pct/--risk-stop-policy`
-- [ ] Artefactos por run:
-  - `scan_<tf>.json`, `backtest_<tf>_<sym>.json`, `datasets_manifest.json`, `setup_edge.json/.md`, `train.json`, `calibration.json`
-- [ ] Datasets manifest:
+- [x] Artefactos por run:
+  - `scan_<tf>.json`, `backtest_<tf>_<sym>.json`, `datasets_manifest.json`, `setup_edge.json/.md/.html`, `train.json`, `calibration.json`
+- [x] Datasets manifest:
   - Incluir `rows` por dataset (incluye `rows=0` para ver que â€œse intentÃ³â€ en cada sÃ­mbolo/TF).
   - Entrenamiento/calibraciÃ³n deben usar sÃ³lo datasets con `rows > 0`.
 - [x] AuditorÃ­a de sizing (por trade):
@@ -224,8 +224,8 @@
   - Mirar `metrics.gates_timing_blocked` y el `late_entry_report.recommendations`.
 
 ## 15) Mejoras Prioritarias (prÃ³ximas)
-- [ ] GestiÃ³n de salida: BE + lock + trailing (sin conflicto) expresado en R/ATR.
-- [ ] MÃ©tricas por trade: `pnl_partials` y `pnl_total` (evitar confusiÃ³n cuando hay parciales).
-- [ ] â€œExplicabilidadâ€ de no-entrada: contadores por gate y por regla (para tuning rÃ¡pido).
-- [ ] OptimizaciÃ³n de provider/rate limits: backoff y throttling configurable en `data:update`.
+- [x] GestiÃ³n de salida: BE + lock + trailing (sin conflicto) expresado en R/ATR.
+- [x] MÃ©tricas por trade: `pnl_partials` y `pnl_total` (evitar confusiÃ³n cuando hay parciales).
+- [x] â€œExplicabilidadâ€ de no-entrada: contadores por gate y por regla (para tuning rÃ¡pido).
+- [x] OptimizaciÃ³n de provider/rate limits: backoff y throttling configurable en `data:update`.
 - [ ] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).
