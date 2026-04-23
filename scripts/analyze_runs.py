@@ -62,75 +62,6 @@ def load_backtest_json(path: str) -> List[Dict[str, Any]]:
     return out
 
 
-def summarize_dataset_csv(path: str) -> Dict[str, Any]:
-    try:
-        df = pd.read_csv(path)
-    except Exception:
-        return {"path": str(path), "error": "read_failed"}
-    rows = int(len(df))
-    cols = list(df.columns)
-    meta: Dict[str, Any] = {"path": str(path), "rows": rows}
-    for k in ("symbol", "provider", "base_timeframe", "timeframe"):
-        if k in df.columns and rows > 0:
-            try:
-                meta[k] = str(df[k].iloc[0])
-            except Exception:
-                pass
-    if "pnl" in df.columns and rows > 0:
-        try:
-            s = pd.to_numeric(df["pnl"], errors="coerce").dropna()
-            if not s.empty:
-                meta["total_pnl"] = float(s.sum())
-                meta["avg_pnl"] = float(s.mean())
-                meta["median_pnl"] = float(s.median())
-        except Exception:
-            pass
-    if "win" in df.columns and rows > 0:
-        try:
-            s = pd.to_numeric(df["win"], errors="coerce").dropna()
-            if not s.empty:
-                meta["win_rate_pct"] = float(s.mean() * 100.0)
-        except Exception:
-            pass
-    meta["has_pnl"] = bool("pnl" in cols)
-    meta["has_win"] = bool("win" in cols)
-    return meta
-
-
-def summarize_backtest_json(path: str) -> Dict[str, Any]:
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            obj = json.loads(f.read() or "{}")
-    except Exception:
-        return {"path": str(path), "error": "read_failed"}
-    if isinstance(obj, dict) and obj.get("error"):
-        return {"path": str(path), "error": str(obj.get("error") or "")}
-    metrics = obj.get("metrics") if isinstance(obj, dict) else {}
-    out: Dict[str, Any] = {"path": str(path)}
-    fn = os.path.basename(str(path))
-    m = re.match(r"backtest_(?P<tf>[^_]+)_(?P<sym>[^_]+?)(?:_lev(?P<lev>\d+))?\.json$", fn)
-    if m:
-        out["timeframe"] = str(m.group("tf"))
-        out["symbol"] = str(m.group("sym"))
-        lev = m.group("lev")
-        if lev:
-            try:
-                out["leverage"] = int(lev)
-            except Exception:
-                pass
-    if isinstance(metrics, dict):
-        for k in ("trades", "win_rate_pct", "profit_factor", "total_pnl", "equity_last", "max_drawdown_pct"):
-            if k in metrics:
-                out[k] = metrics.get(k)
-        try:
-            trades = float(metrics.get("trades") or 0.0)
-            total_pnl = float(metrics.get("total_pnl") or 0.0)
-            out["pnl_per_trade"] = float(total_pnl) / max(1.0, trades)
-        except Exception:
-            pass
-    return out
-
-
 def normalize_trade_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for r in rows or []:
@@ -360,55 +291,6 @@ def main() -> int:
         with open(str(args.out_json), "w", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False, indent=2))
         info(f"wrote json={args.out_json}")
-    if str(args.out_html).strip():
-        sections: List[Dict[str, str]] = []
-        sections.append({"h": "Resumen", "p": f"<pre>{_escape(md)}</pre>"})
-        if dataset_summaries:
-            ds_ok = [d for d in dataset_summaries if not d.get("error")]
-            ds_ok.sort(key=lambda x: float(x.get("avg_pnl") or 0.0), reverse=True)
-            rows = []
-            for d in ds_ok[:200]:
-                rows.append(
-                    [
-                        os.path.basename(str(d.get("path") or "")),
-                        d.get("rows"),
-                        d.get("win_rate_pct"),
-                        d.get("avg_pnl"),
-                        d.get("median_pnl"),
-                        d.get("total_pnl"),
-                    ]
-                )
-            sections.append({"h": "Datasets (ranking por avg_pnl)", "p": _table(["file", "rows", "win_rate_pct", "avg_pnl", "median_pnl", "total_pnl"], rows)})
-        if backtest_summaries:
-            bt_ok = [b for b in backtest_summaries if not b.get("error")]
-            bt_ok.sort(key=lambda x: float(x.get("pnl_per_trade") or 0.0), reverse=True)
-            rows = []
-            for b in bt_ok[:200]:
-                rows.append(
-                    [
-                        os.path.basename(str(b.get("path") or "")),
-                        b.get("symbol"),
-                        b.get("timeframe"),
-                        b.get("leverage"),
-                        b.get("trades"),
-                        b.get("win_rate_pct"),
-                        b.get("pnl_per_trade"),
-                        b.get("total_pnl"),
-                        b.get("max_drawdown_pct"),
-                    ]
-                )
-            sections.append(
-                {
-                    "h": "Backtests (ranking por pnl_per_trade)",
-                    "p": _table(
-                        ["file", "symbol", "tf", "lev", "trades", "win_rate_pct", "pnl_per_trade", "total_pnl", "max_drawdown_pct"],
-                        rows,
-                    ),
-                }
-            )
-        html = render_html("Setup Edge Report", sections)
-        write_html(str(args.out_html), html)
-        info(f"wrote html={args.out_html}")
     info("analyze_runs done")
     return 0
 

@@ -61,11 +61,14 @@ class BacktestTrade(BaseModel):
     entry: float
     exit: float
     pnl: float
+    pnl_partials: Optional[List[float]] = None
+    pnl_total: Optional[float] = None
     bars_held: int
     entry_kind: Optional[str] = None
     exit_reason: Optional[str] = None
     entry_sub_index: Optional[int] = None
     entry_meta: Optional[Dict[str, Any]] = None
+    exit_meta: Optional[Dict[str, Any]] = None
 
 
 class BacktestOut(BaseModel):
