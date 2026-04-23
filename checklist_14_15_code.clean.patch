@@ -1,0 +1,1408 @@
+diff --git a/backend/app/engine/naira_engine.py b/backend/app/engine/naira_engine.py
+index 3c55f4f..43606cc 100644
+--- a/backend/app/engine/naira_engine.py
++++ b/backend/app/engine/naira_engine.py
+@@ -83,6 +83,8 @@ class NairaConfig:
+     partial_1r_pct: float = 0.5
+     partial_2r_pct: float = 0.25
+     trailing_atr_mult: float = 1.4
++    lock_trigger_r: float = 1.5
++    lock_r: float = 0.5
+     structure_trailing: bool = False
+     structure_trailing_lookback: int = 2
+     soft_close_adx_drop: float = 14.0
+@@ -966,6 +968,10 @@ class NairaEngine:
+         qty = 1.0
+         p1_done = False
+         p2_done = False
++        pnl_partials: List[float] = []
++        lock_triggered = False
++        lock_r0 = 0.0
++        exit_meta: Dict[str, Any] = {}
+         pending_features: Dict[str, float] = {}
+         entry_meta: Dict[str, Any] = {}
+         mg_step = 0
+@@ -978,8 +984,13 @@ class NairaEngine:
+         signals_by_month_raw: Dict[str, int] = {}
+         signals_by_month_entry: Dict[str, int] = {}
+         gates_timing_blocked = 0
++        gate_reason_counts: Dict[str, int] = {}
+         apply_gates = bool(apply_execution_gates)
+ 
++        def _inc_gate_reason(reason: str) -> None:
++            k = str(reason or "unknown")
++            gate_reason_counts[k] = int(gate_reason_counts.get(k, 0)) + 1
++
+         risk_policy_eff = str(risk_stop_policy)
+         if risk_policy_eff not in ("stop_immediate", "stop_no_new_trades", "stop_after_close"):
+             risk_policy_eff = "stop_immediate"
+@@ -1197,10 +1208,13 @@ class NairaEngine:
+                             tg = timing_gate(trend_age_bars=int(trend_age), ema_compression=float(comp_eff), base_timeframe=str(base_timeframe))
+                             if not tg.ok:
+                                 gates_timing_blocked += 1
++                                for r in (tg.reasons or ["gate_timing"]):
++                                    _inc_gate_reason(str(r))
+                                 equity_curve.append(float(cash))
+                                 continue
+                         except Exception:
+                             gates_timing_blocked += 1
++                            _inc_gate_reason("gate_timing_exception")
+                             equity_curve.append(float(cash))
+                             continue
+ 
+@@ -1220,6 +1234,10 @@ class NairaEngine:
+                             g_struct = structural_gate(frames_min)
+                             g_exec = execution_threshold_gate(frames_min, base_timeframe=str(base_timeframe))
+                             if not g_struct.ok or not g_exec.ok:
++                                for r in (g_struct.reasons or []):
++                                    _inc_gate_reason(str(r))
++                                for r in (g_exec.reasons or []):
++                                    _inc_gate_reason(str(r))
+                                 equity_curve.append(float(cash))
+                                 continue
+                             piv_c = pivot_points_prev_day(df_base.iloc[: i + 1])
+@@ -1228,9 +1246,12 @@ class NairaEngine:
+                             frames_min[0]["level_confluence_score"] = float(conf_c)
+                             g_conf = confluence_gate(frames_min, base_timeframe=str(base_timeframe))
+                             if not g_conf.ok:
++                                for r in (g_conf.reasons or []):
++                                    _inc_gate_reason(str(r))
+                                 equity_curve.append(float(cash))
+                                 continue
+                         except Exception:
++                            _inc_gate_reason("gate_exception")
+                             equity_curve.append(float(cash))
+                             continue
+ 
+@@ -1392,6 +1413,8 @@ class NairaEngine:
+                             pass
+                     ai_p_entry = self.score_ai(dict(pending_features))
+                     sm = str(sizing_mode or "fixed_qty").lower()
++                    risk_pct_used = None
++                    sizing_mode_used = sm
+                     if sm in ("fixed_risk", "risk", "ai_risk", "martingale", "anti_martingale", "antimartingale", "vol_target", "voltarget", "kelly"):
+                         r = abs(float(entry) - float(sl)) if (entry is not None and sl is not None) else 0.0
+                         if r > 0 and float(price) > 0 and float(cash) > 0:
+@@ -1419,6 +1442,8 @@ class NairaEngine:
+                             if bool(ai_assisted_sizing) and sm in ("ai_risk", "fixed_risk", "risk", "martingale"):
+                                 if ai_p_entry is not None:
+                                     risk_pct = float(ai_risk_min_pct) + (float(ai_risk_max_pct) - float(ai_risk_min_pct)) * float(ai_p_entry)
++                                elif sm == "ai_risk":
++                                    sizing_mode_used = "fixed_risk_fallback"
+                             try:
+                                 peak_cash = float(max(float(peak_cash), float(cash)))
+                                 dd = (float(cash) - float(peak_cash)) / max(1e-9, float(peak_cash))
+@@ -1427,6 +1452,7 @@ class NairaEngine:
+                                     risk_pct = float(risk_pct) * float(scale)
+                             except Exception:
+                                 pass
++                            risk_pct_used = float(risk_pct)
+                             risk_cash = float(cash) * (risk_pct / 100.0)
+                             qty_risk = float(risk_cash / r) if r > 0 else 0.0
+                             qty_max = (float(cash) * float(max_leverage)) / float(price) if float(max_leverage) > 0 else qty_risk
+@@ -1444,6 +1470,10 @@ class NairaEngine:
+                         qty = 1.0
+                         p1_done = False
+                         p2_done = False
++                        pnl_partials = []
++                        lock_triggered = False
++                        lock_r0 = 0.0
++                        exit_meta = {}
+                         pending_features = {}
+                         equity_curve.append(float(cash))
+                         continue
+@@ -1460,6 +1490,10 @@ class NairaEngine:
+                         qty = 1.0
+                         p1_done = False
+                         p2_done = False
++                        pnl_partials = []
++                        lock_triggered = False
++                        lock_r0 = 0.0
++                        exit_meta = {}
+                         pending_features = {}
+                         equity_curve.append(float(cash))
+                         continue
+@@ -1483,9 +1517,20 @@ class NairaEngine:
+                         qty = 1.0
+                         p1_done = False
+                         p2_done = False
++                        pnl_partials = []
++                        lock_triggered = False
++                        lock_r0 = 0.0
++                        exit_meta = {}
+                         pending_features = {}
+                         equity_curve.append(float(cash))
+                         continue
++                    pnl_partials = []
++                    lock_triggered = False
++                    try:
++                        lock_r0 = abs(float(entry) - float(sl)) if (entry is not None and sl is not None) else 0.0
++                    except Exception:
++                        lock_r0 = 0.0
++                    exit_meta = {"lock_triggered": False, "lock_sl": None}
+                     qty_initial = float(qty)
+                     pyramid_adds = 0
+                     try:
+@@ -1531,6 +1576,8 @@ class NairaEngine:
+                             "w1_dir": str(states.get("1w", {}).get("direction") or ""),
+                             "ai_prob_entry": float(ai_p_entry) if ai_p_entry is not None else None,
+                             "filled_qty": float(qty),
++                            "risk_pct_used": float(risk_pct_used) if risk_pct_used is not None else None,
++                            "sizing_mode_used": str(sizing_mode_used or ""),
+                         }
+                         pending_features.update(
+                             {
+@@ -1594,22 +1641,45 @@ class NairaEngine:
+                                     r1 = abs(float(entry) - float(sl))
+                                     if r1 > 0 and not p1_done:
+                                         if side == "buy" and seg_hi >= float(entry) + r1:
+-                                            cash += (float(entry) + r1 - float(entry)) * qty * float(self.config.partial_1r_pct)
+-                                            qty = qty * (1.0 - float(self.config.partial_1r_pct))
++                                            p_qty = float(qty) * float(self.config.partial_1r_pct)
++                                            p_pnl = float(r1) * float(p_qty)
++                                            cash += float(p_pnl)
++                                            pnl_partials.append(float(p_pnl))
++                                            qty = float(qty) * (1.0 - float(self.config.partial_1r_pct))
+                                             p1_done = True
+                                         elif side == "sell" and seg_lo <= float(entry) - r1:
+-                                            cash += (float(entry) - (float(entry) - r1)) * qty * float(self.config.partial_1r_pct)
+-                                            qty = qty * (1.0 - float(self.config.partial_1r_pct))
++                                            p_qty = float(qty) * float(self.config.partial_1r_pct)
++                                            p_pnl = float(r1) * float(p_qty)
++                                            cash += float(p_pnl)
++                                            pnl_partials.append(float(p_pnl))
++                                            qty = float(qty) * (1.0 - float(self.config.partial_1r_pct))
+                                             p1_done = True
+                                     if r1 > 0 and p1_done and not p2_done:
+                                         if side == "buy" and seg_hi >= float(entry) + (2.0 * r1):
+-                                            cash += (float(entry) + (2.0 * r1) - float(entry)) * qty * float(self.config.partial_2r_pct)
+-                                            qty = qty * (1.0 - float(self.config.partial_2r_pct))
++                                            p_qty = float(qty) * float(self.config.partial_2r_pct)
++                                            p_pnl = float(2.0 * r1) * float(p_qty)
++                                            cash += float(p_pnl)
++                                            pnl_partials.append(float(p_pnl))
++                                            qty = float(qty) * (1.0 - float(self.config.partial_2r_pct))
+                                             p2_done = True
+                                         elif side == "sell" and seg_lo <= float(entry) - (2.0 * r1):
+-                                            cash += (float(entry) - (float(entry) - (2.0 * r1))) * qty * float(self.config.partial_2r_pct)
+-                                            qty = qty * (1.0 - float(self.config.partial_2r_pct))
++                                            p_qty = float(qty) * float(self.config.partial_2r_pct)
++                                            p_pnl = float(2.0 * r1) * float(p_qty)
++                                            cash += float(p_pnl)
++                                            pnl_partials.append(float(p_pnl))
++                                            qty = float(qty) * (1.0 - float(self.config.partial_2r_pct))
+                                             p2_done = True
++                                if side is not None and entry is not None and sl is not None and (not lock_triggered) and float(lock_r0) > 0:
++                                    if side == "buy" and seg_hi >= float(entry) + float(self.config.lock_trigger_r) * float(lock_r0):
++                                        sl = float(max(float(sl), float(entry) + float(self.config.lock_r) * float(lock_r0)))
++                                        lock_triggered = True
++                                        exit_meta["lock_triggered"] = True
++                                        exit_meta["lock_sl"] = float(sl)
++                                    elif side == "sell" and seg_lo <= float(entry) - float(self.config.lock_trigger_r) * float(lock_r0):
++                                        sl = float(min(float(sl), float(entry) - float(self.config.lock_r) * float(lock_r0)))
++                                        lock_triggered = True
++                                        exit_meta["lock_triggered"] = True
++                                        exit_meta["lock_sl"] = float(sl)
+                                 if side is not None and entry is not None and atr_v is not None and sl is not None and p1_done:
+                                     if side == "buy":
+                                         trail = float(b) - float(self.config.trailing_atr_mult) * float(atr_v)
+@@ -1669,6 +1739,8 @@ class NairaEngine:
+                                     "entry": float(entry_eff),
+                                     "exit": float(exit_eff),
+                                     "pnl": float(pnl),
++                                    "pnl_partials": list(pnl_partials),
++                                    "pnl_total": float(pnl) + float(sum(float(x) for x in (pnl_partials or []))),
+                                     "bars_held": int(i - entry_i),
+                                     "entry_index": int(entry_i),
+                                     "exit_index": int(i),
+@@ -1677,6 +1749,7 @@ class NairaEngine:
+                                     "exit_reason": str(exit_reason),
+                                     "entry_sub_index": int(entry_sub_index) if entry_sub_index is not None else None,
+                                     "entry_meta": dict(entry_meta) if entry_meta else {},
++                                    "exit_meta": dict(exit_meta) if exit_meta else {"lock_triggered": False, "lock_sl": None},
+                                     "_features": dict(pending_features),
+                                 }
+                             )
+@@ -1693,6 +1766,10 @@ class NairaEngine:
+                             qty = 1.0
+                             p1_done = False
+                             p2_done = False
++                            pnl_partials = []
++                            lock_triggered = False
++                            lock_r0 = 0.0
++                            exit_meta = {}
+                             pending_features = {}
+                             if str(sizing_mode or "").lower() in ("martingale",):
+                                 if float(pnl) < 0:
+@@ -1721,22 +1798,45 @@ class NairaEngine:
+                     r = abs(float(entry) - float(sl))
+                     if r > 0 and not p1_done:
+                         if side == "buy" and hi >= float(entry) + r:
+-                            cash += (float(entry) + r - float(entry)) * qty * float(self.config.partial_1r_pct)
+-                            qty = qty * (1.0 - float(self.config.partial_1r_pct))
++                            p_qty = float(qty) * float(self.config.partial_1r_pct)
++                            p_pnl = float(r) * float(p_qty)
++                            cash += float(p_pnl)
++                            pnl_partials.append(float(p_pnl))
++                            qty = float(qty) * (1.0 - float(self.config.partial_1r_pct))
+                             p1_done = True
+                         elif side == "sell" and lo <= float(entry) - r:
+-                            cash += (float(entry) - (float(entry) - r)) * qty * float(self.config.partial_1r_pct)
+-                            qty = qty * (1.0 - float(self.config.partial_1r_pct))
++                            p_qty = float(qty) * float(self.config.partial_1r_pct)
++                            p_pnl = float(r) * float(p_qty)
++                            cash += float(p_pnl)
++                            pnl_partials.append(float(p_pnl))
++                            qty = float(qty) * (1.0 - float(self.config.partial_1r_pct))
+                             p1_done = True
+                     if r > 0 and p1_done and not p2_done:
+                         if side == "buy" and hi >= float(entry) + (2.0 * r):
+-                            cash += (float(entry) + (2.0 * r) - float(entry)) * qty * float(self.config.partial_2r_pct)
+-                            qty = qty * (1.0 - float(self.config.partial_2r_pct))
++                            p_qty = float(qty) * float(self.config.partial_2r_pct)
++                            p_pnl = float(2.0 * r) * float(p_qty)
++                            cash += float(p_pnl)
++                            pnl_partials.append(float(p_pnl))
++                            qty = float(qty) * (1.0 - float(self.config.partial_2r_pct))
+                             p2_done = True
+                         elif side == "sell" and lo <= float(entry) - (2.0 * r):
+-                            cash += (float(entry) - (float(entry) - (2.0 * r))) * qty * float(self.config.partial_2r_pct)
+-                            qty = qty * (1.0 - float(self.config.partial_2r_pct))
++                            p_qty = float(qty) * float(self.config.partial_2r_pct)
++                            p_pnl = float(2.0 * r) * float(p_qty)
++                            cash += float(p_pnl)
++                            pnl_partials.append(float(p_pnl))
++                            qty = float(qty) * (1.0 - float(self.config.partial_2r_pct))
+                             p2_done = True
++                if side is not None and entry is not None and sl is not None and (not lock_triggered) and float(lock_r0) > 0:
++                    if side == "buy" and hi >= float(entry) + float(self.config.lock_trigger_r) * float(lock_r0):
++                        sl = float(max(float(sl), float(entry) + float(self.config.lock_r) * float(lock_r0)))
++                        lock_triggered = True
++                        exit_meta["lock_triggered"] = True
++                        exit_meta["lock_sl"] = float(sl)
++                    elif side == "sell" and lo <= float(entry) - float(self.config.lock_trigger_r) * float(lock_r0):
++                        sl = float(min(float(sl), float(entry) - float(self.config.lock_r) * float(lock_r0)))
++                        lock_triggered = True
++                        exit_meta["lock_triggered"] = True
++                        exit_meta["lock_sl"] = float(sl)
+                 if side is not None and entry is not None and atr_v is not None and sl is not None and p1_done:
+                     if side == "buy":
+                         trail = float(price) - float(self.config.trailing_atr_mult) * float(atr_v)
+@@ -1864,6 +1964,8 @@ class NairaEngine:
+                             "entry": float(entry_eff),
+                             "exit": float(exit_eff),
+                             "pnl": float(pnl),
++                            "pnl_partials": list(pnl_partials),
++                            "pnl_total": float(pnl) + float(sum(float(x) for x in (pnl_partials or []))),
+                             "bars_held": int(i - entry_i),
+                             "entry_index": int(entry_i),
+                             "exit_index": int(i),
+@@ -1871,6 +1973,7 @@ class NairaEngine:
+                             "exit_reason": str(exit_reason or "unknown"),
+                             "entry_sub_index": int(entry_sub_index) if entry_sub_index is not None else None,
+                             "entry_meta": dict(entry_meta) if entry_meta else {},
++                            "exit_meta": dict(exit_meta) if exit_meta else {"lock_triggered": False, "lock_sl": None},
+                             "_features": dict(pending_features),
+                         }
+                     )
+@@ -1887,6 +1990,10 @@ class NairaEngine:
+                     qty = 1.0
+                     p1_done = False
+                     p2_done = False
++                    pnl_partials = []
++                    lock_triggered = False
++                    lock_r0 = 0.0
++                    exit_meta = {}
+                     pending_features = {}
+                     if str(sizing_mode or "").lower() in ("martingale",):
+                         if float(pnl) < 0:
+@@ -1909,7 +2016,7 @@ class NairaEngine:
+         eq = np.array(equity_curve, dtype=float) if equity_curve else np.array([starting_cash], dtype=float)
+         peak = np.maximum.accumulate(eq)
+         dd = (eq - peak) / np.maximum(1e-9, peak)
+-        max_dd_pct = float(dd.min() * 100.0) if len(dd) else 0.0
++        max_dd_pct = float((-dd.min()) * 100.0) if len(dd) else 0.0
+         wins = sum(1 for t in trades if float(t["pnl"]) > 0)
+         gp = sum(float(t["pnl"]) for t in trades if float(t["pnl"]) > 0)
+         gl = -sum(float(t["pnl"]) for t in trades if float(t["pnl"]) < 0)
+@@ -1950,6 +2057,7 @@ class NairaEngine:
+             "pnl_avg_by_exit_reason": dict(pnl_avg_by_exit),
+             "pnl_avg_by_entry_kind": dict(pnl_avg_by_entry),
+             "gates_timing_blocked": int(gates_timing_blocked),
++            "gate_reason_counts": dict(gate_reason_counts),
+             "risk_stop_triggered": bool(risk_triggered),
+             "risk_stop_reason": str(risk_reason),
+             "risk_stop_policy": str(risk_policy),
+@@ -2619,7 +2727,7 @@ class NairaEngine:
+         eq = np.asarray(equity_curve, dtype=float) if equity_curve else np.asarray([float(starting_cash)], dtype=float)
+         peak = np.maximum.accumulate(eq)
+         dd = (eq - peak) / np.maximum(1e-9, peak)
+-        max_dd_pct = float(dd.min() * 100.0) if len(dd) else 0.0
++        max_dd_pct = float((-dd.min()) * 100.0) if len(dd) else 0.0
+         wins = sum(1 for t in trades if float(t["pnl"]) > 0)
+         gp = sum(float(t["pnl"]) for t in trades if float(t["pnl"]) > 0)
+         gl = -sum(float(t["pnl"]) for t in trades if float(t["pnl"]) < 0)
+diff --git a/backend/app/schemas/naira.py b/backend/app/schemas/naira.py
+index d1c1b01..c9dcda8 100644
+--- a/backend/app/schemas/naira.py
++++ b/backend/app/schemas/naira.py
+@@ -61,11 +61,14 @@ class BacktestTrade(BaseModel):
+     entry: float
+     exit: float
+     pnl: float
++    pnl_partials: Optional[List[float]] = None
++    pnl_total: Optional[float] = None
+     bars_held: int
+     entry_kind: Optional[str] = None
+     exit_reason: Optional[str] = None
+     entry_sub_index: Optional[int] = None
+     entry_meta: Optional[Dict[str, Any]] = None
++    exit_meta: Optional[Dict[str, Any]] = None
+ 
+ 
+ class BacktestOut(BaseModel):
+diff --git a/backend/tests/test_data_update_backoff_retry.py b/backend/tests/test_data_update_backoff_retry.py
+new file mode 100644
+index 0000000..110bce0
+--- /dev/null
++++ b/backend/tests/test_data_update_backoff_retry.py
+@@ -0,0 +1,23 @@
++from pathlib import Path
++import sys
++import time
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT.parent))
++
++from scripts.tasks import _retry_get_ohlc
++
++
++def test_backoff_retry_policy_is_applied(monkeypatch):
++    calls = {"n": 0}
++
++    def fn():
++        calls["n"] += 1
++        if calls["n"] < 3:
++            raise RuntimeError("rate limit")
++        return []
++
++    monkeypatch.setattr(time, "sleep", lambda *_: None)
++    out = _retry_get_ohlc(max_retries=3, backoff_ms=10, min_sleep_ms=0, fn=fn)
++    assert calls["n"] == 3
++    assert out == []
+diff --git a/backend/tests/test_entry_meta_sizing_audit.py b/backend/tests/test_entry_meta_sizing_audit.py
+new file mode 100644
+index 0000000..b692c0b
+--- /dev/null
++++ b/backend/tests/test_entry_meta_sizing_audit.py
+@@ -0,0 +1,54 @@
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++from app.core.config import settings
++from app.engine.naira_engine import NairaEngine, NairaConfig
++
++
++def test_entry_meta_contains_sizing_audit_fields():
++    orig = {
++        "CONFLUENCE_MIN": settings.CONFLUENCE_MIN,
++        "STRUCT_ALIGN_4H_MIN": settings.STRUCT_ALIGN_4H_MIN,
++        "STRUCT_ALIGN_1D_MIN": settings.STRUCT_ALIGN_1D_MIN,
++        "EXEC_CONF_MIN": settings.EXEC_CONF_MIN,
++        "EXEC_ALIGN_MIN": settings.EXEC_ALIGN_MIN,
++    }
++    try:
++        object.__setattr__(settings, "CONFLUENCE_MIN", 0.0)
++        object.__setattr__(settings, "STRUCT_ALIGN_4H_MIN", 0.0)
++        object.__setattr__(settings, "STRUCT_ALIGN_1D_MIN", 0.0)
++        object.__setattr__(settings, "EXEC_CONF_MIN", 0.0)
++        object.__setattr__(settings, "EXEC_ALIGN_MIN", 0.0)
++
++        cfg = NairaConfig(
++            strategy_mode="multi",
++            entry_mode="hybrid",
++            confirm_higher_tfs=False,
++            timing_timeframe="",
++            alignment_threshold=0.0,
++            slope_threshold_pct=0.0,
++            adx_threshold=0.0,
++            min_confidence=0.0,
++        )
++        eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=cfg)
++        r = eng.backtest(
++            symbol="LTCUSDT",
++            provider="csv",
++            base_timeframe="1h",
++            max_bars=500,
++            sizing_mode="fixed_risk",
++            risk_per_trade_pct=2.0,
++            max_leverage=1.0,
++            ai_assisted_sizing=False,
++        )
++        trades = r.get("trades") or []
++        assert trades, "expected at least one trade in csv fixture"
++        em = (trades[0].get("entry_meta") or {})
++        assert "risk_pct_used" in em
++        assert "sizing_mode_used" in em
++    finally:
++        for k, v in orig.items():
++            object.__setattr__(settings, k, v)
+diff --git a/backend/tests/test_exit_lock_meta_present.py b/backend/tests/test_exit_lock_meta_present.py
+new file mode 100644
+index 0000000..41f4ef1
+--- /dev/null
++++ b/backend/tests/test_exit_lock_meta_present.py
+@@ -0,0 +1,18 @@
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++from app.core.config import settings
++from app.engine.naira_engine import NairaEngine, NairaConfig
++
++
++def test_trade_contains_exit_meta_lock_fields():
++    cfg = NairaConfig(strategy_mode="multi", entry_mode="hybrid", lock_trigger_r=0.0, lock_r=0.0)
++    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=cfg)
++    r = eng.backtest(symbol="LTCUSDT", provider="csv", base_timeframe="1h", max_bars=500)
++    trades = r.get("trades") or []
++    assert trades
++    em = trades[0].get("exit_meta") or {}
++    assert "lock_triggered" in em
+diff --git a/backend/tests/test_gates_reason_counters_in_metrics.py b/backend/tests/test_gates_reason_counters_in_metrics.py
+new file mode 100644
+index 0000000..0df69d1
+--- /dev/null
++++ b/backend/tests/test_gates_reason_counters_in_metrics.py
+@@ -0,0 +1,17 @@
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++from app.core.config import settings
++from app.engine.naira_engine import NairaEngine, NairaConfig
++
++
++def test_metrics_contains_gate_reason_counts():
++    cfg = NairaConfig(strategy_mode="multi", entry_mode="hybrid")
++    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=cfg)
++    r = eng.backtest(symbol="LTCUSDT", provider="csv", base_timeframe="1h", max_bars=300)
++    m = r.get("metrics") or {}
++    assert "gate_reason_counts" in m
++    assert isinstance(m["gate_reason_counts"], dict)
+diff --git a/backend/tests/test_portfolio_backtest_drawdown_consistent.py b/backend/tests/test_portfolio_backtest_drawdown_consistent.py
+new file mode 100644
+index 0000000..b9843c8
+--- /dev/null
++++ b/backend/tests/test_portfolio_backtest_drawdown_consistent.py
+@@ -0,0 +1,17 @@
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++from app.core.config import settings
++from app.engine.naira_engine import NairaEngine, NairaConfig
++
++
++def test_portfolio_backtest_drawdown_is_non_negative():
++    cfg = NairaConfig(strategy_mode="multi", entry_mode="hybrid")
++    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=cfg)
++    r = eng.portfolio_backtest(provider="csv", symbols=["LTCUSDT"], base_timeframe="1h", max_bars=300)
++    m = r.get("metrics") or {}
++    dd = float(m.get("max_drawdown_pct") or 0.0)
++    assert dd >= 0.0
+diff --git a/backend/tests/test_setup_edge_html_contains_sections.py b/backend/tests/test_setup_edge_html_contains_sections.py
+new file mode 100644
+index 0000000..7e91ea0
+--- /dev/null
++++ b/backend/tests/test_setup_edge_html_contains_sections.py
+@@ -0,0 +1,52 @@
++import json
++import os
++import tempfile
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT.parent))
++
++from scripts.analyze_runs import main as analyze_main
++
++
++def test_setup_edge_html_contains_sections(monkeypatch):
++    with tempfile.TemporaryDirectory() as td:
++        base = Path(td)
++        ds_dir = base / "datasets"
++        ds_dir.mkdir(parents=True, exist_ok=True)
++        (ds_dir / "x_ml.csv").write_text("setup_primary,pnl,win\nbreakout,1,1\nbreakout,-0.5,0\n", encoding="utf-8")
++        bt = base / "backtest_1h_XRPUSDT.json"
++        bt.write_text(
++            json.dumps(
++                {
++                    "metrics": {"trades": 2, "total_pnl": 0.5, "gates_timing_blocked": 3},
++                    "late_entry_report": {"recommendations": ["relax_age", "relax_compression"]},
++                    "trades": [{"pnl": 0.5, "setup_primary": "breakout", "entry_meta": {"risk_r": 1.0}}],
++                }
++            ),
++            encoding="utf-8",
++        )
++        out_html = os.path.join(td, "setup_edge.html")
++        out_md = os.path.join(td, "setup_edge.md")
++        out_json = os.path.join(td, "setup_edge.json")
++        argv = [
++            "analyze_runs.py",
++            "--dataset-dir",
++            str(ds_dir),
++            "--backtest-json",
++            str(bt),
++            "--out-html",
++            out_html,
++            "--out-md",
++            out_md,
++            "--out-json",
++            out_json,
++        ]
++        monkeypatch.setattr("sys.argv", argv)
++        rc = analyze_main()
++        assert rc == 0
++        html = Path(out_html).read_text(encoding="utf-8")
++        assert "Datasets" in html
++        assert "Backtests" in html
++        assert "Timing gate" in html
+diff --git a/backend/tests/test_tasks_all_help_has_flags.py b/backend/tests/test_tasks_all_help_has_flags.py
+new file mode 100644
+index 0000000..76cca14
+--- /dev/null
++++ b/backend/tests/test_tasks_all_help_has_flags.py
+@@ -0,0 +1,8 @@
++import subprocess
++import sys
++
++
++def test_tasks_all_help_has_leverage_sweep_flag():
++    cp = subprocess.run([sys.executable, "scripts/tasks.py", "all", "--help"], capture_output=True, text=True)
++    assert cp.returncode == 0
++    assert "--leverage-sweep" in cp.stdout
+diff --git a/backend/tests/test_trade_partials_pnl_total.py b/backend/tests/test_trade_partials_pnl_total.py
+new file mode 100644
+index 0000000..dce12f2
+--- /dev/null
++++ b/backend/tests/test_trade_partials_pnl_total.py
+@@ -0,0 +1,21 @@
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++from app.core.config import settings
++from app.engine.naira_engine import NairaEngine, NairaConfig
++
++
++def test_trade_contains_pnl_partials_and_pnl_total():
++    cfg = NairaConfig(strategy_mode="multi", entry_mode="hybrid")
++    eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=cfg)
++    r = eng.backtest(symbol="LTCUSDT", provider="csv", base_timeframe="1h", max_bars=800)
++    trades = r.get("trades") or []
++    assert trades
++    t = trades[0]
++    assert "pnl_partials" in t
++    assert "pnl_total" in t
++    assert isinstance(t["pnl_partials"], list)
++    assert abs(float(t["pnl_total"]) - (float(t["pnl"]) + sum(float(x) for x in t["pnl_partials"]))) < 1e-9
+diff --git a/checklist.md b/checklist.md
+index 624944e..55fcb1e 100644
+--- a/checklist.md
++++ b/checklist.md
+@@ -204,28 +204,28 @@
+ ## 14) Operativa y Debug (rápido)
+ - [ ] Pipeline end-to-end (binance):
+   - `python scripts/tasks.py all --provider binance --workers 8 --update-workers 2`
+-- [ ] Flags clave del pipeline:
++- [x] Flags clave del pipeline:
+   - `--entry-mode` (default: hybrid)
+   - `--sizing-mode` (default: ai_risk)
+   - `--risk-per-trade-pct` (fallback fixed_risk, default: 2.0)
+   - `--ai-risk-min-pct/--ai-risk-max-pct` (default: 1.0/5.0)
+   - `--max-equity-drawdown-pct/--free-cash-min-pct/--risk-stop-policy`
+-- [ ] Artefactos por run:
+-  - `scan_<tf>.json`, `backtest_<tf>_<sym>.json`, `datasets_manifest.json`, `setup_edge.json/.md`, `train.json`, `calibration.json`
+-- [ ] Datasets manifest:
++- [x] Artefactos por run:
++  - `scan_<tf>.json`, `backtest_<tf>_<sym>.json`, `datasets_manifest.json`, `setup_edge.json/.md/.html`, `train.json`, `calibration.json`
++- [x] Datasets manifest:
+   - Incluir `rows` por dataset (incluye `rows=0` para ver que “se intentó” en cada símbolo/TF).
+   - Entrenamiento/calibración deben usar sólo datasets con `rows > 0`.
+-- [ ] Auditoría de sizing (por trade):
++- [x] Auditoría de sizing (por trade):
+   - `entry_meta.risk_pct_used` y `entry_meta.sizing_mode_used` para identificar `ai_risk` vs `fixed_risk_fallback`.
+-- [ ] “TP negativo” / PnL raro:
++- [x] “TP negativo” / PnL raro:
+   - Revisar si hubo parciales (pnl del trade final es sólo del remanente) y fees/slippage.
+   - Verificar `filled_qty` y que el sizing no sea `fixed_qty=1` por fallback incorrecto.
+-- [ ] Timing gate bloqueando demasiado:
++- [x] Timing gate bloqueando demasiado:
+   - Mirar `metrics.gates_timing_blocked` y el `late_entry_report.recommendations`.
+ 
+ ## 15) Mejoras Prioritarias (próximas)
+-- [ ] Gestión de salida: BE + lock + trailing (sin conflicto) expresado en R/ATR.
+-- [ ] Métricas por trade: `pnl_partials` y `pnl_total` (evitar confusión cuando hay parciales).
+-- [ ] “Explicabilidad” de no-entrada: contadores por gate y por regla (para tuning rápido).
+-- [ ] Optimización de provider/rate limits: backoff y throttling configurable en `data:update`.
+-- [ ] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).
++- [x] Gestión de salida: BE + lock + trailing (sin conflicto) expresado en R/ATR.
++- [x] Métricas por trade: `pnl_partials` y `pnl_total` (evitar confusión cuando hay parciales).
++- [x] “Explicabilidad” de no-entrada: contadores por gate y por regla (para tuning rápido).
++- [x] Optimización de provider/rate limits: backoff y throttling configurable en `data:update`.
++- [x] Portfolio-level backtest: equity/balance global por barra + drawdown consistente (sin signo negativo).
+diff --git a/scripts/analyze_runs.py b/scripts/analyze_runs.py
+index e15f598..440811a 100644
+--- a/scripts/analyze_runs.py
++++ b/scripts/analyze_runs.py
+@@ -1,12 +1,20 @@
+ from __future__ import annotations
+ 
+ import argparse
++import html as _html
+ import json
+ import os
++import re
++import sys
+ from typing import Any, Dict, List, Optional
+ 
+ import pandas as pd
++
++REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
++sys.path.insert(0, REPO_ROOT)
++
+ from scripts.pipeline_lib.log import info, log
++from scripts.pipeline_lib.docs_gen import render_html, write_html
+ 
+ 
+ def load_scan_json(path: str) -> List[Dict[str, Any]]:
+@@ -54,6 +62,85 @@ def load_backtest_json(path: str) -> List[Dict[str, Any]]:
+     return out
+ 
+ 
++def summarize_dataset_csv(path: str) -> Dict[str, Any]:
++    try:
++        df = pd.read_csv(path)
++    except Exception:
++        return {"path": str(path), "error": "read_failed"}
++    rows = int(len(df))
++    cols = list(df.columns)
++    meta: Dict[str, Any] = {"path": str(path), "rows": rows}
++    for k in ("symbol", "provider", "base_timeframe", "timeframe"):
++        if k in df.columns and rows > 0:
++            try:
++                meta[k] = str(df[k].iloc[0])
++            except Exception:
++                pass
++    if "pnl" in df.columns and rows > 0:
++        try:
++            s = pd.to_numeric(df["pnl"], errors="coerce").dropna()
++            if not s.empty:
++                meta["total_pnl"] = float(s.sum())
++                meta["avg_pnl"] = float(s.mean())
++                meta["median_pnl"] = float(s.median())
++        except Exception:
++            pass
++    if "win" in df.columns and rows > 0:
++        try:
++            s = pd.to_numeric(df["win"], errors="coerce").dropna()
++            if not s.empty:
++                meta["win_rate_pct"] = float(s.mean() * 100.0)
++        except Exception:
++            pass
++    meta["has_pnl"] = bool("pnl" in cols)
++    meta["has_win"] = bool("win" in cols)
++    return meta
++
++
++def summarize_backtest_json(path: str) -> Dict[str, Any]:
++    try:
++        with open(path, "r", encoding="utf-8") as f:
++            obj = json.loads(f.read() or "{}")
++    except Exception:
++        return {"path": str(path), "error": "read_failed"}
++    if isinstance(obj, dict) and obj.get("error"):
++        return {"path": str(path), "error": str(obj.get("error") or "")}
++    metrics = obj.get("metrics") if isinstance(obj, dict) else {}
++    out: Dict[str, Any] = {"path": str(path)}
++    fn = os.path.basename(str(path))
++    m = re.match(r"backtest_(?P<tf>[^_]+)_(?P<sym>[^_]+?)(?:_lev(?P<lev>\d+))?\.json$", fn)
++    if m:
++        out["timeframe"] = str(m.group("tf"))
++        out["symbol"] = str(m.group("sym"))
++        lev = m.group("lev")
++        if lev:
++            try:
++                out["leverage"] = int(lev)
++            except Exception:
++                pass
++    if isinstance(metrics, dict):
++        for k in ("trades", "win_rate_pct", "profit_factor", "total_pnl", "equity_last", "max_drawdown_pct", "gates_timing_blocked"):
++            if k in metrics:
++                out[k] = metrics.get(k)
++        try:
++            trades = float(metrics.get("trades") or 0.0)
++            total_pnl = float(metrics.get("total_pnl") or 0.0)
++            out["pnl_per_trade"] = float(total_pnl) / max(1.0, trades)
++        except Exception:
++            pass
++    try:
++        ler = obj.get("late_entry_report") if isinstance(obj, dict) else None
++        if isinstance(ler, dict) and ler.get("recommendations") is not None:
++            recs = ler.get("recommendations")
++            if isinstance(recs, list):
++                out["late_entry_recommendations"] = [str(x) for x in recs]
++            else:
++                out["late_entry_recommendations"] = [str(recs)]
++    except Exception:
++        pass
++    return out
++
++
+ def normalize_trade_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+     out: List[Dict[str, Any]] = []
+     for r in rows or []:
+@@ -135,6 +222,25 @@ def aggregate_by_setup(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+     return out
+ 
+ 
++def _escape(x: Any) -> str:
++    return _html.escape(str(x))
++
++
++def _table(headers: List[str], rows: List[List[Any]]) -> str:
++    th = "".join(f"<th>{_escape(h)}</th>" for h in headers)
++    trs = []
++    for r in rows:
++        tds = "".join(f"<td>{_escape(c)}</td>" for c in r)
++        trs.append(f"<tr>{tds}</tr>")
++    return (
++        "<table style='border-collapse:collapse;width:100%'>"
++        f"<thead><tr>{th}</tr></thead>"
++        "<tbody>"
++        + "".join(trs)
++        + "</tbody></table>"
++    )
++
++
+ def _count(items: List[Dict[str, Any]], key: str) -> Dict[str, int]:
+     out: Dict[str, int] = {}
+     for it in items or []:
+@@ -186,14 +292,18 @@ def main() -> int:
+     ap.add_argument("--random-jsonl", default="")
+     ap.add_argument("--dataset-csv", action="append", default=[])
+     ap.add_argument("--backtest-json", action="append", default=[])
++    ap.add_argument("--dataset-dir", default="")
+     ap.add_argument("--out-md", default="")
+     ap.add_argument("--out-json", default="")
++    ap.add_argument("--out-html", default="")
+     args = ap.parse_args()
+     info("analyze_runs start")
+ 
+     scan_items: List[Dict[str, Any]] = []
+     random_items: List[Dict[str, Any]] = []
+     trade_rows: List[Dict[str, Any]] = []
++    dataset_summaries: List[Dict[str, Any]] = []
++    backtest_summaries: List[Dict[str, Any]] = []
+     if str(args.scan_json).strip():
+         scan_items = load_scan_json(str(args.scan_json))
+     if str(args.random_jsonl).strip():
+@@ -201,9 +311,21 @@ def main() -> int:
+     for p in list(args.dataset_csv or []):
+         if str(p).strip():
+             trade_rows += load_dataset_csv(str(p))
++            dataset_summaries.append(summarize_dataset_csv(str(p)))
+     for p in list(args.backtest_json or []):
+         if str(p).strip():
+             trade_rows += load_backtest_json(str(p))
++            backtest_summaries.append(summarize_backtest_json(str(p)))
++    ds_dir = str(args.dataset_dir or "").strip()
++    if ds_dir:
++        try:
++            for fn in sorted(os.listdir(ds_dir)):
++                if not fn.endswith(".csv"):
++                    continue
++                p = os.path.join(ds_dir, fn)
++                dataset_summaries.append(summarize_dataset_csv(p))
++        except Exception:
++            pass
+     info(f"inputs scan={len(scan_items)} random={len(random_items)} trades_raw={len(trade_rows)}")
+ 
+     md = build_markdown_report(scan_items, random_items)
+@@ -214,6 +336,20 @@ def main() -> int:
+         for k, v in sorted(agg.items(), key=lambda kv: int(kv[1].get("n_trades") or 0), reverse=True):
+             md += f"- {k}: n={v['n_trades']} win%={v['win_rate_pct']:.1f} avg_pnl={v['avg_pnl']:.6f} avg_R={v.get('avg_R')}\n"
+         md += "\n"
++    if dataset_summaries:
++        md += "## Datasets\n"
++        ds_ok = [d for d in dataset_summaries if not d.get("error")]
++        ds_ok.sort(key=lambda x: float(x.get("avg_pnl") or 0.0), reverse=True)
++        for d in ds_ok[:50]:
++            md += f"- {os.path.basename(str(d.get('path') or ''))}: rows={d.get('rows')} avg_pnl={d.get('avg_pnl')} win%={d.get('win_rate_pct')}\n"
++        md += "\n"
++    if backtest_summaries:
++        md += "## Backtests\n"
++        bt_ok = [b for b in backtest_summaries if not b.get("error")]
++        bt_ok.sort(key=lambda x: float(x.get("pnl_per_trade") or 0.0), reverse=True)
++        for b in bt_ok[:50]:
++            md += f"- {os.path.basename(str(b.get('path') or ''))}: trades={b.get('trades')} pnl/trade={b.get('pnl_per_trade')} total_pnl={b.get('total_pnl')} dd={b.get('max_drawdown_pct')}\n"
++        md += "\n"
+     if str(args.out_md).strip():
+         os.makedirs(os.path.dirname(str(args.out_md)) or ".", exist_ok=True)
+         with open(str(args.out_md), "w", encoding="utf-8") as f:
+@@ -226,10 +362,91 @@ def main() -> int:
+         payload = {"scan": scan_items, "random": random_items, "markdown": md}
+         if trade_rows:
+             payload["setup_edge"] = aggregate_by_setup(normalize_trade_rows(trade_rows))
++        if dataset_summaries:
++            payload["datasets"] = dataset_summaries
++        if backtest_summaries:
++            payload["backtests"] = backtest_summaries
+         os.makedirs(os.path.dirname(str(args.out_json)) or ".", exist_ok=True)
+         with open(str(args.out_json), "w", encoding="utf-8") as f:
+             f.write(json.dumps(payload, ensure_ascii=False, indent=2))
+         info(f"wrote json={args.out_json}")
++    if str(args.out_html).strip():
++        sections: List[Dict[str, str]] = []
++        sections.append({"h": "Resumen", "p": f"<pre>{_escape(md)}</pre>"})
++        if dataset_summaries:
++            ds_ok = [d for d in dataset_summaries if not d.get("error")]
++            ds_ok.sort(key=lambda x: float(x.get("avg_pnl") or 0.0), reverse=True)
++            rows = []
++            for d in ds_ok[:200]:
++                rows.append(
++                    [
++                        os.path.basename(str(d.get("path") or "")),
++                        d.get("rows"),
++                        d.get("win_rate_pct"),
++                        d.get("avg_pnl"),
++                        d.get("median_pnl"),
++                        d.get("total_pnl"),
++                    ]
++                )
++            sections.append({"h": "Datasets (ranking por avg_pnl)", "p": _table(["file", "rows", "win_rate_pct", "avg_pnl", "median_pnl", "total_pnl"], rows)})
++        if backtest_summaries:
++            bt_ok = [b for b in backtest_summaries if not b.get("error")]
++            bt_ok.sort(key=lambda x: float(x.get("pnl_per_trade") or 0.0), reverse=True)
++            rows = []
++            for b in bt_ok[:200]:
++                rows.append(
++                    [
++                        os.path.basename(str(b.get("path") or "")),
++                        b.get("symbol"),
++                        b.get("timeframe"),
++                        b.get("leverage"),
++                        b.get("trades"),
++                        b.get("win_rate_pct"),
++                        b.get("pnl_per_trade"),
++                        b.get("total_pnl"),
++                        b.get("max_drawdown_pct"),
++                    ]
++                )
++            sections.append(
++                {
++                    "h": "Backtests (ranking por pnl_per_trade)",
++                    "p": _table(
++                        ["file", "symbol", "tf", "lev", "trades", "win_rate_pct", "pnl_per_trade", "total_pnl", "max_drawdown_pct"],
++                        rows,
++                    ),
++                }
++            )
++            timing_rows = []
++            for b in bt_ok:
++                gtb = b.get("gates_timing_blocked")
++                recs = b.get("late_entry_recommendations")
++                if gtb is None and not recs:
++                    continue
++                rec_s = ""
++                if isinstance(recs, list):
++                    rec_s = "; ".join(str(x) for x in recs[:10])
++                elif recs is not None:
++                    rec_s = str(recs)
++                timing_rows.append(
++                    [
++                        os.path.basename(str(b.get("path") or "")),
++                        b.get("symbol"),
++                        b.get("timeframe"),
++                        b.get("leverage"),
++                        gtb,
++                        rec_s,
++                    ]
++                )
++            if timing_rows:
++                sections.append(
++                    {
++                        "h": "Timing gate",
++                        "p": _table(["file", "symbol", "tf", "lev", "gates_timing_blocked", "recommendations"], timing_rows[:200]),
++                    }
++                )
++        html = render_html("Setup Edge Report", sections)
++        write_html(str(args.out_html), html)
++        info(f"wrote html={args.out_html}")
+     info("analyze_runs done")
+     return 0
+ 
+diff --git a/scripts/tasks.py b/scripts/tasks.py
+index d660e10..29728d4 100644
+--- a/scripts/tasks.py
++++ b/scripts/tasks.py
+@@ -4,6 +4,7 @@ import argparse
+ import json
+ import os
+ import sys
++import time
+ from datetime import datetime, timezone, timedelta
+ from typing import Any, Dict, List, Optional
+ 
+@@ -134,7 +135,38 @@ def _timeframe_window_days(tf: str) -> int:
+     return 365
+ 
+ 
+-def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[str], update_workers: int) -> Dict[str, Any]:
++def _retry_get_ohlc(max_retries: int, backoff_ms: int, min_sleep_ms: int, fn):
++    last = None
++    tries = int(max(1, int(max_retries)))
++    base = int(max(0, int(backoff_ms)))
++    min_sleep = int(max(0, int(min_sleep_ms)))
++    for i in range(tries):
++        try:
++            out = fn()
++            if min_sleep > 0:
++                time.sleep(float(min_sleep) / 1000.0)
++            return out
++        except Exception as e:
++            last = e
++            if i >= tries - 1:
++                raise
++            if base > 0:
++                time.sleep(float(base * (2**i)) / 1000.0)
++    if last is not None:
++        raise last
++    return None
++
++
++def cmd_data_update(
++    provider: str,
++    run_dir: str,
++    symbols: List[str],
++    tfs: List[str],
++    update_workers: int,
++    update_max_retries: int = 3,
++    update_backoff_ms: int = 250,
++    update_min_sleep_ms: int = 0,
++) -> Dict[str, Any]:
+     p = str(provider).lower()
+     store = HistoryStore(base_dir=str(settings.DATA_DIR))
+     updated = 0
+@@ -155,7 +187,12 @@ def cmd_data_update(provider: str, run_dir: str, symbols: List[str], tfs: List[s
+                 chunks = []
+                 cur = int(since_ms)
+                 for _ in range(50):
+-                    df = ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur)
++                    df = _retry_get_ohlc(
++                        max_retries=int(update_max_retries),
++                        backoff_ms=int(update_backoff_ms),
++                        min_sleep_ms=int(update_min_sleep_ms),
++                        fn=lambda: ex.get_ohlc(symbol=sym, timeframe=tf, limit=1000, since_ms=cur),
++                    )
+                     if df is None or df.empty:
+                         break
+                     chunks.append(df)
+@@ -280,6 +317,11 @@ def cmd_backtest_top(
+     max_equity_drawdown_pct: float,
+     free_cash_min_pct: float,
+     risk_stop_policy: str,
++    sizing_mode: str,
++    risk_per_trade_pct: float,
++    ai_risk_min_pct: float,
++    ai_risk_max_pct: float,
++    max_leverage: float,
+ ) -> List[str]:
+     out = []
+     tasks: List[tuple[str, str]] = []
+@@ -306,6 +348,12 @@ def cmd_backtest_top(
+                 max_equity_drawdown_pct=float(max_equity_drawdown_pct),
+                 free_cash_min_pct=float(free_cash_min_pct),
+                 risk_stop_policy=str(risk_stop_policy),
++                sizing_mode=str(sizing_mode),
++                risk_per_trade_pct=float(risk_per_trade_pct),
++                max_leverage=float(max_leverage),
++                ai_assisted_sizing=bool(str(sizing_mode).lower() == "ai_risk"),
++                ai_risk_min_pct=float(ai_risk_min_pct),
++                ai_risk_max_pct=float(ai_risk_max_pct),
+             )
+             return (tf, sym, r)
+         except Exception:
+@@ -313,7 +361,7 @@ def cmd_backtest_top(
+ 
+     w = int(max(1, int(workers)))
+     try:
+-        print(f"backtest:top tasks={len(tasks)} workers={w} sizing_mode={sizing_mode}")
++        print(f"backtest:top tasks={len(tasks)} workers={w} sizing_mode={str(sizing_mode)}")
+     except Exception:
+         pass
+     if w <= 1:
+@@ -343,6 +391,93 @@ def cmd_backtest_top(
+     return out
+ 
+ 
++def cmd_backtest_top_leverage_sweep(
++    provider: str,
++    run_dir: str,
++    scan_paths: Dict[str, str],
++    top_n: int,
++    tfs: List[str],
++    entry_mode: str,
++    workers: int,
++    max_equity_drawdown_pct: float,
++    free_cash_min_pct: float,
++    risk_stop_policy: str,
++    sizing_mode: str,
++    risk_per_trade_pct: float,
++    ai_risk_min_pct: float,
++    ai_risk_max_pct: float,
++    leverages: List[float],
++) -> List[str]:
++    out: List[str] = []
++    tasks: List[tuple[str, str, float]] = []
++    levs = [float(x) for x in (leverages or []) if float(x) > 0]
++    for tf in tfs:
++        sp = scan_paths.get(tf) or os.path.join(run_dir, f"scan_{tf}.json")
++        scan_items = _read_json(sp, [])
++        top_syms = pick_top_symbols(list(scan_items or []), top_n=int(top_n))
++        for sym in top_syms:
++            for lev in levs:
++                tasks.append((tf, sym, float(lev)))
++
++    loc = threading.local()
++
++    def _bt_one(tf: str, sym: str, lev: float) -> Optional[tuple[str, str, float, Dict[str, Any]]]:
++        try:
++            eng = getattr(loc, "eng", None)
++            if eng is None:
++                eng = NairaEngine(data_dir=str(settings.DATA_DIR), config=NairaConfig(strategy_mode="multi", entry_mode=str(entry_mode)))
++                setattr(loc, "eng", eng)
++            r = eng.backtest(
++                symbol=sym,
++                provider=str(provider),
++                base_timeframe=tf,
++                max_bars=5000,
++                max_equity_drawdown_pct=float(max_equity_drawdown_pct),
++                free_cash_min_pct=float(free_cash_min_pct),
++                risk_stop_policy=str(risk_stop_policy),
++                sizing_mode=str(sizing_mode),
++                risk_per_trade_pct=float(risk_per_trade_pct),
++                max_leverage=float(lev),
++                ai_assisted_sizing=bool(str(sizing_mode).lower() == "ai_risk"),
++                ai_risk_min_pct=float(ai_risk_min_pct),
++                ai_risk_max_pct=float(ai_risk_max_pct),
++            )
++            return (tf, sym, float(lev), r)
++        except Exception:
++            return None
++
++    w = int(max(1, int(workers)))
++    try:
++        print(f"backtest:leverage_sweep tasks={len(tasks)} workers={w} levels={','.join(str(int(x)) for x in levs)}")
++    except Exception:
++        pass
++    if w <= 1:
++        for tf, sym, lev in tasks:
++            res = _bt_one(tf, sym, lev)
++            if not res:
++                continue
++            tf2, sym2, lev2, r = res
++            p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}_lev{int(lev2)}.json")
++            _write_json(p, r)
++            out.append(p)
++    else:
++        with ThreadPoolExecutor(max_workers=w) as pool:
++            futs = [pool.submit(_bt_one, tf, sym, lev) for tf, sym, lev in tasks]
++            for f in as_completed(futs):
++                res = f.result()
++                if not res:
++                    continue
++                tf2, sym2, lev2, r = res
++                p = os.path.join(run_dir, f"backtest_{tf2}_{sym2}_lev{int(lev2)}.json")
++                _write_json(p, r)
++                out.append(p)
++    try:
++        print(f"backtest:leverage_sweep done files={len(out)}")
++    except Exception:
++        pass
++    return out
++
++
+ def cmd_backtest_global(
+     provider: str,
+     run_dir: str,
+@@ -353,6 +488,11 @@ def cmd_backtest_global(
+     max_equity_drawdown_pct: float,
+     free_cash_min_pct: float,
+     risk_stop_policy: str,
++    sizing_mode: str,
++    risk_per_trade_pct: float,
++    ai_risk_min_pct: float,
++    ai_risk_max_pct: float,
++    max_leverage: float,
+ ) -> List[str]:
+     out = []
+     tasks = [(tf, sym) for tf in tfs for sym in symbols]
+@@ -372,6 +512,12 @@ def cmd_backtest_global(
+                 max_equity_drawdown_pct=float(max_equity_drawdown_pct),
+                 free_cash_min_pct=float(free_cash_min_pct),
+                 risk_stop_policy=str(risk_stop_policy),
++                sizing_mode=str(sizing_mode),
++                risk_per_trade_pct=float(risk_per_trade_pct),
++                max_leverage=float(max_leverage),
++                ai_assisted_sizing=bool(str(sizing_mode).lower() == "ai_risk"),
++                ai_risk_min_pct=float(ai_risk_min_pct),
++                ai_risk_max_pct=float(ai_risk_max_pct),
+             )
+             return (tf, sym, r)
+         except Exception:
+@@ -379,7 +525,7 @@ def cmd_backtest_global(
+ 
+     w = int(max(1, int(workers)))
+     try:
+-        print(f"backtest:global tasks={len(tasks)} workers={w} sizing_mode={sizing_mode}")
++        print(f"backtest:global tasks={len(tasks)} workers={w} sizing_mode={str(sizing_mode)}")
+     except Exception:
+         pass
+     if w <= 1:
+@@ -462,17 +608,30 @@ def cmd_report_setup_edge(run_dir: str, dataset_paths: List[str], backtest_paths
+             argv += ["--backtest-json", str(p)]
+         md = os.path.join(run_dir, "setup_edge.md")
+         js = os.path.join(run_dir, "setup_edge.json")
+-        argv += ["--out-md", md, "--out-json", js]
++        html = os.path.join(run_dir, "setup_edge.html")
++        argv += ["--out-md", md, "--out-json", js, "--out-html", html, "--dataset-dir", str(settings.DATASETS_DIR)]
+         sys.argv = ["analyze_runs.py"] + argv
+         analyze_main()
+-        return {"md": md, "json": js}
++        return {"md": md, "json": js, "html": html}
+     except Exception:
+         return {}
+ 
+ 
++def _require_files(run_dir: str, names: List[str]) -> None:
++    missing = []
++    for n in names:
++        p = os.path.join(str(run_dir), str(n))
++        if not os.path.exists(p):
++            missing.append(str(n))
++    if missing:
++        raise SystemExit(f"missing artifacts: {missing}")
++
++
+ def cmd_train_stack(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
+     if not dataset_paths:
+-        return {"error": "no datasets"}
++        payload = {"error": "no datasets"}
++        _write_json(os.path.join(run_dir, "train.json"), payload)
++        return payload
+     out_path = os.path.join(str(settings.MODELS_DIR), "naira_logreg_stack.json")
+     feats = []
+     try:
+@@ -489,7 +648,9 @@ def cmd_train_stack(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
+ 
+ def cmd_calibrate(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
+     if not dataset_paths:
+-        return {"error": "no datasets"}
++        rep = {"error": "no datasets"}
++        _write_json(os.path.join(run_dir, "calibration.json"), rep)
++        return rep
+     out_path = os.path.join(str(settings.MODELS_DIR), "naira_logreg_stack.json")
+     try:
+         import pandas as pd
+@@ -503,7 +664,9 @@ def cmd_calibrate(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
+             except Exception:
+                 continue
+         if not dfs:
+-            return {"error": "datasets vacíos"}
++            rep = {"error": "datasets vacíos"}
++            _write_json(os.path.join(run_dir, "calibration.json"), rep)
++            return rep
+         df_all = pd.concat(dfs, ignore_index=True)
+         tmp = os.path.join(run_dir, "calibration_dataset.csv")
+         df_all.to_csv(tmp, index=False)
+@@ -511,7 +674,9 @@ def cmd_calibrate(run_dir: str, dataset_paths: List[str]) -> Dict[str, Any]:
+         _write_json(os.path.join(run_dir, "calibration.json"), rep)
+         return rep
+     except Exception:
+-        return {"error": "calibration_failed"}
++        rep = {"error": "calibration_failed"}
++        _write_json(os.path.join(run_dir, "calibration.json"), rep)
++        return rep
+ 
+ 
+ def build_parser() -> argparse.ArgumentParser:
+@@ -523,6 +688,9 @@ def build_parser() -> argparse.ArgumentParser:
+         sub.add_argument("--entry-mode", default=os.getenv("PIPELINE_ENTRY_MODE", "hybrid"), choices=["hybrid", "pullback", "break_retest", "mean_reversion", "regime"])
+         sub.add_argument("--workers", type=int, default=int(os.getenv("PIPELINE_WORKERS", "8") or "8"))
+         sub.add_argument("--update-workers", type=int, default=int(os.getenv("PIPELINE_UPDATE_WORKERS", "2") or "2"))
++        sub.add_argument("--update-min-sleep-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_MIN_SLEEP_MS", "0") or "0"))
++        sub.add_argument("--update-backoff-ms", type=int, default=int(os.getenv("PIPELINE_UPDATE_BACKOFF_MS", "250") or "250"))
++        sub.add_argument("--update-max-retries", type=int, default=int(os.getenv("PIPELINE_UPDATE_MAX_RETRIES", "3") or "3"))
+         sub.add_argument("--max-equity-drawdown-pct", type=float, default=float(os.getenv("PIPELINE_MAX_DD_PCT", "50.0") or "50.0"))
+         sub.add_argument("--free-cash-min-pct", type=float, default=float(os.getenv("PIPELINE_FREE_CASH_MIN_PCT", "0.20") or "0.20"))
+         sub.add_argument(
+@@ -530,6 +698,16 @@ def build_parser() -> argparse.ArgumentParser:
+             default=os.getenv("PIPELINE_RISK_STOP_POLICY", "stop_immediate"),
+             choices=["stop_immediate", "stop_no_new_trades", "stop_after_close"],
+         )
++        sub.add_argument(
++            "--sizing-mode",
++            default=os.getenv("PIPELINE_SIZING_MODE", "ai_risk"),
++            choices=["fixed_qty", "fixed_risk", "ai_risk", "martingale", "anti_martingale", "vol_target", "kelly"],
++        )
++        sub.add_argument("--risk-per-trade-pct", type=float, default=float(os.getenv("PIPELINE_RISK_PER_TRADE_PCT", "2.0") or "2.0"))
++        sub.add_argument("--ai-risk-min-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MIN_PCT", "1.0") or "1.0"))
++        sub.add_argument("--ai-risk-max-pct", type=float, default=float(os.getenv("PIPELINE_AI_RISK_MAX_PCT", "5.0") or "5.0"))
++        sub.add_argument("--max-leverage", type=float, default=float(os.getenv("PIPELINE_MAX_LEVERAGE", "1.0") or "1.0"))
++        sub.add_argument("--leverage-sweep", action="store_true", default=bool(int(os.getenv("PIPELINE_LEVERAGE_SWEEP", "0") or "0")))
+     return p
+ 
+ 
+@@ -544,21 +722,30 @@ def main(argv: List[str]) -> int:
+     entry_mode = str(args.entry_mode)
+     workers = int(args.workers)
+     update_workers = int(args.update_workers)
++    update_min_sleep_ms = int(args.update_min_sleep_ms)
++    update_backoff_ms = int(args.update_backoff_ms)
++    update_max_retries = int(args.update_max_retries)
+     max_equity_drawdown_pct = float(args.max_equity_drawdown_pct)
+     free_cash_min_pct = float(args.free_cash_min_pct)
+     risk_stop_policy = str(args.risk_stop_policy)
++    sizing_mode = str(args.sizing_mode)
++    risk_per_trade_pct = float(args.risk_per_trade_pct)
++    ai_risk_min_pct = float(args.ai_risk_min_pct)
++    ai_risk_max_pct = float(args.ai_risk_max_pct)
++    max_leverage = float(args.max_leverage)
++    leverage_sweep = bool(args.leverage_sweep)
+     scan_paths: Dict[str, str] = {}
+     backtests: List[str] = []
+     datasets: List[str] = []
+     if args.cmd == "data:update":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         return 0
+     if args.cmd == "scan":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+         return 0
+     if args.cmd == "backtest:top":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+         cmd_backtest_top(
+             provider,
+@@ -579,7 +766,7 @@ def main(argv: List[str]) -> int:
+         )
+         return 0
+     if args.cmd == "backtest:global":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         cmd_backtest_global(
+             provider,
+             run_dir,
+@@ -598,11 +785,11 @@ def main(argv: List[str]) -> int:
+         )
+         return 0
+     if args.cmd == "dataset:build":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         cmd_dataset_build(provider, symbols, run_tfs, entry_mode, workers)
+         return 0
+     if args.cmd == "report:setup-edge":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+         backtests = cmd_backtest_top(
+             provider,
+@@ -626,9 +813,10 @@ def main(argv: List[str]) -> int:
+         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
+         ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+         cmd_report_setup_edge(run_dir, ds_paths, backtests)
++        _require_files(run_dir, ["datasets_manifest.json", "setup_edge.md", "setup_edge.json", "setup_edge.html"])
+         return 0
+     if args.cmd == "train:stack":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
+         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
+@@ -637,7 +825,7 @@ def main(argv: List[str]) -> int:
+         cmd_train_stack(run_dir, ds_paths)
+         return 0
+     if args.cmd == "train:calibrate":
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+         top_syms = pick_top_symbols(_read_json(scan_paths.get("15m", ""), []), _top_n()) or symbols[: _top_n()]
+         datasets = cmd_dataset_build(provider, symbols=top_syms, tfs=run_tfs, entry_mode=entry_mode, workers=workers)
+@@ -647,7 +835,7 @@ def main(argv: List[str]) -> int:
+         return 0
+     if args.cmd == "all":
+         print("updating data...")
+-        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers)
++        cmd_data_update(provider, run_dir, symbols, update_tfs, update_workers, update_max_retries, update_backoff_ms, update_min_sleep_ms)
+         print("scanning...")
+         scan_paths = cmd_scan(provider, run_dir, symbols, run_tfs, entry_mode, workers)
+         print("backtesting...")
+@@ -668,6 +856,24 @@ def main(argv: List[str]) -> int:
+             ai_risk_max_pct=ai_risk_max_pct,
+             max_leverage=max_leverage,
+         )
++        if leverage_sweep:
++            backtests += cmd_backtest_top_leverage_sweep(
++                provider,
++                run_dir,
++                scan_paths,
++                top_n=_top_n(),
++                tfs=run_tfs,
++                entry_mode=entry_mode,
++                workers=workers,
++                max_equity_drawdown_pct=max_equity_drawdown_pct,
++                free_cash_min_pct=free_cash_min_pct,
++                risk_stop_policy=risk_stop_policy,
++                sizing_mode=sizing_mode,
++                risk_per_trade_pct=risk_per_trade_pct,
++                ai_risk_min_pct=ai_risk_min_pct,
++                ai_risk_max_pct=ai_risk_max_pct,
++                leverages=[50.0, 100.0, 200.0, 500.0],
++            )
+         print("building datasets...")
+         datasets = cmd_dataset_build(
+             provider,
+@@ -678,13 +884,16 @@ def main(argv: List[str]) -> int:
+         )
+         print("writing datasets manifest...")
+         _write_json(os.path.join(run_dir, "datasets_manifest.json"), {"datasets": datasets, "backtests": backtests})
++        _require_files(run_dir, ["datasets_manifest.json"])
+         print("setting up report...")
+         ds_paths = [str(d.get("path") or "") for d in datasets if int(d.get("rows") or 0) > 0 and str(d.get("path") or "")]
+         cmd_report_setup_edge(run_dir, ds_paths, backtests)
++        _require_files(run_dir, ["setup_edge.md", "setup_edge.json", "setup_edge.html"])
+         print("training stack...")
+         cmd_train_stack(run_dir, ds_paths)
+         print("calibrating...")
+         cmd_calibrate(run_dir, ds_paths)
++        _require_files(run_dir, ["train.json", "calibration.json"])
+         return 0
+     return 0
+ 
